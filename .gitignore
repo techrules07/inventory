@@ -23,3 +23,10 @@
 /build/resources/main/application-prod.properties
 /build/classes/java/main/com/eloiacs/aapta/Inventory/config/SpringFoxConfig.class
 /build/classes/java/main/com/eloiacs/aapta/Inventory/utils/Utils.class
+/.idea/.gitignore
+/.idea/.name
+/.idea/compiler.xml
+/.idea/gradle.xml
+/.idea/jarRepositories.xml
+/.idea/misc.xml
+/.idea/vcs.xml
