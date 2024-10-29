@@ -76,6 +76,24 @@ public class AuthController {
                 }
             }
 
+            Boolean existingUserEmail = authHandler.checkUserEmailExist(authModel.getEmail());
+
+            if (existingUserEmail) {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Email is already registered.");
+                return baseResponse;
+            }
+
+            Boolean existingUserMobile = authHandler.checkUserMobileExist(authModel.getMobileNumber());
+
+            if (existingUserMobile) {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Mobile Number is already registered.");
+                return baseResponse;
+            }
+
             Boolean account = authHandler.createAccount(authModel, createdBy);
 
             if (account) {
