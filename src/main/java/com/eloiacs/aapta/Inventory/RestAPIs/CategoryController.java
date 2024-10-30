@@ -10,7 +10,6 @@ import com.eloiacs.aapta.Inventory.Responses.BaseResponse;
 import com.eloiacs.aapta.Inventory.Responses.CategoryResponseModel;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.config.AWSConfig;
-import com.eloiacs.aapta.Inventory.utils.Constant;
 import com.eloiacs.aapta.Inventory.utils.Utils;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -233,10 +232,11 @@ public class CategoryController {
             }
         }
         else {
-            baseResponse.setCode(Constant.LOGIN_REQUIRED);
+            baseResponse.setCode(HttpStatus.NO_CONTENT.value());
             baseResponse.setStatus("Failed");
             baseResponse.setMessage("Please login again");
         }
         return baseResponse;
     }
+
 }

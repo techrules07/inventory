@@ -10,13 +10,12 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.util.Base64;
 
-@Configuration
+@Service
 public class AWSConfig {
 
     @Value("${accessKey}")
@@ -40,22 +39,6 @@ public class AWSConfig {
         return client;
     }
 
-    public String uploadMultiPartFileToS3(File file) {
-
-        AmazonS3 s3 = setupS3Client(accessKey, secretKey);
-
-        PutObjectRequest request = new PutObjectRequest(bucketName, "appta/" + file.getName(), file);
-        PutObjectResult result = s3.putObject(request);
-
-        String fileName = s3.getUrl(bucketName, "appta/" + file.getName()).toString();
-
-        if (file.exists()) {
-            file.delete();
-        }
-
-        return fileName;
-    }
-
     public String uploadBase64ImageToS3(String base64String, String name) {
 
         AmazonS3 s3 = setupS3Client(accessKey, secretKey);
@@ -77,4 +60,5 @@ public class AWSConfig {
 
         return fileName;
     }
+
 }

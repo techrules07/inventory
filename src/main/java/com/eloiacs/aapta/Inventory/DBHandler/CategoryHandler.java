@@ -1,9 +1,7 @@
 package com.eloiacs.aapta.Inventory.DBHandler;
 
-import com.eloiacs.aapta.Inventory.Models.BaseModel;
 import com.eloiacs.aapta.Inventory.Models.CategoryRequestModel;
 import com.eloiacs.aapta.Inventory.Responses.CategoryResponseModel;
-import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -93,5 +91,4 @@ public class CategoryHandler {
             }
         });
     }
-
 }
