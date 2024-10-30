@@ -16,7 +16,7 @@ public class BrandResponseModel {
 
     private boolean isActive  = false;
 
-    private String  image_url  = null;
+    private String  imageUrl  = null;
 
     public int getId() {
         return id;
@@ -74,11 +74,11 @@ public class BrandResponseModel {
         isActive = active;
     }
 
-    public String getImage_url() {
-        return image_url;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setImage_url(String image_url) {
-        this.image_url = image_url;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

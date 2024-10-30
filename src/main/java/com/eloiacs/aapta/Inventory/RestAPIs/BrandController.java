@@ -70,8 +70,8 @@ public class BrandController {
 
             String filePath = "";
 
-            if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getBrandName());
+            if (model.getImageUrl()!=null && !model.getImageUrl().isEmpty()){
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImageUrl(), model.getBrandName());
             }
 
             Boolean brandModel = brandHandler.insertBrand(filePath,model, createdBy);
@@ -176,10 +176,10 @@ public class BrandController {
 
             BrandResponseModel brandResponseModel = brandHandler.getBrandById(model.getId());
 
-            String filePath = brandResponseModel.getImage_url();
+            String filePath = brandResponseModel.getImageUrl();
 
-            if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getBrandName());
+            if (model.getImageUrl()!=null && !model.getImageUrl().isEmpty()){
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImageUrl(), model.getBrandName());
             }
 
             Boolean brandModel = brandHandler.updateBrand(filePath,model,createdBy);

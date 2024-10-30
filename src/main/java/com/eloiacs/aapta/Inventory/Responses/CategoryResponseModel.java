@@ -4,7 +4,7 @@ public class CategoryResponseModel {
 
     private  int id = 0;
 
-    private String category_name = null;
+    private String categoryName = null;
 
     private  String createdBy = null;
 
@@ -16,7 +16,7 @@ public class CategoryResponseModel {
 
     private  boolean isActive = false;
 
-    private String    image_url = null;
+    private String    imageUrl = null;
 
     public int getId() {
         return id;
@@ -26,12 +26,12 @@ public class CategoryResponseModel {
         this.id = id;
     }
 
-    public String getCategory_name() {
-        return category_name;
+    public String getCategoryName() {
+        return categoryName;
     }
 
-    public void setCategory_name(String category_name) {
-        this.category_name = category_name;
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 
     public String getCreatedBy() {
@@ -74,12 +74,11 @@ public class CategoryResponseModel {
         isActive = active;
     }
 
-    public String getImage_url() {
-        return image_url;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setImage_url(String image_url) {
-        this.image_url = image_url;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
-
 }

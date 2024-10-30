@@ -22,7 +22,7 @@ public class CategoryHandler {
 
     public  boolean insertCategory(String filePath,CategoryRequestModel model,String createdBy){
 
-        String query = "insert into category(category_name,createdBy,modifiedBy,modifiedAt,image_url)values('"+model.getCategory_name()+"','"+createdBy+"','"+createdBy+"',Now(),'"+filePath+"')";
+        String query = "insert into category(category_name,createdBy,modifiedBy,modifiedAt,image_url)values('"+model.getCategoryName()+"','"+createdBy+"','"+createdBy+"',Now(),'"+filePath+"')";
         jdbcTemplate.execute(query);
         return  true;
     }
@@ -37,7 +37,7 @@ public class CategoryHandler {
     }
 
     public boolean updateCategory(String filePath,CategoryRequestModel model,String createdBy){
-        String query = "update category set category_name='"+model.getCategory_name()+"' ,image_url='"+filePath+"',modifiedBy='"+createdBy+"',modifiedAt=now() where id= "+model.getId()+" ";
+        String query = "update category set category_name='"+model.getCategoryName()+"' ,image_url='"+filePath+"',modifiedBy='"+createdBy+"',modifiedAt=now() where id= "+model.getId()+" ";
         jdbcTemplate.execute(query);
         return  true;
     }
@@ -56,13 +56,13 @@ public class CategoryHandler {
                         CategoryResponseModel response = new CategoryResponseModel();
 
                         response.setId(rs.getInt("id"));
-                        response.setCategory_name(rs.getString("category_name"));
+                        response.setCategoryName(rs.getString("category_name"));
                         response.setCreatedBy(rs.getString("createdBy"));
                         response.setModifiedBy(rs.getString("modifiedBy"));
                         response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
                         response.setModifiedAt(Utils.convertDateToString(rs.getTimestamp("modifiedAt")));
                         response.setActive(rs.getBoolean("isActive"));
-                        response.setImage_url(rs.getString("image_url"));
+                        response.setImageUrl(rs.getString("image_url"));
 
                         categoryResponseModels.add(response);
                     } while (rs.next());
@@ -81,13 +81,13 @@ public class CategoryHandler {
                 if (rs.next()) {
                     CategoryResponseModel response = new CategoryResponseModel();
                     response.setId(rs.getInt("id"));
-                    response.setCategory_name(rs.getString("category_name"));
+                    response.setCategoryName(rs.getString("category_name"));
                     response.setCreatedBy(rs.getString("createdBy"));
                     response.setModifiedBy(rs.getString("modifiedBy"));
                     response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
                     response.setModifiedAt(Utils.convertDateToString(rs.getTimestamp("modifiedAt")));
                     response.setActive(rs.getBoolean("isActive"));
-                    response.setImage_url(rs.getString("image_url"));
+                    response.setImageUrl(rs.getString("image_url"));
                     return response;
                 }
                 return null;

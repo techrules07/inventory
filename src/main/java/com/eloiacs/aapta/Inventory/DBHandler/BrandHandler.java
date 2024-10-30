@@ -58,7 +58,7 @@ public class BrandHandler {
                         response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
                         response.setModifiedAt(Utils.convertDateToString(rs.getTimestamp("modifiedAt")));
                         response.setActive(rs.getBoolean("isActive"));
-                        response.setImage_url(rs.getString("image_url"));
+                        response.setImageUrl(rs.getString("image_url"));
 
                         brandResponseModels.add(response);
 
@@ -85,7 +85,7 @@ public class BrandHandler {
                     response.setCreatedAt(rs.getString("createdAt"));
                     response.setModifiedAt(rs.getString("modifiedAt"));
                     response.setActive(rs.getBoolean("isActive"));
-                    response.setImage_url(rs.getString("image_url"));
+                    response.setImageUrl(rs.getString("image_url"));
 
                     return response;
                 }

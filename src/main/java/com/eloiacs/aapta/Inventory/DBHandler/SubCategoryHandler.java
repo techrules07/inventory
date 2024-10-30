@@ -22,7 +22,7 @@ public class SubCategoryHandler {
     JdbcTemplate jdbcTemplate;
 
     public  boolean insertSubCategory(String filePath,SubCategoryRequestModel model,String createdBy){
-        String query = "insert into subcategory(subCategoryName,category_id,createdBy,modifiedBy,modifiedAt,image_url) Values('"+model.getSubCategoryName()+"','"+ model.getCategory_id()+"','"+createdBy+"','"+createdBy+"',Now(),'"+filePath+"')";
+        String query = "insert into subcategory(subCategoryName,category_id,createdBy,modifiedBy,modifiedAt,image_url) Values('"+model.getSubCategoryName()+"','"+ model.getCategoryId()+"','"+createdBy+"','"+createdBy+"',Now(),'"+filePath+"')";
         jdbcTemplate.execute(query);
         return true;
     }
@@ -34,7 +34,7 @@ public class SubCategoryHandler {
     }
 
     public boolean updateSubCategory(String filePath,SubCategoryRequestModel model,String createdBy){
-        String query = "update subcategory set subCategoryName='"+model.getSubCategoryName()+"',modifiedBy='"+createdBy+"',modifiedAt=NOW() ,category_id="+model.getCategory_id()+",image_url='"+filePath+"' where id="+model.getId()+" ";
+        String query = "update subcategory set subCategoryName='"+model.getSubCategoryName()+"',modifiedBy='"+createdBy+"',modifiedAt=NOW() ,category_id="+model.getCategoryId()+",image_url='"+filePath+"' where id="+model.getId()+" ";
         jdbcTemplate.execute(query);
         return true;
     }
@@ -53,9 +53,9 @@ public class SubCategoryHandler {
                         response.setCreatedAt(rs.getString("createdAt"));
                         response.setModifiedAt(rs.getString("modifiedAt"));
                         response.setActive(rs.getBoolean("isActive"));
-                        response.setCategory_id(rs.getInt("category_id"));
+                        response.setCategoryId(rs.getInt("category_id"));
                         response.setCategoryName(rs.getString("category_name"));
-                        response.setImage_url(rs.getString("image_url"));
+                        response.setImageUrl(rs.getString("image_url"));
 
                         return response;
                     }
@@ -84,9 +84,9 @@ public class SubCategoryHandler {
                         response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
                         response.setModifiedAt(Utils.convertDateToString(rs.getTimestamp("modifiedAt")));
                         response.setActive(rs.getBoolean("isActive"));
-                        response.setCategory_id(rs.getInt("category_id"));
+                        response.setCategoryId(rs.getInt("category_id"));
                         response.setCategoryName(rs.getString("category_name"));
-                        response.setImage_url(rs.getString("image_url"));
+                        response.setImageUrl(rs.getString("image_url"));
 
                         subCategoryResponseModel.add(response);
 
