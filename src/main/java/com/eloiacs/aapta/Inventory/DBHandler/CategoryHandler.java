@@ -28,8 +28,11 @@ public class CategoryHandler {
     }
 
     public  boolean deleteCategory(int id){
+
         String query = "update category set isActive=false where id="+id+" ";
+
         jdbcTemplate.execute(query);
+
         return  true ;
     }
 
