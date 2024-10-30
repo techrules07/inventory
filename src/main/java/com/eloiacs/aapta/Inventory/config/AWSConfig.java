@@ -13,7 +13,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AWSConfig {
@@ -59,6 +62,37 @@ public class AWSConfig {
         String fileName = s3.getUrl(bucketName, "appta/supermart/" + name).toString();
 
         return fileName;
+    }
+
+    public List<String> uploadMultipleBase64ImagesToS3(List<String> base64Strings, String productName) {
+
+        AmazonS3 s3 = setupS3Client(accessKey, secretKey);
+        List<String> filePaths = new ArrayList<>();
+
+        for (int i = 0; i < base64Strings.size(); i++) {
+            String base64String = base64Strings.get(i);
+
+            // Decode Base64 string to byte array
+            byte[] decodedBytes = Base64.getDecoder().decode(base64String);
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(decodedBytes);
+
+            // Create metadata for the object
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(decodedBytes.length);
+            metadata.setContentType("image/jpeg"); // Adjust the content type if needed
+
+            String uniqueFileName = productName + "_" + UUID.randomUUID();
+            String key = "bismiAdmin/products/" + uniqueFileName;
+
+            PutObjectRequest request = new PutObjectRequest(bucketName, key,
+                    byteArrayInputStream, metadata);
+            s3.putObject(request);
+
+            String filePath = s3.getUrl(bucketName, key).toString();
+            filePaths.add(filePath);
+        }
+
+        return filePaths;
     }
 
 }
