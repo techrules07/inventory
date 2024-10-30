@@ -2,13 +2,11 @@ package com.eloiacs.aapta.Inventory.RestAPIs;
 
 import com.eloiacs.aapta.Inventory.DBHandler.AuthHandler;
 import com.eloiacs.aapta.Inventory.DBHandler.CategoryHandler;
-import com.eloiacs.aapta.Inventory.Models.AuthModel;
-import com.eloiacs.aapta.Inventory.Models.BaseModel;
-import com.eloiacs.aapta.Inventory.Models.CategoryRequestModel;
-import com.eloiacs.aapta.Inventory.Models.LoginModel;
+import com.eloiacs.aapta.Inventory.DBHandler.SubCategoryHandler;
+import com.eloiacs.aapta.Inventory.Models.*;
 import com.eloiacs.aapta.Inventory.Responses.BaseResponse;
-import com.eloiacs.aapta.Inventory.Responses.BrandResponseModel;
 import com.eloiacs.aapta.Inventory.Responses.CategoryResponseModel;
+import com.eloiacs.aapta.Inventory.Responses.SubCategoryResponseModel;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.Utils;
@@ -24,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/category")
+@RequestMapping("/subCategory")
 @SecurityScheme(
         name = "Authorization",
         type = SecuritySchemeType.HTTP,
@@ -33,22 +31,25 @@ import java.util.List;
 )
 @SecurityRequirement(name = "Authorization")
 @CrossOrigin("*")
-public class CategoryController {
+public class SubCategoryController {
 
     @Autowired
     JwtService jwtService;
 
     @Autowired
-    AuthHandler authHandler;
+    SubCategoryHandler subCategoryHandler;
 
     @Autowired
     CategoryHandler categoryHandler;
 
     @Autowired
+    AuthHandler authHandler;
+
+    @Autowired
     AWSConfig awsConfig;
 
-    @RequestMapping(value = "/insertCategory", method = RequestMethod.POST)
-    public BaseResponse insertCategory(@RequestBody CategoryRequestModel model, HttpServletRequest request) {
+    @RequestMapping(value = "/insertSubCategory", method = RequestMethod.POST)
+    public BaseResponse insertSubCategory(@RequestBody SubCategoryRequestModel model, HttpServletRequest request) {
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -74,15 +75,23 @@ public class CategoryController {
             String filePath = "";
 
             if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getCategory_name());
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getSubCategoryName());
             }
 
-            Boolean category = categoryHandler.insertCategory(filePath,model, createdBy);
+            CategoryResponseModel categoryResponse = categoryHandler.getCategoryById(model.getCategory_id());
+            if (categoryResponse == null) {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Category Does Not Exist");
+                return baseResponse;
+            }
 
-            if (category) {
+            Boolean subCategory = subCategoryHandler.insertSubCategory(filePath,model, createdBy);
+
+            if (subCategory) {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setMessage("Category Added Successfully");
+                baseResponse.setMessage("SubCategory Added Successfully");
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
@@ -99,8 +108,8 @@ public class CategoryController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/deleteCategory", method = RequestMethod.POST)
-    public BaseResponse deleteCategory(@RequestBody BaseModel model, HttpServletRequest request) {
+    @RequestMapping(value = "/deleteSubCategory", method = RequestMethod.POST)
+    public BaseResponse deleteSubCategory(@RequestBody BaseModel model, HttpServletRequest request) {
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -123,12 +132,12 @@ public class CategoryController {
                 }
             }
 
-            Boolean category = categoryHandler.deleteCategory(model.getRequestId());
+            Boolean subCategory = subCategoryHandler.deleteSubCategory(model);
 
-            if (category) {
+            if (subCategory) {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setMessage("Category Deleted Successfully");
+                baseResponse.setMessage("SubCategory Deleted Successfully");
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
@@ -145,8 +154,8 @@ public class CategoryController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/updateCategory", method = RequestMethod.POST)
-    public BaseResponse updateCategory(@RequestBody CategoryRequestModel model, HttpServletRequest request) {
+    @RequestMapping(value = "/updateSubCategory", method = RequestMethod.POST)
+    public BaseResponse updateSubCategory(@RequestBody SubCategoryRequestModel model, HttpServletRequest request) {
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -169,10 +178,15 @@ public class CategoryController {
                 }
             }
 
-            CategoryResponseModel categoryResponseModel = categoryHandler.getCategoryById(model.getId());
+            SubCategoryResponseModel subCategoryResponse = subCategoryHandler.getSubCategoryById(model.getId());
+            if (subCategoryResponse == null) {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("SubCategory Does Not Exist");
+                return baseResponse;
+            }
 
-
-            CategoryResponseModel  categoryResponse = categoryHandler.getCategoryById(model.getId());
+            CategoryResponseModel categoryResponse = categoryHandler.getCategoryById(model.getCategory_id());
             if (categoryResponse == null) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
@@ -180,18 +194,20 @@ public class CategoryController {
                 return baseResponse;
             }
 
-            String filePath = categoryResponseModel.getImage_url();
+            SubCategoryResponseModel subCategoryResponseModel = subCategoryHandler.getSubCategoryById(model.getId());
 
+            String filePath = subCategoryResponseModel.getImage_url();
             if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getCategory_name());
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getSubCategoryName());
             }
 
-            Boolean category = categoryHandler.updateCategory(filePath,model,createdBy);
 
-            if (category) {
+            Boolean subCategory = subCategoryHandler.updateSubCategory(filePath,model,createdBy);
+
+            if (subCategory) {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setMessage("Category Updated Successfully");
+                baseResponse.setMessage("SubCategory Updated Successfully");
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
@@ -208,9 +224,9 @@ public class CategoryController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/getCategory", method = RequestMethod.POST)
+    @RequestMapping(value = "/getSubCategory", method = RequestMethod.POST)
     @ResponseBody
-    public BaseResponse getCategory(HttpServletRequest httpServletRequest){
+    public BaseResponse getSubCategory(HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
@@ -229,16 +245,16 @@ public class CategoryController {
                     baseResponse.setAccessToken("");
                 }
             }
-            List<CategoryResponseModel> categoryResponseModelList = categoryHandler.getCategory();
-            if (categoryResponseModelList == null || categoryResponseModelList.isEmpty()) {
+            List<SubCategoryResponseModel> subCategoryResponseModels = subCategoryHandler.getSubCategory();
+            if (subCategoryResponseModels == null || subCategoryResponseModels.isEmpty()) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setMessage("No Category available");
+                baseResponse.setMessage("No SubCategory available");
                 baseResponse.setStatus("Failed");
             }
             else {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setData(categoryResponseModelList);
+                baseResponse.setData(subCategoryResponseModels);
             }
         }
         else {

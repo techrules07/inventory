@@ -1,14 +1,10 @@
 package com.eloiacs.aapta.Inventory.RestAPIs;
 
 import com.eloiacs.aapta.Inventory.DBHandler.AuthHandler;
-import com.eloiacs.aapta.Inventory.DBHandler.CategoryHandler;
-import com.eloiacs.aapta.Inventory.Models.AuthModel;
-import com.eloiacs.aapta.Inventory.Models.BaseModel;
-import com.eloiacs.aapta.Inventory.Models.CategoryRequestModel;
-import com.eloiacs.aapta.Inventory.Models.LoginModel;
+import com.eloiacs.aapta.Inventory.DBHandler.BrandHandler;
+import com.eloiacs.aapta.Inventory.Models.*;
 import com.eloiacs.aapta.Inventory.Responses.BaseResponse;
 import com.eloiacs.aapta.Inventory.Responses.BrandResponseModel;
-import com.eloiacs.aapta.Inventory.Responses.CategoryResponseModel;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.Utils;
@@ -24,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/category")
+@RequestMapping("/brand")
 @SecurityScheme(
         name = "Authorization",
         type = SecuritySchemeType.HTTP,
@@ -33,22 +29,23 @@ import java.util.List;
 )
 @SecurityRequirement(name = "Authorization")
 @CrossOrigin("*")
-public class CategoryController {
+public class BrandController {
 
     @Autowired
     JwtService jwtService;
 
     @Autowired
-    AuthHandler authHandler;
-
-    @Autowired
-    CategoryHandler categoryHandler;
+    BrandHandler brandHandler;
 
     @Autowired
     AWSConfig awsConfig;
 
-    @RequestMapping(value = "/insertCategory", method = RequestMethod.POST)
-    public BaseResponse insertCategory(@RequestBody CategoryRequestModel model, HttpServletRequest request) {
+    @Autowired
+    AuthHandler authHandler;
+
+
+    @RequestMapping(value = "/insertBrand", method = RequestMethod.POST)
+    public BaseResponse insertBrand(@RequestBody BrandRequestModel model, HttpServletRequest request) {
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -74,15 +71,15 @@ public class CategoryController {
             String filePath = "";
 
             if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getCategory_name());
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getBrandName());
             }
 
-            Boolean category = categoryHandler.insertCategory(filePath,model, createdBy);
+            Boolean brandModel = brandHandler.insertBrand(filePath,model, createdBy);
 
-            if (category) {
+            if (brandModel) {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setMessage("Category Added Successfully");
+                baseResponse.setMessage("Brand Added Successfully");
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
@@ -99,8 +96,8 @@ public class CategoryController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/deleteCategory", method = RequestMethod.POST)
-    public BaseResponse deleteCategory(@RequestBody BaseModel model, HttpServletRequest request) {
+    @RequestMapping(value = "/deleteBrand", method = RequestMethod.POST)
+    public BaseResponse deleteBrand(@RequestBody BaseModel model, HttpServletRequest request) {
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -123,12 +120,12 @@ public class CategoryController {
                 }
             }
 
-            Boolean category = categoryHandler.deleteCategory(model.getRequestId());
+            Boolean brandModel = brandHandler.deleteBrand(model);
 
-            if (category) {
+            if (brandModel) {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setMessage("Category Deleted Successfully");
+                baseResponse.setMessage("Brand Deleted Successfully");
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
@@ -145,8 +142,8 @@ public class CategoryController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/updateCategory", method = RequestMethod.POST)
-    public BaseResponse updateCategory(@RequestBody CategoryRequestModel model, HttpServletRequest request) {
+    @RequestMapping(value = "/updateBrand", method = RequestMethod.POST)
+    public BaseResponse updateBrand(@RequestBody BrandRequestModel model, HttpServletRequest request) {
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -169,29 +166,28 @@ public class CategoryController {
                 }
             }
 
-            CategoryResponseModel categoryResponseModel = categoryHandler.getCategoryById(model.getId());
-
-
-            CategoryResponseModel  categoryResponse = categoryHandler.getCategoryById(model.getId());
-            if (categoryResponse == null) {
+            BrandResponseModel brandResponse = brandHandler.getBrandById(model.getId());
+            if (brandResponse == null) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Category Does Not Exist");
+                baseResponse.setMessage("Brand Does Not Exist");
                 return baseResponse;
             }
 
-            String filePath = categoryResponseModel.getImage_url();
+            BrandResponseModel brandResponseModel = brandHandler.getBrandById(model.getId());
+
+            String filePath = brandResponseModel.getImage_url();
 
             if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getCategory_name());
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getBrandName());
             }
 
-            Boolean category = categoryHandler.updateCategory(filePath,model,createdBy);
+            Boolean brandModel = brandHandler.updateBrand(filePath,model,createdBy);
 
-            if (category) {
+            if (brandModel) {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setMessage("Category Updated Successfully");
+                baseResponse.setMessage("Brand Updated Successfully");
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
@@ -208,9 +204,9 @@ public class CategoryController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/getCategory", method = RequestMethod.POST)
+    @RequestMapping(value = "/getBrand", method = RequestMethod.POST)
     @ResponseBody
-    public BaseResponse getCategory(HttpServletRequest httpServletRequest){
+    public BaseResponse getBrand(HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
@@ -229,16 +225,16 @@ public class CategoryController {
                     baseResponse.setAccessToken("");
                 }
             }
-            List<CategoryResponseModel> categoryResponseModelList = categoryHandler.getCategory();
-            if (categoryResponseModelList == null || categoryResponseModelList.isEmpty()) {
+            List<BrandResponseModel> brandResponseModelList = brandHandler.getBrand();
+            if (brandResponseModelList == null || brandResponseModelList.isEmpty()) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setMessage("No Category available");
+                baseResponse.setMessage("No Brand available");
                 baseResponse.setStatus("Failed");
             }
             else {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setData(categoryResponseModelList);
+                baseResponse.setData(brandResponseModelList);
             }
         }
         else {
