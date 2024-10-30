@@ -75,6 +75,34 @@ public class AuthHandler {
         });
     }
 
+    public Boolean checkUserEmailExist(String email) {
+
+        String checkCourseQuery = "SELECT COUNT(*) FROM users WHERE email = ? AND  isActive = true";
+
+        int count = jdbcTemplate.queryForObject(checkCourseQuery, new Object[]{email}, Integer.class);
+
+        if(count!=0){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    public Boolean checkUserMobileExist(String mobileNumber) {
+
+        String checkCourseQuery = "SELECT COUNT(*) FROM users WHERE mobileNumber = ? AND  isActive = true";
+
+        int count = jdbcTemplate.queryForObject(checkCourseQuery, new Object[]{mobileNumber}, Integer.class);
+
+        if(count!=0){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
     public LoginModel getUserDetails(String id){
 
         String query = "SELECT * FROM users WHERE id='"+id+"' AND isActive = true";
