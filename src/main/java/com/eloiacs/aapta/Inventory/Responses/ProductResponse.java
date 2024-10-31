@@ -55,9 +55,7 @@ public class ProductResponse {
 
     private Boolean billOfMaterials = false;
 
-    private List<Integer> billOfMaterialsProductId = new ArrayList<>();
-
-    private List<String> billOfMaterialsProductName = new ArrayList<>();
+    private List<BillOfMaterialsResponse> billOfMaterialsList = new ArrayList<>();
 
     private Boolean freebie = false;
 
@@ -276,20 +274,12 @@ public class ProductResponse {
         this.billOfMaterials = billOfMaterials;
     }
 
-    public List<Integer> getBillOfMaterialsProductId() {
-        return billOfMaterialsProductId;
+    public List<BillOfMaterialsResponse> getBillOfMaterialsList() {
+        return billOfMaterialsList;
     }
 
-    public void setBillOfMaterialsProductId(List<Integer> billOfMaterialsProductId) {
-        this.billOfMaterialsProductId = billOfMaterialsProductId;
-    }
-
-    public List<String> getBillOfMaterialsProductName() {
-        return billOfMaterialsProductName;
-    }
-
-    public void setBillOfMaterialsProductName(List<String> billOfMaterialsProductName) {
-        this.billOfMaterialsProductName = billOfMaterialsProductName;
+    public void setBillOfMaterialsList(List<BillOfMaterialsResponse> billOfMaterialsList) {
+        this.billOfMaterialsList = billOfMaterialsList;
     }
 
     public Boolean getFreebie() {

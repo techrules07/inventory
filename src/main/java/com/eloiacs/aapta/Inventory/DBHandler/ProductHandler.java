@@ -3,6 +3,7 @@ package com.eloiacs.aapta.Inventory.DBHandler;
 import com.eloiacs.aapta.Inventory.Models.BaseModel;
 import com.eloiacs.aapta.Inventory.Models.BillOfMaterialsRequestModel;
 import com.eloiacs.aapta.Inventory.Models.ProductRequestModel;
+import com.eloiacs.aapta.Inventory.Responses.BillOfMaterialsResponse;
 import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
 import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -250,7 +251,7 @@ public class ProductHandler {
 
     public List<ProductResponse> getProducts(){
 
-        String getProductsQuery = "select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true group by pd.id order by pd.id desc";
+        String getProductsQuery = "select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true group by pd.id order by pd.id desc";
 
         return jdbcTemplate.query(getProductsQuery, new ResultSetExtractor<List<ProductResponse>>() {
             @Override
@@ -287,23 +288,46 @@ public class ProductHandler {
                         productResponse.setWholesalePricePercentage(rs.getInt("wholesaleGSTPercentage"));
                         productResponse.setThreshold(rs.getInt("threshold"));
                         productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
+
+                        // Concatenated strings for bill of materials
                         String billOfMaterialsProductIdConcat = rs.getString("billOfMaterialProductId");
-                        if (billOfMaterialsProductIdConcat != null) {
-                            List<Integer> billOfMaterialsProductId = Arrays.stream(billOfMaterialsProductIdConcat.split(","))
-                                    .map(Integer::parseInt)
-                                    .collect(Collectors.toList());
-                            productResponse.setBillOfMaterialsProductId(billOfMaterialsProductId);
-                        } else {
-                            productResponse.setBillOfMaterialsProductId(new ArrayList<>());
-                        }
                         String billOfMaterialsProductNameConcat = rs.getString("billOfMaterialProductName");
-                        if (billOfMaterialsProductNameConcat != null){
-                            List<String> billOfMaterialsProductName = Arrays.asList(billOfMaterialsProductNameConcat.split(","));
-                            productResponse.setBillOfMaterialsProductName(billOfMaterialsProductName);
+                        String billOfMaterialsProductQuantityConcat = rs.getString("billOfMaterialQuantity");
+                        String billOfMaterialsProductCostConcat = rs.getString("billOfMaterialCost");
+
+                        // Initialize arrays to avoid NullPointerException
+                        String[] billOfMaterialsProductIds = (billOfMaterialsProductIdConcat != null) ? billOfMaterialsProductIdConcat.split(",") : new String[0];
+                        String[] billOfMaterialsProductNames = (billOfMaterialsProductNameConcat != null) ? billOfMaterialsProductNameConcat.split(",") : new String[0];
+                        String[] billOfMaterialsProductQuantities = (billOfMaterialsProductQuantityConcat != null) ? billOfMaterialsProductQuantityConcat.split(",") : new String[0];
+                        String[] billOfMaterialsProductCosts = (billOfMaterialsProductCostConcat != null) ? billOfMaterialsProductCostConcat.split(",") : new String[0];
+
+                        // Create a list to hold the BillOfMaterialsResponse objects
+                        List<BillOfMaterialsResponse> billOfMaterialsList = new ArrayList<>();
+
+                        // Ensure all arrays have the same length before processing
+                        if (billOfMaterialsProductIds.length == billOfMaterialsProductNames.length &&
+                                billOfMaterialsProductNames.length == billOfMaterialsProductQuantities.length &&
+                                billOfMaterialsProductQuantities.length == billOfMaterialsProductCosts.length) {
+
+                            // Loop through the arrays to create BillOfMaterialsResponse objects
+                            for (int i = 0; i < billOfMaterialsProductIds.length; i++) {
+                                // Create a new instance for each bill of material
+                                BillOfMaterialsResponse billOfMaterialsResponse = new BillOfMaterialsResponse();
+
+                                // Set the values for each BillOfMaterialsResponse object
+                                billOfMaterialsResponse.setBillOfMaterialsProductId(Integer.parseInt(billOfMaterialsProductIds[i]));
+                                billOfMaterialsResponse.setBillOfMaterialsProductName(billOfMaterialsProductNames[i]);
+                                billOfMaterialsResponse.setBillOfMaterialsProductQuantity(Integer.parseInt(billOfMaterialsProductQuantities[i]));
+                                billOfMaterialsResponse.setBillOfMaterialsProductCost(Integer.parseInt(billOfMaterialsProductCosts[i]));
+
+                                // Add the populated response object to the list
+                                billOfMaterialsList.add(billOfMaterialsResponse);
+                            }
                         }
-                        else {
-                            productResponse.setBillOfMaterialsProductName(new ArrayList<>());
-                        }
+
+                        // Set the populated list to the product response
+                        productResponse.setBillOfMaterialsList(billOfMaterialsList);
+
                         productResponse.setFreebie(rs.getBoolean("freebie"));
                         productResponse.setFreebieProductId(rs.getInt("freebieProduct"));
                         productResponse.setFreebieProductName(rs.getString("freebieProductName"));
@@ -332,7 +356,7 @@ public class ProductHandler {
 
     public ProductResponse getProductById(int id){
 
-        String getProductByIdQuery = "select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true and pd.id = ? group by pd.id";
+        String getProductByIdQuery = "select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true and pd.id = ? group by pd.id";
 
         return jdbcTemplate.query(getProductByIdQuery, new Object[]{id}, new ResultSetExtractor<ProductResponse>() {
             @Override
@@ -365,23 +389,45 @@ public class ProductHandler {
                     productResponse.setWholesalePricePercentage(rs.getInt("wholesaleGSTPercentage"));
                     productResponse.setThreshold(rs.getInt("threshold"));
                     productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
+
+                    // Concatenated strings for bill of materials
                     String billOfMaterialsProductIdConcat = rs.getString("billOfMaterialProductId");
-                    if (billOfMaterialsProductIdConcat != null) {
-                        List<Integer> billOfMaterialsProductId = Arrays.stream(billOfMaterialsProductIdConcat.split(","))
-                                .map(Integer::parseInt)
-                                .collect(Collectors.toList());
-                        productResponse.setBillOfMaterialsProductId(billOfMaterialsProductId);
-                    } else {
-                        productResponse.setBillOfMaterialsProductId(new ArrayList<>());
-                    }
                     String billOfMaterialsProductNameConcat = rs.getString("billOfMaterialProductName");
-                    if (billOfMaterialsProductNameConcat != null){
-                        List<String> billOfMaterialsProductName = Arrays.asList(billOfMaterialsProductNameConcat.split(","));
-                        productResponse.setBillOfMaterialsProductName(billOfMaterialsProductName);
+                    String billOfMaterialsProductQuantityConcat = rs.getString("billOfMaterialQuantity");
+                    String billOfMaterialsProductCostConcat = rs.getString("billOfMaterialCost");
+
+                    // Initialize arrays to avoid NullPointerException
+                    String[] billOfMaterialsProductIds = (billOfMaterialsProductIdConcat != null) ? billOfMaterialsProductIdConcat.split(",") : new String[0];
+                    String[] billOfMaterialsProductNames = (billOfMaterialsProductNameConcat != null) ? billOfMaterialsProductNameConcat.split(",") : new String[0];
+                    String[] billOfMaterialsProductQuantities = (billOfMaterialsProductQuantityConcat != null) ? billOfMaterialsProductQuantityConcat.split(",") : new String[0];
+                    String[] billOfMaterialsProductCosts = (billOfMaterialsProductCostConcat != null) ? billOfMaterialsProductCostConcat.split(",") : new String[0];
+
+                    // Create a list to hold the BillOfMaterialsResponse objects
+                    List<BillOfMaterialsResponse> billOfMaterialsList = new ArrayList<>();
+
+                    // Ensure all arrays have the same length before processing
+                    if (billOfMaterialsProductIds.length == billOfMaterialsProductNames.length &&
+                            billOfMaterialsProductNames.length == billOfMaterialsProductQuantities.length &&
+                            billOfMaterialsProductQuantities.length == billOfMaterialsProductCosts.length) {
+
+                        // Loop through the arrays to create BillOfMaterialsResponse objects
+                        for (int i = 0; i < billOfMaterialsProductIds.length; i++) {
+                            // Create a new instance for each bill of material
+                            BillOfMaterialsResponse billOfMaterialsResponse = new BillOfMaterialsResponse();
+
+                            // Set the values for each BillOfMaterialsResponse object
+                            billOfMaterialsResponse.setBillOfMaterialsProductId(Integer.parseInt(billOfMaterialsProductIds[i]));
+                            billOfMaterialsResponse.setBillOfMaterialsProductName(billOfMaterialsProductNames[i]);
+                            billOfMaterialsResponse.setBillOfMaterialsProductQuantity(Integer.parseInt(billOfMaterialsProductQuantities[i]));
+                            billOfMaterialsResponse.setBillOfMaterialsProductCost(Integer.parseInt(billOfMaterialsProductCosts[i]));
+
+                            // Add the populated response object to the list
+                            billOfMaterialsList.add(billOfMaterialsResponse);
+                        }
                     }
-                    else {
-                        productResponse.setBillOfMaterialsProductName(new ArrayList<>());
-                    }
+
+                    // Set the populated list to the product response
+                    productResponse.setBillOfMaterialsList(billOfMaterialsList);
                     productResponse.setFreebie(rs.getBoolean("freebie"));
                     productResponse.setFreebieProductId(rs.getInt("freebieProduct"));
                     productResponse.setFreebieProductName(rs.getString("freebieProductName"));
