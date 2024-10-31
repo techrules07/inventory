@@ -81,8 +81,9 @@ public class AWSConfig {
             metadata.setContentLength(decodedBytes.length);
             metadata.setContentType("image/jpeg"); // Adjust the content type if needed
 
-            String uniqueFileName = productName + "_" + UUID.randomUUID();
-            String key = "bismiAdmin/products/" + uniqueFileName;
+            String uniqueFileName = String.format("%s_%d_%s.jpg",
+                    productName, System.currentTimeMillis(), UUID.randomUUID());
+            String key = "appta/supermart/" + uniqueFileName;
 
             PutObjectRequest request = new PutObjectRequest(bucketName, key,
                     byteArrayInputStream, metadata);

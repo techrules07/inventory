@@ -3,9 +3,11 @@ package com.eloiacs.aapta.Inventory.RestAPIs;
 import com.eloiacs.aapta.Inventory.DBHandler.AuthHandler;
 import com.eloiacs.aapta.Inventory.DBHandler.ProductHandler;
 import com.eloiacs.aapta.Inventory.Models.AuthModel;
+import com.eloiacs.aapta.Inventory.Models.BaseModel;
 import com.eloiacs.aapta.Inventory.Models.LoginModel;
 import com.eloiacs.aapta.Inventory.Models.ProductRequestModel;
 import com.eloiacs.aapta.Inventory.Responses.BaseResponse;
+import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.Utils;
@@ -87,6 +89,146 @@ public class ProductController {
                 baseResponse.setMessage("Product Addition Failed");
             }
         } else {
+            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
+        }
+
+        return baseResponse;
+    }
+
+    @RequestMapping(value = "/editProduct", method = RequestMethod.POST)
+    public BaseResponse editProduct(@RequestBody ProductRequestModel productRequestModel,
+                                    HttpServletRequest httpServletRequest){
+
+        BaseResponse baseResponse = new BaseResponse();
+
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if(claims!=null){
+
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+
+            ProductResponse existingProduct = productHandler.getProductById(productRequestModel.getProductId());
+
+            List<String> filePaths = existingProduct.getImages();
+
+            if (productRequestModel.getImages() != null && productRequestModel.getImages().stream().anyMatch(image -> image != null && !image.trim().isEmpty())){
+                filePaths = awsConfig.uploadMultipleBase64ImagesToS3(productRequestModel.getImages(), productRequestModel.getProductName());
+            }
+
+            Boolean responseStatus = productHandler.updateProduct(productRequestModel, createdBy, filePaths);
+
+            if(responseStatus){
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setMessage("Product Updated Successfully");
+            } else {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Product Update Failed");
+            }
+        } else {
+            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
+        }
+
+        return baseResponse;
+    }
+
+    @RequestMapping(value = "/deleteProduct", method = RequestMethod.POST)
+    public BaseResponse deleteProduct(@RequestBody BaseModel baseModel,
+                                      HttpServletRequest httpServletRequest){
+
+        BaseResponse baseResponse = new BaseResponse();
+
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if(claims!=null){
+
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+
+            Boolean responseStatus = productHandler.deleteProduct(baseModel);
+
+            if(responseStatus){
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setMessage("Product Deleted Successfully");
+            } else {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Product Deletion Failed");
+            }
+        } else {
+            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
+        }
+
+        return baseResponse;
+    }
+
+    @RequestMapping(value = "/getProducts", method = RequestMethod.POST)
+    public BaseResponse getProducts(HttpServletRequest httpServletRequest){
+
+        BaseResponse baseResponse = new BaseResponse();
+
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if (claims != null) {
+
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+
+            List<ProductResponse> productResponses = productHandler.getProducts();
+
+            if (productResponses!=null && !productResponses.isEmpty()){
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setMessage("Products got successfully");
+                baseResponse.setData(productResponses);
+            }else {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("No product found");
+            }
+        }else {
             baseResponse.setCode(HttpStatus.FORBIDDEN.value());
             baseResponse.setStatus("Failed");
             baseResponse.setMessage("Please login again");
