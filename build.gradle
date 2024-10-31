@@ -6,11 +6,15 @@ plugins {
 }
 
 group = 'com.eloiacs.aapta'
-version = '0.0.1-SNAPSHOT'
+//version = ''
+
+bootWar {
+	archiveBaseName = 'inventory-test'
+}
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(8)
 	}
 }
 
