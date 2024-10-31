@@ -21,7 +21,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductHandler {
@@ -448,5 +447,68 @@ public class ProductHandler {
                 return null;
             }
         });
+    }
+
+    public Boolean productExistByName(String name){
+
+        String productExistByNameQuery = "select count(*) from products where productName = ? and isActive = true";
+
+        int count = jdbcTemplate.queryForObject(productExistByNameQuery, new Object[]{name}, Integer.class);
+
+        return count > 0;
+    }
+
+    public Boolean productExistById(int id){
+
+        String productExistByIdQuery = "select count(*) from products where id = ? and isActive = true";
+
+        int count = jdbcTemplate.queryForObject(productExistByIdQuery, new Object[]{id}, Integer.class);
+
+        return count > 0;
+    }
+
+    public Boolean statusTypeExistById(int id){
+
+        String statusTypeExistByIdQuery = "select count(*) from statusType where id = ? and isActive = true";
+
+        int count = jdbcTemplate.queryForObject(statusTypeExistByIdQuery, new Object[]{id}, Integer.class);
+
+        return count > 0;
+    }
+
+    public Boolean categoryExistById(int id){
+
+        String categoryExistByIdQuery = "select count(*) from category where id = ? and isActive = true";
+
+        int count = jdbcTemplate.queryForObject(categoryExistByIdQuery, new Object[]{id}, Integer.class);
+
+        return count > 0;
+    }
+
+    public Boolean subCategoryExistById(int id){
+
+        String subCategoryExistByIdQuery = "select count(*) from subcategory where id = ? and isActive = true";
+
+        int count = jdbcTemplate.queryForObject(subCategoryExistByIdQuery, new Object[]{id}, Integer.class);
+
+        return count > 0;
+    }
+
+    public Boolean brandExistById(int id){
+
+        String brandExistByIdQuery = "select count(*) from brand where id = ? and isActive = true";
+
+        int count = jdbcTemplate.queryForObject(brandExistByIdQuery, new Object[]{id}, Integer.class);
+
+        return count > 0;
+    }
+
+    public Boolean unitExistById(int id){
+
+        String unitExistByIdQuery = "select count(*) from unitTable where id = ? and isActive = true";
+
+        int count = jdbcTemplate.queryForObject(unitExistByIdQuery, new Object[]{id}, Integer.class);
+
+        return count > 0;
     }
 }
