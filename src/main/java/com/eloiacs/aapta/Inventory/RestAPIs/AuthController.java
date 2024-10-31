@@ -40,17 +40,41 @@ public class AuthController {
     AuthHandler authHandler;
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public String authController(@RequestBody LoginModel loginModel) {
+    public String authController(@RequestBody LoginModel loginModel, HttpServletRequest request) {
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(request.getHeader("Authorization"));
+
+        BaseResponse baseResponse = new BaseResponse();
+
+        if (claims != null) {
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (!Utils.checkExpired(expireDate)) {
+                return "Token expired";
+            }
+
+            LoginModel eventModel = authHandler.getUserDetails(createdBy);
+            AuthModel model1 = authHandler.accountDetails(eventModel);
+
+            if (model1 != null) {
+                baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                authHandler.logUserLoginEvent(model1.getId());
+                return baseResponse.getAccessToken();
+            } else {
+                baseResponse.setAccessToken("");
+                return "User not found";
+            }
+        }
 
         AuthModel authModel = authHandler.accountDetails(loginModel);
-
         if (authModel != null) {
+            authHandler.logUserLoginEvent(authModel.getId());
             return jwtService.generateJWToken(authModel.getEmail(), authModel);
-        }
-        else {
+        } else {
             throw new UsernameNotFoundException("Invalid credential provided");
         }
     }
+
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public BaseResponse register(@RequestBody AuthModel authModel, HttpServletRequest request) {

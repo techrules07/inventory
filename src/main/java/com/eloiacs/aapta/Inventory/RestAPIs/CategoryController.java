@@ -73,8 +73,8 @@ public class CategoryController {
 
             String filePath = "";
 
-            if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getCategory_name());
+            if (model.getImageUrl()!=null && !model.getImageUrl().isEmpty()){
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImageUrl(), model.getCategoryName());
             }
 
             Boolean category = categoryHandler.insertCategory(filePath,model, createdBy);
@@ -180,10 +180,10 @@ public class CategoryController {
                 return baseResponse;
             }
 
-            String filePath = categoryResponseModel.getImage_url();
+            String filePath = categoryResponseModel.getImageUrl();
 
-            if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getCategory_name());
+            if (model.getImageUrl()!=null && !model.getImageUrl().isEmpty()){
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImageUrl(), model.getCategoryName());
             }
 
             Boolean category = categoryHandler.updateCategory(filePath,model,createdBy);

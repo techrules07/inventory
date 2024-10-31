@@ -7,10 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +26,25 @@ public class CategoryHandler {
 
     public  boolean insertCategory(String filePath,CategoryRequestModel model,String createdBy){
 
-        String query = "insert into category(category_name,createdBy,modifiedBy,modifiedAt,image_url)values('"+model.getCategory_name()+"','"+createdBy+"','"+createdBy+"',Now(),'"+filePath+"')";
-        jdbcTemplate.execute(query);
-        return  true;
+        String categoryQuery = "insert into category(category_name,createdBy,modifiedBy,modifiedAt,image_url)values(?,?,?,Now(),?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(categoryQuery, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, model.getCategoryName());
+            ps.setString(2, createdBy);
+            ps.setString(3, createdBy);
+            ps.setString(4, filePath);
+            return ps;
+        }, keyHolder);
+
+        int subCategoryId = keyHolder.getKey().intValue();
+        String eventName = "New category created";
+        int eventType = 5;
+        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+
+        jdbcTemplate.update(eventInsertQuery, eventName, subCategoryId, eventType, createdBy);
+
+        return true;
     }
 
     public  boolean deleteCategory(int id){
@@ -37,7 +57,7 @@ public class CategoryHandler {
     }
 
     public boolean updateCategory(String filePath,CategoryRequestModel model,String createdBy){
-        String query = "update category set category_name='"+model.getCategory_name()+"' ,image_url='"+filePath+"',modifiedBy='"+createdBy+"',modifiedAt=now() where id= "+model.getId()+" ";
+        String query = "update category set category_name='"+model.getCategoryName()+"' ,image_url='"+filePath+"',modifiedBy='"+createdBy+"',modifiedAt=now() where id= "+model.getId()+" ";
         jdbcTemplate.execute(query);
         return  true;
     }
@@ -56,13 +76,13 @@ public class CategoryHandler {
                         CategoryResponseModel response = new CategoryResponseModel();
 
                         response.setId(rs.getInt("id"));
-                        response.setCategory_name(rs.getString("category_name"));
+                        response.setCategoryName(rs.getString("category_name"));
                         response.setCreatedBy(rs.getString("createdBy"));
                         response.setModifiedBy(rs.getString("modifiedBy"));
                         response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
                         response.setModifiedAt(Utils.convertDateToString(rs.getTimestamp("modifiedAt")));
                         response.setActive(rs.getBoolean("isActive"));
-                        response.setImage_url(rs.getString("image_url"));
+                        response.setImageUrl(rs.getString("image_url"));
 
                         categoryResponseModels.add(response);
                     } while (rs.next());
@@ -81,13 +101,13 @@ public class CategoryHandler {
                 if (rs.next()) {
                     CategoryResponseModel response = new CategoryResponseModel();
                     response.setId(rs.getInt("id"));
-                    response.setCategory_name(rs.getString("category_name"));
+                    response.setCategoryName(rs.getString("category_name"));
                     response.setCreatedBy(rs.getString("createdBy"));
                     response.setModifiedBy(rs.getString("modifiedBy"));
                     response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
                     response.setModifiedAt(Utils.convertDateToString(rs.getTimestamp("modifiedAt")));
                     response.setActive(rs.getBoolean("isActive"));
-                    response.setImage_url(rs.getString("image_url"));
+                    response.setImageUrl(rs.getString("image_url"));
                     return response;
                 }
                 return null;

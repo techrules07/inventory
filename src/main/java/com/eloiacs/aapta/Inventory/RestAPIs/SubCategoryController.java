@@ -74,11 +74,11 @@ public class SubCategoryController {
 
             String filePath = "";
 
-            if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getSubCategoryName());
+            if (model.getImageUrl()!=null && !model.getImageUrl().isEmpty()){
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImageUrl(), model.getSubCategoryName());
             }
 
-            CategoryResponseModel categoryResponse = categoryHandler.getCategoryById(model.getCategory_id());
+            CategoryResponseModel categoryResponse = categoryHandler.getCategoryById(model.getCategoryId());
             if (categoryResponse == null) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
@@ -186,7 +186,7 @@ public class SubCategoryController {
                 return baseResponse;
             }
 
-            CategoryResponseModel categoryResponse = categoryHandler.getCategoryById(model.getCategory_id());
+            CategoryResponseModel categoryResponse = categoryHandler.getCategoryById(model.getCategoryId());
             if (categoryResponse == null) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
@@ -196,9 +196,9 @@ public class SubCategoryController {
 
             SubCategoryResponseModel subCategoryResponseModel = subCategoryHandler.getSubCategoryById(model.getId());
 
-            String filePath = subCategoryResponseModel.getImage_url();
-            if (model.getImage_url()!=null && !model.getImage_url().isEmpty()){
-                filePath = awsConfig.uploadBase64ImageToS3(model.getImage_url(), model.getSubCategoryName());
+            String filePath = subCategoryResponseModel.getImageUrl();
+            if (model.getImageUrl()!=null && !model.getImageUrl().isEmpty()){
+                filePath = awsConfig.uploadBase64ImageToS3(model.getImageUrl(), model.getSubCategoryName());
             }
 
 

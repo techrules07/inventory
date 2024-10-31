@@ -16,11 +16,11 @@ public class SubCategoryResponseModel {
 
     private boolean isActive  = false;
 
-    private int category_id  = 0;
+    private int categoryId  = 0;
 
     private  String categoryName = null;
 
-    private String  image_url  = null;
+    private String  imageUrl  = null;
 
     public int getId() {
         return id;
@@ -78,14 +78,6 @@ public class SubCategoryResponseModel {
         isActive = active;
     }
 
-    public int getCategory_id() {
-        return category_id;
-    }
-
-    public void setCategory_id(int category_id) {
-        this.category_id = category_id;
-    }
-
     public String getCategoryName() {
         return categoryName;
     }
@@ -94,11 +86,19 @@ public class SubCategoryResponseModel {
         this.categoryName = categoryName;
     }
 
-    public String getImage_url() {
-        return image_url;
+    public int getCategoryId() {
+        return categoryId;
     }
 
-    public void setImage_url(String image_url) {
-        this.image_url = image_url;
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

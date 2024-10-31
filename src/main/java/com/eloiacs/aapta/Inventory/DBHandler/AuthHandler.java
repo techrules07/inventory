@@ -7,10 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @Service
 public class AuthHandler {
@@ -23,9 +27,27 @@ public class AuthHandler {
 
     public Boolean createAccount(AuthModel model, String createdBy) {
 
-        String query = "insert into users(username,email,mobileNumber,password,isActive,createdBy,modifiedBy,roleId) values('"+model.getUsername()+"','"+model.getEmail()+"','"+model.getMobileNumber()+"','"+model.getPassword()+"',true,"+createdBy+","+createdBy+","+model.getRoleId()+")";
+        String userInsertQuery = "INSERT INTO users (username, email, mobileNumber, password, isActive, createdBy, modifiedBy, roleId) VALUES (?, ?, ?, ?, true, ?, ?, ?)";
 
-        jdbcTemplate.execute(query);
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(userInsertQuery, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, model.getUsername());
+            ps.setString(2, model.getEmail());
+            ps.setString(3, model.getMobileNumber());
+            ps.setString(4, model.getPassword());
+            ps.setString(5, createdBy);
+            ps.setString(6, createdBy);
+            ps.setInt(7, model.getRoleId());
+            return ps;
+        }, keyHolder);
+
+        int createdUserId = keyHolder.getKey().intValue();
+        String eventName = "User registered";
+        int eventType = 1;
+        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+
+        jdbcTemplate.update(eventInsertQuery, eventName, createdUserId, eventType, createdUserId);
 
         return true;
     }
@@ -120,6 +142,15 @@ public class AuthHandler {
                 return null;
             }
         });
+    }
+
+    public void logUserLoginEvent(int createdBy) {
+        String eventName = "User login the page";
+        int eventType = 2;
+
+        String query = "INSERT INTO event(eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+
+        jdbcTemplate.update(query, eventName, createdBy, eventType, createdBy);
     }
 
 }
