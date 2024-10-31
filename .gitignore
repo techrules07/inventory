@@ -82,3 +82,4 @@
 /build/classes/java/main/com/eloiacs/aapta/Inventory/DBHandler/SubCategoryHandler.class
 /build/classes/java/main/com/eloiacs/aapta/Inventory/Models/SubCategoryRequestModel.class
 /build/classes/java/main/com/eloiacs/aapta/Inventory/Responses/SubCategoryResponseModel.class
+/build/classes/java/main/com/eloiacs/aapta/Inventory/Responses/BillOfMaterialsResponse.class
