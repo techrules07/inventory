@@ -8,10 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,8 +26,25 @@ public class SubCategoryHandler {
     JdbcTemplate jdbcTemplate;
 
     public  boolean insertSubCategory(String filePath,SubCategoryRequestModel model,String createdBy){
-        String query = "insert into subcategory(subCategoryName,category_id,createdBy,modifiedBy,modifiedAt,image_url) Values('"+model.getSubCategoryName()+"','"+ model.getCategoryId()+"','"+createdBy+"','"+createdBy+"',Now(),'"+filePath+"')";
-        jdbcTemplate.execute(query);
+        String subCategoryQuery = "insert into subcategory(subCategoryName,category_id,createdBy,modifiedBy,modifiedAt,image_url) Values(?,?,?,?,Now(),?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(subCategoryQuery, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, model.getSubCategoryName());
+            ps.setInt(2, model.getCategoryId());
+            ps.setString(3, createdBy);
+            ps.setString(4, createdBy);
+            ps.setString(5, filePath);
+            return ps;
+        }, keyHolder);
+
+        int subCategoryId = keyHolder.getKey().intValue();
+        String eventName = "New subCategory created";
+        int eventType = 4;
+        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+
+        jdbcTemplate.update(eventInsertQuery, eventName, subCategoryId, eventType, createdBy);
+
         return true;
     }
 

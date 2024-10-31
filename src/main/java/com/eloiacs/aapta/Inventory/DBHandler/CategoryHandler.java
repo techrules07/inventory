@@ -7,10 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +26,25 @@ public class CategoryHandler {
 
     public  boolean insertCategory(String filePath,CategoryRequestModel model,String createdBy){
 
-        String query = "insert into category(category_name,createdBy,modifiedBy,modifiedAt,image_url)values('"+model.getCategoryName()+"','"+createdBy+"','"+createdBy+"',Now(),'"+filePath+"')";
-        jdbcTemplate.execute(query);
-        return  true;
+        String categoryQuery = "insert into category(category_name,createdBy,modifiedBy,modifiedAt,image_url)values(?,?,?,Now(),?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(categoryQuery, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, model.getCategoryName());
+            ps.setString(2, createdBy);
+            ps.setString(3, createdBy);
+            ps.setString(4, filePath);
+            return ps;
+        }, keyHolder);
+
+        int subCategoryId = keyHolder.getKey().intValue();
+        String eventName = "New category created";
+        int eventType = 5;
+        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+
+        jdbcTemplate.update(eventInsertQuery, eventName, subCategoryId, eventType, createdBy);
+
+        return true;
     }
 
     public  boolean deleteCategory(int id){

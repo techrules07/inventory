@@ -8,10 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,9 +25,26 @@ public class BrandHandler {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
-    public  boolean insertBrand(String filePath, BrandRequestModel model, String createdBy){
-        String query = "insert into brand(brandName,createdBy,modifiedBy,modifiedAt,image_url) Values('"+model.getBrandName()+"','"+createdBy+"','"+createdBy+"',Now(),'"+filePath+"')";
-        jdbcTemplate.execute(query);
+    public boolean insertBrand(String filePath, BrandRequestModel model, String createdBy) {
+        String brandInsertQuery = "INSERT INTO brand (brandName, createdBy, modifiedBy, modifiedAt, image_url) VALUES (?, ?, ?, NOW(), ?)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(brandInsertQuery, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, model.getBrandName());
+            ps.setString(2, createdBy);
+            ps.setString(3, createdBy);
+            ps.setString(4, filePath);
+            return ps;
+        }, keyHolder);
+
+        int brandId = keyHolder.getKey().intValue();
+        String eventName = "New brand created";
+        int eventType = 6;
+        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+
+        jdbcTemplate.update(eventInsertQuery, eventName, brandId, eventType, createdBy);
+
         return true;
     }
 
