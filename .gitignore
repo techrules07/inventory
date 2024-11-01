@@ -84,3 +84,11 @@
 /build/classes/java/main/com/eloiacs/aapta/Inventory/Responses/SubCategoryResponseModel.class
 /build/classes/java/main/com/eloiacs/aapta/Inventory/Responses/BillOfMaterialsResponse.class
 /build/tmp/compileJava/compileTransaction/stash-dir/ProductController.class.uniqueId0
+/build/classes/java/main/com/eloiacs/aapta/Inventory/RestAPIs/EventController.class
+/build/classes/java/main/com/eloiacs/aapta/Inventory/DBHandler/EventHandler$1.class
+/build/classes/java/main/com/eloiacs/aapta/Inventory/DBHandler/EventHandler.class
+/build/classes/java/main/com/eloiacs/aapta/Inventory/Responses/EventResponseModel.class
+/build/classes/java/main/com/eloiacs/aapta/Inventory/DBHandler/ProductHandler$3.class
+/build/
+/.gradle/
+/.idea/
