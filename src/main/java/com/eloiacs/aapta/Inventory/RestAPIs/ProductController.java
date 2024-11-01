@@ -709,4 +709,56 @@ public class ProductController {
 
         return baseResponse;
     }
+
+    @RequestMapping(value = "/getProductByBarcode", method = RequestMethod.POST)
+    public BaseResponse getProductByBarcode(@RequestParam("barcode") String barcode,
+                                            HttpServletRequest httpServletRequest){
+
+        BaseResponse baseResponse = new BaseResponse();
+
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if (claims != null) {
+
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+
+            if (barcode == null || barcode.isEmpty()){
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("barcode cannot be null or empty");
+                return baseResponse;
+            }
+
+            ProductResponse productResponse = productHandler.getProductByBarcode(barcode);
+
+            if (productResponse!=null){
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setMessage("Product got successfully");
+                baseResponse.setData(productResponse);
+            }else {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("No product found");
+            }
+        }else {
+            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
+        }
+
+        return baseResponse;
+    }
 }
