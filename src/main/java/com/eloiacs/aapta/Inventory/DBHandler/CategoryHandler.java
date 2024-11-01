@@ -37,12 +37,12 @@ public class CategoryHandler {
             return ps;
         }, keyHolder);
 
-        int subCategoryId = keyHolder.getKey().intValue();
+        int categoryId = keyHolder.getKey().intValue();
         String eventName = "New category created";
         int eventType = 5;
         String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
 
-        jdbcTemplate.update(eventInsertQuery, eventName, subCategoryId, eventType, createdBy);
+        jdbcTemplate.update(eventInsertQuery, eventName, categoryId, eventType, createdBy);
 
         return true;
     }
