@@ -186,6 +186,47 @@ public class ProductController {
                 return baseResponse;
             }
 
+            if (productRequestModel.getFreebie()){
+                if (productRequestModel.getFreebieProductId() == 0){
+                    baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                    baseResponse.setStatus("Failed");
+                    baseResponse.setMessage("Freebie Product Id cannot be zero when freebie is true");
+                    return baseResponse;
+                }
+            }
+
+            if (productRequestModel.getBillOfMaterials()) {
+                if (productRequestModel.getBillOfMaterialsList().isEmpty()) {
+                    baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                    baseResponse.setStatus("Failed");
+                    baseResponse.setMessage("Bill of Materials cannot be empty when billOfMaterials is true");
+                    return baseResponse;
+                }
+
+                for (BillOfMaterialsRequestModel item : productRequestModel.getBillOfMaterialsList()) {
+                    if (item.getBillOfMaterialsProductId() == 0) {
+                        baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                        baseResponse.setStatus("Failed");
+                        baseResponse.setMessage("Bill Of Materials Product Id cannot be zero");
+                        return baseResponse;
+                    }
+
+                    if (item.getBillOfMaterialsProductQuantity() <= 0) {
+                        baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                        baseResponse.setStatus("Failed");
+                        baseResponse.setMessage("Bill Of Materials Quantity cannot be zero");
+                        return baseResponse;
+                    }
+
+                    if (item.getBillOfMaterialsProductCost() <= 0) {
+                        baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                        baseResponse.setStatus("Failed");
+                        baseResponse.setMessage("Bill Of Materials Cost cannot be zero");
+                        return baseResponse;
+                    }
+                }
+            }
+
             Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
             if (productNameExist){
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
@@ -425,6 +466,47 @@ public class ProductController {
                 baseResponse.setStatus("Failed");
                 baseResponse.setMessage("Threshold cannot be zero");
                 return baseResponse;
+            }
+
+            if (productRequestModel.getFreebie()){
+                if (productRequestModel.getFreebieProductId() == 0){
+                    baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                    baseResponse.setStatus("Failed");
+                    baseResponse.setMessage("Freebie Product Id cannot be zero when freebie is true");
+                    return baseResponse;
+                }
+            }
+
+            if (productRequestModel.getBillOfMaterials()) {
+                if (productRequestModel.getBillOfMaterialsList().isEmpty()) {
+                    baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                    baseResponse.setStatus("Failed");
+                    baseResponse.setMessage("Bill of Materials cannot be empty when billOfMaterials is true");
+                    return baseResponse;
+                }
+
+                for (BillOfMaterialsRequestModel item : productRequestModel.getBillOfMaterialsList()) {
+                    if (item.getBillOfMaterialsProductId() == 0) {
+                        baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                        baseResponse.setStatus("Failed");
+                        baseResponse.setMessage("Bill Of Materials Product Id cannot be zero");
+                        return baseResponse;
+                    }
+
+                    if (item.getBillOfMaterialsProductQuantity() <= 0) {
+                        baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                        baseResponse.setStatus("Failed");
+                        baseResponse.setMessage("Bill Of Materials Quantity cannot be zero");
+                        return baseResponse;
+                    }
+
+                    if (item.getBillOfMaterialsProductCost() <= 0) {
+                        baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                        baseResponse.setStatus("Failed");
+                        baseResponse.setMessage("Bill Of Materials Cost cannot be zero");
+                        return baseResponse;
+                    }
+                }
             }
 
             Boolean productExist = productHandler.productExistById(productRequestModel.getProductId());
