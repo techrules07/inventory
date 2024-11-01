@@ -77,11 +77,13 @@ public class ProductHandler {
             return ps;
         }, keyHolder);
 
-        // Check if the product was added successfully
         if (rowsAffected > 0 && keyHolder.getKey() != null) {
-
-            // Retrieve the generated productId
             int productId = keyHolder.getKey().intValue();
+
+            String eventName = "New product created";
+            int eventType = 3;
+            String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+            jdbcTemplate.update(eventInsertQuery, eventName, productId, eventType, createdBy);
 
             if (imageUrls != null) {
                 for (String image : imageUrls) {

@@ -21,14 +21,15 @@ public class EventHandler {
 
     public List<EventResponseModel> getEventList() {
         String query = "SELECT e.id, e.eventName, e.taskId, e.eventType, b.brandName, et.name AS eventTypeName, " +
-                "u.id AS userId, u.username, e.isActive, e.createdAt, " +
+                "u.id AS userId, u.username, p.productName,e.isActive, e.createdAt, " +
                 "c.category_name, sc.subCategoryName " +
                 "FROM event e " +
-                "INNER JOIN users u ON e.userId = u.id " +
-                "INNER JOIN eventTypes et ON e.eventType = et.id " +
+                "LEFT JOIN users u ON e.userId = u.id " +
+                "LEFT JOIN eventTypes et ON e.eventType = et.id " +
                 "LEFT JOIN brand b ON e.taskId = b.id " +
                 "LEFT JOIN category c ON e.taskId = c.id " +
                 "LEFT JOIN subcategory sc ON e.taskId = sc.id " +
+                "LEFT JOIN products p ON e.taskId = p.id " +
                 "WHERE e.isActive = true";
 
         return jdbcTemplate.query(query, new ResultSetExtractor<List<EventResponseModel>>() {
@@ -43,6 +44,9 @@ public class EventHandler {
                     response.setEventName(rs.getString("eventName"));
 
                     switch (rs.getString("eventName")) {
+                        case "New product created":
+                            response.setTaskName(rs.getString("productName"));
+                            break;
                         case "New category created":
                             response.setTaskName(rs.getString("category_name"));
                             break;
