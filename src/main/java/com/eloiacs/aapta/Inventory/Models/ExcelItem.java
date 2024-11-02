@@ -2,38 +2,20 @@ package com.eloiacs.aapta.Inventory.Models;
 
 public class ExcelItem {
 
-    String ItemID = null;
-    String ItemCode = null;
     String ItemName = null;
-    String Unit = null;
-    String MRP = null;
-    String SRate = null;
-    String PRate = null;
-    String MalayalamEnglish = null;
-    String RateInclusivePurchase = null;
-    String TempRate = null;
-    String HSNID = null;
-    String RptAccesslevel = null;
-    String BlnOrder = null;
-    String RateDiscPer = null;
-    String PLUNo = null;
+    int CategoryID = 0;
+    String Description = null;
+    int Unit = 0;
+    double MRP = 0;
+    double SRate = 0;
+    double PRate = 0;
+    Boolean RateInclusive = false;
+    int Manufacturer = 0;
+    int Discount = 0;
+    Boolean ActiveStatus = false;
+    int HSNID = 0;
+    String mfgBarcode = null;
 
-
-    public String getItemID() {
-        return ItemID;
-    }
-
-    public void setItemID(String itemID) {
-        ItemID = itemID;
-    }
-
-    public String getItemCode() {
-        return ItemCode;
-    }
-
-    public void setItemCode(String itemCode) {
-        ItemCode = itemCode;
-    }
 
     public String getItemName() {
         return ItemName;
@@ -43,120 +25,119 @@ public class ExcelItem {
         ItemName = itemName;
     }
 
-    public String getUnit() {
+    public int getCategoryID() {
+        return CategoryID;
+    }
+
+    public void setCategoryID(int categoryID) {
+        CategoryID = categoryID;
+    }
+
+    public String getDescription() {
+        return Description;
+    }
+
+    public void setDescription(String description) {
+        Description = description;
+    }
+
+    public int getUnit() {
         return Unit;
     }
 
-    public void setUnit(String unit) {
+    public void setUnit(int unit) {
         Unit = unit;
     }
 
-    public String getMRP() {
+    public double getMRP() {
         return MRP;
     }
 
-    public void setMRP(String MRP) {
+    public void setMRP(double MRP) {
         this.MRP = MRP;
     }
 
-    public String getSRate() {
+    public double getSRate() {
         return SRate;
     }
 
-    public void setSRate(String SRate) {
+    public void setSRate(double SRate) {
         this.SRate = SRate;
     }
 
-    public String getPRate() {
+    public double getPRate() {
         return PRate;
     }
 
-    public void setPRate(String PRate) {
+    public void setPRate(double PRate) {
         this.PRate = PRate;
     }
 
-    public String getMalayalamEnglish() {
-        return MalayalamEnglish;
+    public Boolean getRateInclusive() {
+        return RateInclusive;
     }
 
-    public void setMalayalamEnglish(String malayalamEnglish) {
-        MalayalamEnglish = malayalamEnglish;
+    public void setRateInclusive(Boolean rateInclusive) {
+        RateInclusive = rateInclusive;
     }
 
-    public String getRateInclusivePurchase() {
-        return RateInclusivePurchase;
+    public int getManufacturer() {
+        return Manufacturer;
     }
 
-    public void setRateInclusivePurchase(String rateInclusivePurchase) {
-        RateInclusivePurchase = rateInclusivePurchase;
+    public void setManufacturer(int manufacturer) {
+        Manufacturer = manufacturer;
     }
 
-    public String getTempRate() {
-        return TempRate;
+    public int getDiscount() {
+        return Discount;
     }
 
-    public void setTempRate(String tempRate) {
-        TempRate = tempRate;
+    public void setDiscount(int discount) {
+        Discount = discount;
     }
 
-    public String getHSNID() {
+    public Boolean getActiveStatus() {
+        return ActiveStatus;
+    }
+
+    public void setActiveStatus(Boolean activeStatus) {
+        ActiveStatus = activeStatus;
+    }
+
+    public int getHSNID() {
         return HSNID;
     }
 
-    public void setHSNID(String HSNID) {
+    public void setHSNID(int HSNID) {
         this.HSNID = HSNID;
     }
 
-    public String getRptAccesslevel() {
-        return RptAccesslevel;
+    public String getMfgBarcode() {
+        return mfgBarcode;
     }
 
-    public void setRptAccesslevel(String rptAccesslevel) {
-        RptAccesslevel = rptAccesslevel;
+    public void setMfgBarcode(String mfgBarcode) {
+        this.mfgBarcode = mfgBarcode;
     }
 
-    public String getBlnOrder() {
-        return BlnOrder;
-    }
-
-    public void setBlnOrder(String blnOrder) {
-        BlnOrder = blnOrder;
-    }
-
-    public String getRateDiscPer() {
-        return RateDiscPer;
-    }
-
-    public void setRateDiscPer(String rateDiscPer) {
-        RateDiscPer = rateDiscPer;
-    }
-
-    public String getPLUNo() {
-        return PLUNo;
-    }
-
-    public void setPLUNo(String PLUNo) {
-        this.PLUNo = PLUNo;
-    }
 
     @Override
     public String toString() {
         return "ExcelItem{" +
-                "ItemID=" + ItemID +
-                ", ItemCode='" + ItemCode + '\'' +
-                ", ItemName='" + ItemName + '\'' +
-                ", Unit='" + Unit + '\'' +
+                "ItemName='" + ItemName + '\'' +
+                ", CategoryID=" + CategoryID +
+                ", Description='" + Description + '\'' +
+                ", Unit=" + Unit +
                 ", MRP=" + MRP +
                 ", SRate=" + SRate +
                 ", PRate=" + PRate +
-                ", MalayalamEnglish='" + MalayalamEnglish + '\'' +
-                ", RateInclusivePurchase=" + RateInclusivePurchase +
-                ", TempRate=" + TempRate +
+                ", RateInclusive=" + RateInclusive +
+                ", Manufacturer=" + Manufacturer +
+                ", Discount=" + Discount +
+                ", ActiveStatus=" + ActiveStatus +
                 ", HSNID=" + HSNID +
-                ", RptAccesslevel=" + RptAccesslevel +
-                ", BlnOrder=" + BlnOrder +
-                ", RateDiscPer=" + RateDiscPer +
-                ", PLUNo=" + PLUNo +
+                ", mfgBarcode='" + mfgBarcode + '\'' +
                 '}';
     }
 }
