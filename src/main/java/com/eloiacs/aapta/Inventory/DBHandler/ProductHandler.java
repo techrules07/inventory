@@ -560,6 +560,111 @@ public class ProductHandler {
         });
     }
 
+    public List<ProductResponse> getProductsByBarcodeOrName(String inputText){
+
+        String getProductsQuery = "select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true and (pd.barcodeNo LIKE CONCAT('%', ?, '%') OR pd.productName LIKE CONCAT('%', ?, '%')) group by pd.id order by pd.id desc";
+
+        return jdbcTemplate.query(getProductsQuery, new Object[]{inputText,inputText}, new ResultSetExtractor<List<ProductResponse>>() {
+            @Override
+            public List<ProductResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
+                if(rs.next()){
+
+                    List<ProductResponse> productResponseList = new ArrayList<>();
+
+                    do {
+                        ProductResponse productResponse = new ProductResponse();
+
+                        productResponse.setProductId(rs.getInt("id"));
+                        productResponse.setProductName(rs.getString("productName"));
+                        productResponse.setStatusTypeId(rs.getInt("statusType"));
+                        productResponse.setStatusType(rs.getString("status"));
+                        productResponse.setCategoryId(rs.getInt("category"));
+                        productResponse.setCategory(rs.getString("category_name"));
+                        productResponse.setSubCategoryId(rs.getInt("subCategory"));
+                        productResponse.setSubCategory(rs.getString("subCategoryName"));
+                        productResponse.setBrandId(rs.getInt("brand"));
+                        productResponse.setBrand(rs.getString("brandName"));
+                        productResponse.setUnitId(rs.getInt("unit"));
+                        productResponse.setUnit(rs.getString("unitName"));
+                        productResponse.setQuantity(rs.getInt("quantity"));
+                        productResponse.setMinPurchaseQuantity(rs.getInt("minPurchaseQuantity"));
+                        productResponse.setBarcodeType(rs.getInt("barcodeType"));
+                        productResponse.setBarcodeNo(rs.getString("barcodeNo"));
+                        productResponse.setDescription(rs.getString("description"));
+                        productResponse.setPurchasePrice(rs.getInt("purchasePrice"));
+                        productResponse.setSalesPricePercentage(rs.getInt("gstPercentage"));
+                        productResponse.setSalesPrice(rs.getInt("salesPrice"));
+                        productResponse.setMrp(rs.getInt("mrp"));
+                        productResponse.setWholesalePrice(rs.getInt("wholesalePrice"));
+                        productResponse.setWholesalePricePercentage(rs.getInt("wholesaleGSTPercentage"));
+                        productResponse.setThreshold(rs.getInt("threshold"));
+                        productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
+
+                        // Concatenated strings for bill of materials
+                        String billOfMaterialsProductIdConcat = rs.getString("billOfMaterialProductId");
+                        String billOfMaterialsProductNameConcat = rs.getString("billOfMaterialProductName");
+                        String billOfMaterialsProductQuantityConcat = rs.getString("billOfMaterialQuantity");
+                        String billOfMaterialsProductCostConcat = rs.getString("billOfMaterialCost");
+
+                        // Initialize arrays to avoid NullPointerException
+                        String[] billOfMaterialsProductIds = (billOfMaterialsProductIdConcat != null) ? billOfMaterialsProductIdConcat.split(",") : new String[0];
+                        String[] billOfMaterialsProductNames = (billOfMaterialsProductNameConcat != null) ? billOfMaterialsProductNameConcat.split(",") : new String[0];
+                        String[] billOfMaterialsProductQuantities = (billOfMaterialsProductQuantityConcat != null) ? billOfMaterialsProductQuantityConcat.split(",") : new String[0];
+                        String[] billOfMaterialsProductCosts = (billOfMaterialsProductCostConcat != null) ? billOfMaterialsProductCostConcat.split(",") : new String[0];
+
+                        // Create a list to hold the BillOfMaterialsResponse objects
+                        List<BillOfMaterialsResponse> billOfMaterialsList = new ArrayList<>();
+
+                        // Ensure all arrays have the same length before processing
+                        if (billOfMaterialsProductIds.length == billOfMaterialsProductNames.length &&
+                                billOfMaterialsProductNames.length == billOfMaterialsProductQuantities.length &&
+                                billOfMaterialsProductQuantities.length == billOfMaterialsProductCosts.length) {
+
+                            // Loop through the arrays to create BillOfMaterialsResponse objects
+                            for (int i = 0; i < billOfMaterialsProductIds.length; i++) {
+                                // Create a new instance for each bill of material
+                                BillOfMaterialsResponse billOfMaterialsResponse = new BillOfMaterialsResponse();
+
+                                // Set the values for each BillOfMaterialsResponse object
+                                billOfMaterialsResponse.setBillOfMaterialsProductId(Integer.parseInt(billOfMaterialsProductIds[i]));
+                                billOfMaterialsResponse.setBillOfMaterialsProductName(billOfMaterialsProductNames[i]);
+                                billOfMaterialsResponse.setBillOfMaterialsProductQuantity(Integer.parseInt(billOfMaterialsProductQuantities[i]));
+                                billOfMaterialsResponse.setBillOfMaterialsProductCost(Integer.parseInt(billOfMaterialsProductCosts[i]));
+
+                                // Add the populated response object to the list
+                                billOfMaterialsList.add(billOfMaterialsResponse);
+                            }
+                        }
+
+                        // Set the populated list to the product response
+                        productResponse.setBillOfMaterialsList(billOfMaterialsList);
+
+                        productResponse.setFreebie(rs.getBoolean("freebie"));
+                        productResponse.setFreebieProductId(rs.getInt("freebieProduct"));
+                        productResponse.setFreebieProductName(rs.getString("freebieProductName"));
+                        productResponse.setActive(rs.getBoolean("isActive"));
+                        productResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                        productResponse.setCreatedById(rs.getInt("createdBy"));
+                        productResponse.setCreatedBy(rs.getString("createdByUsername"));
+                        String imagesConcat = rs.getString("images");
+                        if (imagesConcat != null) {
+                            List<String> images = Arrays.asList(imagesConcat.split(","));
+                            productResponse.setImages(images);
+                        } else {
+                            productResponse.setImages(new ArrayList<>());
+                        }
+
+                        productResponseList.add(productResponse);
+                    }
+                    while (rs.next());
+
+                    return productResponseList;
+                }
+                return null;
+            }
+        });
+    }
+
     public Boolean productExistByName(String name){
 
         String productExistByNameQuery = "select count(*) from products where productName = ? and isActive = true";
