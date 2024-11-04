@@ -267,13 +267,13 @@ public class ProductController {
                 return baseResponse;
             }
 
-//            Boolean unitExist = productHandler.unitExistById(productRequestModel.getUnitId());
-//            if (!unitExist){
-//                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-//                baseResponse.setStatus("Failed");
-//                baseResponse.setMessage("Unit doesn't exist");
-//                return baseResponse;
-//            }
+            Boolean unitExist = productHandler.unitExistById(productRequestModel.getUnitId());
+            if (!unitExist){
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Unit doesn't exist");
+                return baseResponse;
+            }
 
             if (productRequestModel.getFreebie() && productRequestModel.getFreebieProductId()!=0) {
                 Boolean freebieProductExist = productHandler.productExistById(productRequestModel.getFreebieProductId());
@@ -557,13 +557,13 @@ public class ProductController {
                 return baseResponse;
             }
 
-//            Boolean unitExist = productHandler.unitExistById(productRequestModel.getUnitId());
-//            if (!unitExist){
-//                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-//                baseResponse.setStatus("Failed");
-//                baseResponse.setMessage("Unit doesn't exist");
-//                return baseResponse;
-//            }
+            Boolean unitExist = productHandler.unitExistById(productRequestModel.getUnitId());
+            if (!unitExist){
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Unit doesn't exist");
+                return baseResponse;
+            }
 
             if (productRequestModel.getFreebie() && productRequestModel.getFreebieProductId()!=0) {
                 Boolean freebieProductExist = productHandler.productExistById(productRequestModel.getFreebieProductId());
@@ -748,6 +748,58 @@ public class ProductController {
                 baseResponse.setStatus("Success");
                 baseResponse.setMessage("Product got successfully");
                 baseResponse.setData(productResponse);
+            }else {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("No product found");
+            }
+        }else {
+            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
+        }
+
+        return baseResponse;
+    }
+
+    @RequestMapping(value = "/getProductsByBarcodeOrName", method = RequestMethod.POST)
+    public BaseResponse getProductsByBarcodeOrName(@RequestParam("inputText") String inputText,
+                                                   HttpServletRequest httpServletRequest){
+
+        BaseResponse baseResponse = new BaseResponse();
+
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if (claims != null) {
+
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+
+            if (inputText == null || inputText.isEmpty()){
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Search cannot be null or empty");
+                return baseResponse;
+            }
+
+            List<ProductResponse> productResponses = productHandler.getProductsByBarcodeOrName(inputText);
+
+            if (productResponses!=null && !productResponses.isEmpty()){
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setMessage("Products got successfully");
+                baseResponse.setData(productResponses);
             }else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
