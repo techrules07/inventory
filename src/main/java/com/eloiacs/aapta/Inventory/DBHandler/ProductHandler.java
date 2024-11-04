@@ -9,6 +9,7 @@ import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -250,11 +251,23 @@ public class ProductHandler {
         }
     }
 
-    public List<ProductResponse> getProducts(){
+    public List<ProductResponse> getProducts(String productName){
 
-        String getProductsQuery = "select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true group by pd.id order by pd.id desc";
+        StringBuilder getProductsQuery =new StringBuilder("select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true ");
+        if (productName != null && !productName.trim().isEmpty()) {
+            getProductsQuery.append("and pd.productName LIKE ? ");
+        }
 
-        return jdbcTemplate.query(getProductsQuery, new ResultSetExtractor<List<ProductResponse>>() {
+        getProductsQuery.append("group by pd.id order by pd.id desc");
+
+        return jdbcTemplate.query(getProductsQuery.toString(), new PreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps) throws SQLException {
+                if (productName != null && !productName.trim().isEmpty()) {
+                    ps.setString(1, "%" + productName + "%");
+                }
+            }
+        }, new ResultSetExtractor<List<ProductResponse>>() {
             @Override
             public List<ProductResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 if(rs.next()){

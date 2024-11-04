@@ -7,6 +7,7 @@ import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -60,9 +61,23 @@ public class BrandHandler {
         return true;
     }
 
-    public List<BrandResponseModel> getBrand(){
-        String query = "select b.id,b.brandName,b.createdBy,b.modifiedBy,b.createdAt,b.modifiedAt,b.isActive,b.image_url from brand b where b.isActive = true ";
-        return jdbcTemplate.query(query, new ResultSetExtractor<List<BrandResponseModel>>() {
+    public List<BrandResponseModel> getBrand(String brand){
+        StringBuilder query =new StringBuilder("select b.id,b.brandName,b.createdBy,b.modifiedBy,b.createdAt,b.modifiedAt,b.isActive,b.image_url from brand b where b.isActive = true ");
+
+        if (brand != null && !brand.trim().isEmpty()) {
+            query.append("and b.brandName LIKE ? ");
+        }
+
+        query.append("group by b.id order by b.id desc");
+
+        return jdbcTemplate.query(query.toString(), new PreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps) throws SQLException {
+                if (brand != null && !brand.trim().isEmpty()) {
+                    ps.setString(1, "%" + brand + "%");
+                }
+            }
+        },new ResultSetExtractor<List<BrandResponseModel>>() {
             @Override
             public List<BrandResponseModel> extractData(ResultSet rs) throws SQLException, DataAccessException {
 

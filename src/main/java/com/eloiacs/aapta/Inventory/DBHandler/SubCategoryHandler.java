@@ -7,6 +7,7 @@ import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -85,10 +86,23 @@ public class SubCategoryHandler {
         });
     }
 
-    public List<SubCategoryResponseModel> getSubCategory(){
-        String query = " select sc.id,sc.subCategoryName,sc.createdBy,sc.modifiedBy,sc.createdAt,sc.modifiedAt,sc.isActive,c.id as category_id,c.category_name ,sc.image_url from subcategory sc left join category c on sc.category_id=c.id where sc.isActive=true ";
+    public List<SubCategoryResponseModel> getSubCategory(String subCategoryName){
+        StringBuilder query =  new StringBuilder(" select sc.id,sc.subCategoryName,sc.createdBy,sc.modifiedBy,sc.createdAt,sc.modifiedAt,sc.isActive,c.id as category_id,c.category_name ,sc.image_url from subcategory sc left join category c on sc.category_id=c.id where sc.isActive=true ");
 
-        return jdbcTemplate.query(query, new ResultSetExtractor<List<SubCategoryResponseModel>>() {
+        if (subCategoryName != null && !subCategoryName.trim().isEmpty()) {
+            query.append("and sc.subCategoryName LIKE ? ");
+        }
+
+        query.append("group by sc.id order by sc.id desc");
+
+        return jdbcTemplate.query(query.toString(), new PreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps) throws SQLException {
+                if (subCategoryName != null && !subCategoryName.trim().isEmpty()) {
+                    ps.setString(1, "%" + subCategoryName + "%");
+                }
+            }
+        },new ResultSetExtractor<List<SubCategoryResponseModel>>() {
             @Override
             public List<SubCategoryResponseModel> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
