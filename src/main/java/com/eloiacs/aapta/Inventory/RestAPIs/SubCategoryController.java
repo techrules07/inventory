@@ -226,7 +226,7 @@ public class SubCategoryController {
 
     @RequestMapping(value = "/getSubCategory", method = RequestMethod.POST)
     @ResponseBody
-    public BaseResponse getSubCategory(HttpServletRequest httpServletRequest){
+    public BaseResponse getSubCategory(@RequestParam (value="subCategory",required = false)String subCategory,HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
@@ -245,7 +245,7 @@ public class SubCategoryController {
                     baseResponse.setAccessToken("");
                 }
             }
-            List<SubCategoryResponseModel> subCategoryResponseModels = subCategoryHandler.getSubCategory();
+            List<SubCategoryResponseModel> subCategoryResponseModels = subCategoryHandler.getSubCategory(subCategory);
             if (subCategoryResponseModels == null || subCategoryResponseModels.isEmpty()) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setMessage("No SubCategory available");

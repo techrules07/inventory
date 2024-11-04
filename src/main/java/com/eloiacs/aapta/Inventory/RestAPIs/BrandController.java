@@ -206,7 +206,7 @@ public class BrandController {
 
     @RequestMapping(value = "/getBrand", method = RequestMethod.POST)
     @ResponseBody
-    public BaseResponse getBrand(HttpServletRequest httpServletRequest){
+    public BaseResponse getBrand(@RequestParam (value = "brand",required = false)String brand,HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
@@ -225,7 +225,7 @@ public class BrandController {
                     baseResponse.setAccessToken("");
                 }
             }
-            List<BrandResponseModel> brandResponseModelList = brandHandler.getBrand();
+            List<BrandResponseModel> brandResponseModelList = brandHandler.getBrand(brand);
             if (brandResponseModelList == null || brandResponseModelList.isEmpty()) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setMessage("No Brand available");

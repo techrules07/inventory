@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -210,7 +211,7 @@ public class CategoryController {
 
     @RequestMapping(value = "/getCategory", method = RequestMethod.POST)
     @ResponseBody
-    public BaseResponse getCategory(HttpServletRequest httpServletRequest){
+    public BaseResponse getCategory(@RequestParam (value = "categoryName",required = false) String categoryName , HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
@@ -229,7 +230,7 @@ public class CategoryController {
                     baseResponse.setAccessToken("");
                 }
             }
-            List<CategoryResponseModel> categoryResponseModelList = categoryHandler.getCategory();
+            List<CategoryResponseModel> categoryResponseModelList = categoryHandler.getCategory(categoryName);
             if (categoryResponseModelList == null || categoryResponseModelList.isEmpty()) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setMessage("No Category available");

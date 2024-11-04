@@ -6,6 +6,7 @@ import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -62,10 +63,23 @@ public class CategoryHandler {
         return  true;
     }
 
-    public List<CategoryResponseModel> getCategory(){
-        String query = "select c.id,c.category_name,c.createdBy,c.modifiedBy,c.createdAt,c.modifiedAt,c.isActive,c.image_url  from category c where isActive=true ";
+    public List<CategoryResponseModel> getCategory(String categoryName){
+        StringBuilder  query =new StringBuilder("select c.id,c.category_name,c.createdBy,c.modifiedBy,c.createdAt,c.modifiedAt,c.isActive,c.image_url  from category c where isActive=true ");
 
-        return   jdbcTemplate.query(query, new ResultSetExtractor<List<CategoryResponseModel>>() {
+        if (categoryName != null && !categoryName.trim().isEmpty()) {
+            query.append("and c.category_name LIKE ? ");
+        }
+
+        query.append("group by c.id order by c.id desc");
+
+        return jdbcTemplate.query(query.toString(), new PreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps) throws SQLException {
+                if (categoryName != null && !categoryName.trim().isEmpty()) {
+                    ps.setString(1, "%" + categoryName + "%");
+                }
+            }
+        },new ResultSetExtractor<List<CategoryResponseModel>>() {
             @Override
             public List<CategoryResponseModel> extractData(ResultSet rs) throws SQLException, DataAccessException {
 

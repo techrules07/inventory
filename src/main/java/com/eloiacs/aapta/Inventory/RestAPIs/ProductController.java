@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -667,7 +668,7 @@ public class ProductController {
     }
 
     @RequestMapping(value = "/getProducts", method = RequestMethod.POST)
-    public BaseResponse getProducts(HttpServletRequest httpServletRequest){
+    public BaseResponse getProducts(@RequestParam(value ="productName" ,required = false) String productName, HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -689,7 +690,7 @@ public class ProductController {
                 }
             }
 
-            List<ProductResponse> productResponses = productHandler.getProducts();
+            List<ProductResponse> productResponses = productHandler.getProducts(productName);
 
             if (productResponses!=null && !productResponses.isEmpty()){
                 baseResponse.setCode(HttpStatus.OK.value());
