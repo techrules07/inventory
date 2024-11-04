@@ -52,7 +52,7 @@ public class CSVReaderService {
             double mrp = item.getMRP();
             double wholesalesPrice = purchasePrice + (purchasePrice * 2 / 100);
             if (wholesalesPrice > mrp) {
-                wholesalesPrice = mrp - 1;
+                wholesalesPrice = mrp;
             }
 
             jdbcTemplate.update(insertProductQuery,
