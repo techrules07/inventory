@@ -86,48 +86,6 @@ public class ApptaCustomersController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/deleteCustomer",method = RequestMethod.POST)
-    public BaseResponse deleteCustomer(@RequestBody BaseModel model,HttpServletRequest httpServletRequest){
-
-        BaseResponse baseResponse = new BaseResponse();
-        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
-
-        if (claims != null) {
-
-            String createdBy = claims.get("id").toString();
-            String expireDate = claims.get("exp").toString();
-
-            if (Utils.checkExpired(expireDate)) {
-
-                LoginModel loginModel = authHandler.getUserDetails(createdBy);
-                AuthModel model1 = authHandler.accountDetails(loginModel);
-
-                if (model1 != null) {
-                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
-                } else {
-                    baseResponse.setAccessToken("");
-                }
-            }
-
-            Boolean deleteResponse = apptaCustomersHandler.deleteCustomer(model);
-
-            if (deleteResponse){
-                baseResponse.setCode(HttpStatus.OK.value());
-                baseResponse.setStatus("Success");
-                baseResponse.setMessage("ApptaCustomer Deleted Successfully");
-            }else{
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Failed To Delete");
-            }
-        }else{
-            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
-            baseResponse.setMessage("Please Login again");
-            baseResponse.setStatus("Failed");
-        }
-        return baseResponse;
-        }
-
     @RequestMapping(value = "/updateCustomer",method = RequestMethod.POST)
     public BaseResponse updateCustomers(@RequestBody ApptaCustomersRequestModel model, HttpServletRequest request) {
 

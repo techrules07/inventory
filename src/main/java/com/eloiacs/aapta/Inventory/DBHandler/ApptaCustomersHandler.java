@@ -30,35 +30,26 @@ public class ApptaCustomersHandler {
         return true;
     }
 
-    public  boolean deleteCustomer(BaseModel model){
-        String query = "update apptaCustomers set status=false where id='"+model.getRequestId()+"' ";
-        jdbcTemplate.execute(query);
-        return true;
-    }
-
     public boolean updateCustomers(ApptaCustomersRequestModel model,String createdBy){
         String query = "update apptaCustomers set customerName='"+model.getCustomerName()+"',customerId='"+model.getCustomerId()+"',mobile='"+model.getMobile()+"',email='"+model.getEmail()+"',address='"+model.getAddress()+"',paylater="+model.isPaylater()+",loyaltyPoints='"+model.getLoyaltyPoints()+"',createdBy='"+createdBy+"' where id="+model.getId()+" ";
         jdbcTemplate.execute(query);
         return true;
     }
 
-    public List<ApptaCustomersResponseModel> getCustomers(String customerName,String customerId){
-
-        StringBuilder query = new StringBuilder("select ac.id,ac.customerName,ac.customerId,ac.mobile,ac.email,ac.address,ac.paylater,ac.loyaltyPoints ,ac.createdBy,ac.createdAt from apptaCustomers ac where isActive=true ") ;
+    public List<ApptaCustomersResponseModel> getCustomers(String customerName, String customerId) {
+        StringBuilder query = new StringBuilder("SELECT ac.id, ac.customerName, ac.customerId, ac.mobile, ac.email, ac.address, ac.paylater, ac.loyaltyPoints, ac.createdBy, ac.createdAt FROM apptaCustomers ac WHERE 1=1");
 
         List<Object> params = new ArrayList<>();
 
         if (customerName != null && !customerName.trim().isEmpty()) {
-            query.append("AND ac.customerName LIKE ? ");
+            query.append(" AND ac.customerName LIKE ?");
             params.add("%" + customerName + "%");
         }
 
         if (customerId != null && !customerId.trim().isEmpty()) {
-            query.append("AND ac.customerId LIKE ? ");
+            query.append(" AND ac.customerId LIKE ?");
             params.add("%" + customerId + "%");
         }
-
-        query.append("GROUP BY ac.id ORDER BY ac.id DESC");
 
         return jdbcTemplate.query(query.toString(), new PreparedStatementSetter() {
             @Override
@@ -67,35 +58,32 @@ public class ApptaCustomersHandler {
                     ps.setObject(i + 1, params.get(i));
                 }
             }
-        },new ResultSetExtractor<List<ApptaCustomersResponseModel>>() {
+        }, new ResultSetExtractor<List<ApptaCustomersResponseModel>>() {
             @Override
             public List<ApptaCustomersResponseModel> extractData(ResultSet rs) throws SQLException, DataAccessException {
-              if(rs.next()){
+                List<ApptaCustomersResponseModel> apptaCustomersResponseModelList = new ArrayList<>();
 
-                  List<ApptaCustomersResponseModel> apptaCustomersResponseModelList = new ArrayList<>();
+                while (rs.next()) {
+                    ApptaCustomersResponseModel response = new ApptaCustomersResponseModel();
 
-                  do {
-                      ApptaCustomersResponseModel response = new ApptaCustomersResponseModel();
+                    response.setId(rs.getInt("id"));
+                    response.setCustomerName(rs.getString("customerName"));
+                    response.setCustomerId(rs.getString("customerId"));
+                    response.setMobile(rs.getString("mobile"));
+                    response.setEmail(rs.getString("email"));
+                    response.setAddress(rs.getString("address"));
+                    response.setPaylater(rs.getBoolean("paylater"));
+                    response.setLoyaltyPoints(rs.getInt("loyaltyPoints"));
+                    response.setCreatedBy(rs.getString("createdBy"));
+                    response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
 
-                      response.setId(rs.getInt("id"));
-                      response.setCustomerName(rs.getString("customerName"));
-                      response.setCustomerId(rs.getString("customerId"));
-                      response.setMobile(rs.getString("mobile"));
-                      response.setEmail(rs.getString("email"));
-                      response.setAddress(rs.getString("address"));
-                      response.setPaylater(rs.getBoolean("paylater"));
-                      response.setLoyaltyPoints(rs.getInt("loyaltyPoints"));
-                      response.setCreatedBy(rs.getString("createdBy"));
-                      response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                    apptaCustomersResponseModelList.add(response);
+                }
 
-                      apptaCustomersResponseModelList.add(response);
-
-                  }while (rs.next());
-                  return apptaCustomersResponseModelList;
-              }
-                return null;
+                return apptaCustomersResponseModelList;
             }
         });
     }
+
 
 }
