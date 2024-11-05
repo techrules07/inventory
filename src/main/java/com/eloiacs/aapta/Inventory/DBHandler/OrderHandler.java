@@ -53,7 +53,7 @@ public class OrderHandler {
 
     public Boolean addOrder(OrderRequestModel orderRequestModel, String createdBy){
 
-        String orderId = (orderRequestModel.getOrderId() != null || !orderRequestModel.getOrderId().isEmpty())
+        String orderId = (orderRequestModel.getOrderId() != null && !orderRequestModel.getOrderId().isEmpty())
                 ? orderRequestModel.getOrderId()
                 : generateOrderId(findLastOrderId());
 
@@ -75,7 +75,7 @@ public class OrderHandler {
 
             double totalAmount = Math.round(orderItem.getUnitPrice() * orderItem.getQuantity());
             if (orderItem.getDiscount() != 0){
-                totalAmount = totalAmount * orderItem.getDiscount() / 100;
+                totalAmount = totalAmount * (1 - (double) orderItem.getDiscount() / 100);
             }
             jdbcTemplate.update(insertOrderItemsQuery,
                     orderId,
@@ -107,7 +107,7 @@ public class OrderHandler {
             double totalAmount = Math.round(orderItem.getUnitPrice() * orderItem.getQuantity());
 
             if (orderItem.getDiscount() != 0) {
-                totalAmount = totalAmount * orderItem.getDiscount() / 100;
+                totalAmount = totalAmount * (1 - (double) orderItem.getDiscount() / 100);
             }
 
             String checkOrderItemExistsQuery = "select count(*) from orderItems where orderId = ? and productId = ?";
@@ -171,12 +171,12 @@ public class OrderHandler {
 
     public List<OrderResponse> getOrders(){
 
-        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.statusType = o.status left join products p on p.productName = oi.productId left join users usr on usr.username = o.createdBy left join users usrs on usrs.username = oi.createdBy order by o.orderId desc";
+        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy order by o.orderId desc";
 
         return jdbcTemplate.query(getAllOrdersQuery, new ResultSetExtractor<List<OrderResponse>>() {
             @Override
             public List<OrderResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
-                Map<String, OrderResponse> orderMap = new HashMap<>();
+                Map<String, OrderResponse> orderMap = new LinkedHashMap<>();
 
                 while (rs.next()) {
                     String orderId = rs.getString("oOrderId");
@@ -194,6 +194,12 @@ public class OrderHandler {
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
                         orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
+
+                        orderResponse.setTotalUnitPrice(0.0);
+                        orderResponse.setTotalPrice(0.0);
+                        orderResponse.setTotalAmount(0.0);
+                        orderResponse.setTotalDiscount(0.0);
+
                         orderMap.put(orderId, orderResponse);
                     }
 
@@ -211,8 +217,21 @@ public class OrderHandler {
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
                     orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
 
+                    double unitPrice = rs.getDouble("unitPrice");
+                    int quantity = rs.getInt("quantity");
+                    double discount = rs.getDouble("discount");
+
+                    double itemTotalPrice = unitPrice * quantity;
+                    double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                    double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
+
                     // Add the item to the list in the corresponding order
                     orderResponse.getOrderItems().add(orderItem);
+
+                    orderResponse.setTotalUnitPrice(orderResponse.getTotalUnitPrice() + unitPrice);
+                    orderResponse.setTotalPrice(orderResponse.getTotalPrice() + itemTotalPrice);
+                    orderResponse.setTotalAmount(orderResponse.getTotalAmount() + itemTotalAmountAfterDiscount);
+                    orderResponse.setTotalDiscount(orderResponse.getTotalDiscount() + itemDiscountAmount);
                 }
 
                 // Convert map values to a list and return
@@ -223,12 +242,12 @@ public class OrderHandler {
 
     public List<OrderResponse> getHeldOrders(){
 
-        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.statusType = o.status left join products p on p.productName = oi.productId left join users usr on usr.username = o.createdBy left join users usrs on usrs.username = oi.createdBy where o.status = 2 order by o.orderId desc";
+        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.status = 2 order by o.orderId desc";
 
         return jdbcTemplate.query(getAllOrdersQuery, new ResultSetExtractor<List<OrderResponse>>() {
             @Override
             public List<OrderResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
-                Map<String, OrderResponse> orderMap = new HashMap<>();
+                Map<String, OrderResponse> orderMap = new LinkedHashMap<>();
 
                 while (rs.next()) {
                     String orderId = rs.getString("oOrderId");
@@ -246,6 +265,12 @@ public class OrderHandler {
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
                         orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
+
+                        orderResponse.setTotalUnitPrice(0.0);
+                        orderResponse.setTotalPrice(0.0);
+                        orderResponse.setTotalAmount(0.0);
+                        orderResponse.setTotalDiscount(0.0);
+
                         orderMap.put(orderId, orderResponse);
                     }
 
@@ -263,8 +288,21 @@ public class OrderHandler {
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
                     orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
 
+                    double unitPrice = rs.getDouble("unitPrice");
+                    int quantity = rs.getInt("quantity");
+                    double discount = rs.getDouble("discount");
+
+                    double itemTotalPrice = unitPrice * quantity;
+                    double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                    double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
+
                     // Add the item to the list in the corresponding order
                     orderResponse.getOrderItems().add(orderItem);
+
+                    orderResponse.setTotalUnitPrice(orderResponse.getTotalUnitPrice() + unitPrice);
+                    orderResponse.setTotalPrice(orderResponse.getTotalPrice() + itemTotalPrice);
+                    orderResponse.setTotalAmount(orderResponse.getTotalAmount() + itemTotalAmountAfterDiscount);
+                    orderResponse.setTotalDiscount(orderResponse.getTotalDiscount() + itemDiscountAmount);
                 }
 
                 // Convert map values to a list and return
@@ -275,12 +313,16 @@ public class OrderHandler {
 
     public OrderResponse getOrderByOrderId(String orderId) {
 
-        String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.statusType = o.status left join products p on p.productName = oi.productId left join users usr on usr.username = o.createdBy left join users usrs on usrs.username = oi.createdBy where o.orderId = ?";
+        String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
 
         return jdbcTemplate.query(getOrderByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<OrderResponse>() {
             @Override
             public OrderResponse extractData(ResultSet rs) throws SQLException, DataAccessException {
                 OrderResponse orderResponse = null;
+                double totalUnitPrice = 0.0;
+                double totalPrice = 0.0;
+                double totalAmount = 0.0;
+                double totalDiscount = 0.0;
 
                 while (rs.next()) {
                     if (orderResponse == null) {
@@ -310,8 +352,28 @@ public class OrderHandler {
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
                     orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
 
+                    double unitPrice = rs.getDouble("unitPrice");
+                    int quantity = rs.getInt("quantity");
+                    double discount = rs.getDouble("discount");
+
+                    double itemTotalPrice = unitPrice * quantity;
+                    double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                    double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
+
                     // Add the item to the list in the corresponding order
                     orderResponse.getOrderItems().add(orderItem);
+
+                    totalUnitPrice += unitPrice;
+                    totalPrice += itemTotalPrice;
+                    totalAmount += itemTotalAmountAfterDiscount;
+                    totalDiscount += itemDiscountAmount;
+                }
+
+                if (orderResponse != null) {
+                    orderResponse.setTotalUnitPrice(totalUnitPrice);
+                    orderResponse.setTotalPrice(totalPrice);
+                    orderResponse.setTotalAmount(totalAmount);
+                    orderResponse.setTotalDiscount(totalDiscount);
                 }
 
                 return orderResponse;

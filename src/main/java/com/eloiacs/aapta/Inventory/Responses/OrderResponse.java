@@ -21,6 +21,14 @@ public class OrderResponse {
 
     private String createdAt = null;
 
+    private double totalUnitPrice = 0;
+
+    private double totalPrice = 0;
+
+    private double totalAmount = 0;
+
+    private double totalDiscount = 0;
+
     private List<OrderItemsResponse> orderItems = new ArrayList<>();
 
 
@@ -86,6 +94,38 @@ public class OrderResponse {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public double getTotalUnitPrice() {
+        return totalUnitPrice;
+    }
+
+    public void setTotalUnitPrice(double totalUnitPrice) {
+        this.totalUnitPrice = totalUnitPrice;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(double totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    public double getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public double getTotalDiscount() {
+        return totalDiscount;
+    }
+
+    public void setTotalDiscount(double totalDiscount) {
+        this.totalDiscount = totalDiscount;
     }
 
     public List<OrderItemsResponse> getOrderItems() {
