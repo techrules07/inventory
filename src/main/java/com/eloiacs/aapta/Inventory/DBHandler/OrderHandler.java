@@ -381,4 +381,12 @@ public class OrderHandler {
         });
     }
 
+    public Boolean orderExistByOrderId(String orderId) {
+
+        String orderExistByOrderIdQuery = "select count(*) from orders where orderId = ?";
+
+        int count = jdbcTemplate.queryForObject(orderExistByOrderIdQuery, new Object[]{orderId}, Integer.class);
+
+        return count > 0;
+    }
 }
