@@ -6,6 +6,8 @@ public class CategoryResponseModel {
 
     private String categoryName = null;
 
+    private String categoryCode = null;
+
     private  String createdBy = null;
 
     private  String modifiedBy = null;
@@ -32,6 +34,14 @@ public class CategoryResponseModel {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+
+    public String getCategoryCode() {
+        return categoryCode;
+    }
+
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
     }
 
     public String getCreatedBy() {
