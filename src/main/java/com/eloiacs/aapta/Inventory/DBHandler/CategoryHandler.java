@@ -16,7 +16,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -27,14 +29,17 @@ public class CategoryHandler {
 
     public  boolean insertCategory(String filePath,CategoryRequestModel model,String createdBy){
 
-        String categoryQuery = "insert into category(category_name,createdBy,modifiedBy,modifiedAt,image_url)values(?,?,?,Now(),?)";
+        String categoryCode = generateCategoryCode();
+
+        String categoryQuery = "insert into category(category_name,categoryCode,createdBy,modifiedBy,modifiedAt,image_url)values(?,?,?,?,Now(),?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(categoryQuery, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, model.getCategoryName());
-            ps.setString(2, createdBy);
+            ps.setString(2,categoryCode);
             ps.setString(3, createdBy);
-            ps.setString(4, filePath);
+            ps.setString(4, createdBy);
+            ps.setString(5, filePath);
             return ps;
         }, keyHolder);
 
@@ -64,7 +69,7 @@ public class CategoryHandler {
     }
 
     public List<CategoryResponseModel> getCategory(String categoryName){
-        StringBuilder  query =new StringBuilder("select c.id,c.category_name,c.createdBy,c.modifiedBy,c.createdAt,c.modifiedAt,c.isActive,c.image_url  from category c where isActive=true ");
+        StringBuilder  query =new StringBuilder("select c.id,c.category_name,c.categoryCode,c.createdBy,c.modifiedBy,c.createdAt,c.modifiedAt,c.isActive,c.image_url  from category c where isActive=true ");
 
         if (categoryName != null && !categoryName.trim().isEmpty()) {
             query.append("and c.category_name LIKE ? ");
@@ -91,6 +96,7 @@ public class CategoryHandler {
 
                         response.setId(rs.getInt("id"));
                         response.setCategoryName(rs.getString("category_name"));
+                        response.setCategoryCode(rs.getString("categoryCode"));
                         response.setCreatedBy(rs.getString("createdBy"));
                         response.setModifiedBy(rs.getString("modifiedBy"));
                         response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
@@ -116,6 +122,7 @@ public class CategoryHandler {
                     CategoryResponseModel response = new CategoryResponseModel();
                     response.setId(rs.getInt("id"));
                     response.setCategoryName(rs.getString("category_name"));
+                    response.setCategoryCode(rs.getString("categoryCode"));
                     response.setCreatedBy(rs.getString("createdBy"));
                     response.setModifiedBy(rs.getString("modifiedBy"));
                     response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
@@ -125,6 +132,28 @@ public class CategoryHandler {
                     return response;
                 }
                 return null;
+            }
+        });
+    }
+
+    private String generateCategoryCode() {
+        int lastCategoryCode = findLastCatgeoryCode();
+        Date date = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        return "CAT-" + sdf.format(date) + "-" + (lastCategoryCode + 1);
+    }
+
+    private int findLastCatgeoryCode() {
+        String query = "SELECT categoryCode FROM category ORDER BY id DESC LIMIT 1";
+
+        return jdbcTemplate.query(query, new ResultSetExtractor<Integer>() {
+            @Override
+            public Integer extractData(ResultSet rs) throws SQLException, DataAccessException {
+                if (rs.next()) {
+                    String lastCategory = rs.getString("categoryCode");
+                    return Integer.parseInt(lastCategory.split("-")[2]);
+                }
+                return 0;
             }
         });
     }
