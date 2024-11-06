@@ -32,7 +32,7 @@ public class ProductHandler {
     @Transactional
     public Boolean insertProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
-        String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,quantity,minPurchaseQuantity,barcodeType,barcodeNo,description,purchasePrice,gstPercentage,salesPrice,mrp,wholesalePrice,wholesaleGSTPercentage,threshold,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
+        String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,size,quantity,minPurchaseQuantity,barcodeType,barcodeNo,description,purchasePrice,gstPercentage,salesPrice,mrp,wholesalePrice,wholesaleGSTPercentage,threshold,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
         String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
         String insertBillOfMaterialsQuery = "insert into billOfMaterials(productId,billOfMaterialProductId,quantity,cost,isActive,createdAt) values(?,?,?,?,true,current_timestamp())";
 
@@ -47,34 +47,35 @@ public class ProductHandler {
             ps.setInt(4, productRequestModel.getSubCategoryId());
             ps.setInt(5, productRequestModel.getBrandId());
             ps.setInt(6, productRequestModel.getUnitId());
-            ps.setInt(7, productRequestModel.getQuantity());
-            ps.setInt(8, productRequestModel.getMinPurchaseQuantity());
-            ps.setInt(9, productRequestModel.getBarcodeType());
-            ps.setString(10, productRequestModel.getBarcodeNo());
-            ps.setString(11, productRequestModel.getDescription());
+            ps.setInt(7,productRequestModel.getSizeId());
+            ps.setInt(8, productRequestModel.getQuantity());
+            ps.setInt(9, productRequestModel.getMinPurchaseQuantity());
+            ps.setInt(10, productRequestModel.getBarcodeType());
+            ps.setString(11, productRequestModel.getBarcodeNo());
+            ps.setString(12, productRequestModel.getDescription());
             int purchasePrice = productRequestModel.getPurchasePrice();
             int mrp = productRequestModel.getMrp();
             int salesPricePercentage = productRequestModel.getSalesPricePercentage();
-            ps.setInt(12, purchasePrice);
-            ps.setDouble(13, salesPricePercentage);
+            ps.setInt(13, purchasePrice);
+            ps.setDouble(14, salesPricePercentage);
             int salesPrice = purchasePrice + (purchasePrice * salesPricePercentage / 100);
             if (salesPrice > mrp) {
                 salesPrice = mrp;
             }
-            ps.setInt(14, salesPrice);
-            ps.setInt(15, mrp);
+            ps.setInt(15, salesPrice);
+            ps.setInt(16, mrp);
             int wholeSalePercentage = productRequestModel.getWholesalePricePercentage();
             int wholeSalePrice = purchasePrice + (purchasePrice * wholeSalePercentage / 100);
             if (wholeSalePrice > mrp) {
                 wholeSalePrice = mrp;
             }
-            ps.setInt(16, wholeSalePrice);
-            ps.setDouble(17, wholeSalePercentage);
-            ps.setInt(18, productRequestModel.getThreshold());
-            ps.setBoolean(19, productRequestModel.getBillOfMaterials());
-            ps.setBoolean(20, productRequestModel.getFreebie());
-            ps.setInt(21, productRequestModel.getFreebieProductId());
-            ps.setString(22, createdBy);
+            ps.setInt(17, wholeSalePrice);
+            ps.setDouble(18, wholeSalePercentage);
+            ps.setInt(19, productRequestModel.getThreshold());
+            ps.setBoolean(20, productRequestModel.getBillOfMaterials());
+            ps.setBoolean(21, productRequestModel.getFreebie());
+            ps.setInt(22, productRequestModel.getFreebieProductId());
+            ps.setString(23, createdBy);
             return ps;
         }, keyHolder);
 
@@ -122,7 +123,7 @@ public class ProductHandler {
     @Transactional
     public Boolean updateProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
-        String updateProductQuery = "update products set productName = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?, quantity = ?, minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, purchasePrice = ?, gstPercentage = ?, salesPrice = ?, mrp = ?, wholesalePrice = ?, wholesaleGSTPercentage = ?, threshold = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
+        String updateProductQuery = "update products set productName = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?, quantity = ?, minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, purchasePrice = ?, gstPercentage = ?, salesPrice = ?, mrp = ?, wholesalePrice = ?, wholesaleGSTPercentage = ?, threshold = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
 
         int purchasePrice = productRequestModel.getPurchasePrice();
         int mrp = productRequestModel.getMrp();
@@ -149,6 +150,7 @@ public class ProductHandler {
                 productRequestModel.getSubCategoryId(),
                 productRequestModel.getBrandId(),
                 productRequestModel.getUnitId(),
+                productRequestModel.getSizeId(),
                 productRequestModel.getQuantity(),
                 productRequestModel.getMinPurchaseQuantity(),
                 productRequestModel.getBarcodeType(),
@@ -253,7 +255,7 @@ public class ProductHandler {
 
     public List<ProductResponse> getProducts(String productName){
 
-        StringBuilder getProductsQuery =new StringBuilder("select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true ");
+        StringBuilder getProductsQuery =new StringBuilder("select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName,psize.size as sizeName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join productSize psize on psize.id=pd.size left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true ");
         if (productName != null && !productName.trim().isEmpty()) {
             getProductsQuery.append("and pd.productName LIKE ? ");
         }
@@ -289,6 +291,8 @@ public class ProductHandler {
                         productResponse.setBrand(rs.getString("brandName"));
                         productResponse.setUnitId(rs.getInt("unit"));
                         productResponse.setUnit(rs.getString("unitName"));
+                        productResponse.setSizeId(rs.getInt("size"));
+                        productResponse.setSize(rs.getString("sizeName"));
                         productResponse.setQuantity(rs.getInt("quantity"));
                         productResponse.setMinPurchaseQuantity(rs.getInt("minPurchaseQuantity"));
                         productResponse.setBarcodeType(rs.getInt("barcodeType"));

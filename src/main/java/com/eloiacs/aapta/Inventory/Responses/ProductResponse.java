@@ -29,6 +29,10 @@ public class ProductResponse {
 
     private String unit = null;
 
+    private int sizeId = 0;
+
+    private String size = null;
+
     private int quantity = 0;
 
     private int minPurchaseQuantity = 0;
@@ -168,6 +172,22 @@ public class ProductResponse {
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    public int getSizeId() {
+        return sizeId;
+    }
+
+    public void setSizeId(int sizeId) {
+        this.sizeId = sizeId;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
     }
 
     public int getQuantity() {

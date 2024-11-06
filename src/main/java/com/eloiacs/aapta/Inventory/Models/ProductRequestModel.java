@@ -19,6 +19,8 @@ public class ProductRequestModel {
 
     private int unitId = 0;
 
+    private int sizeId = 0;
+
     private int quantity = 0;
 
     private int minPurchaseQuantity = 0;
@@ -49,6 +51,14 @@ public class ProductRequestModel {
 
     private List<String> images = new ArrayList<>();
 
+
+    public int getSizeId() {
+        return sizeId;
+    }
+
+    public void setSizeId(int sizeId) {
+        this.sizeId = sizeId;
+    }
 
     public int getProductId() {
         return productId;
