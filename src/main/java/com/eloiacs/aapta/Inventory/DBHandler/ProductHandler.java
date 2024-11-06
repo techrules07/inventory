@@ -35,7 +35,7 @@ public class ProductHandler {
         String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,size,quantity,minPurchaseQuantity,barcodeType,barcodeNo,description,purchasePrice,gstPercentage,salesPrice,mrp,wholesalePrice,wholesaleGSTPercentage,threshold,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
         String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
         String insertBillOfMaterialsQuery = "insert into billOfMaterials(productId,billOfMaterialProductId,quantity,cost,isActive,createdAt) values(?,?,?,?,true,current_timestamp())";
-
+        final String insertInventoryQuery = "INSERT INTO inventory(productId, category, subCategory, size, count, isActive, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, true, ?, current_timestamp())";
         // Insert product and retrieve generated productId
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -87,6 +87,15 @@ public class ProductHandler {
             String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
             jdbcTemplate.update(eventInsertQuery, eventName, productId, eventType, createdBy);
 
+            jdbcTemplate.update(insertInventoryQuery,
+                    productId,
+                    productRequestModel.getCategoryId(),
+                    productRequestModel.getSubCategoryId(),
+                    productRequestModel.getSizeId(),
+                    productRequestModel.getQuantity(),
+                    createdBy);
+
+
             if (imageUrls != null) {
                 for (String image : imageUrls) {
                     // Insert into productImages table
@@ -124,6 +133,7 @@ public class ProductHandler {
     public Boolean updateProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
         String updateProductQuery = "update products set productName = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?, quantity = ?, minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, purchasePrice = ?, gstPercentage = ?, salesPrice = ?, mrp = ?, wholesalePrice = ?, wholesaleGSTPercentage = ?, threshold = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
+        String updateInventoryQuery = "update inventory set count=?,createdBy=? where productId=? ";
 
         int purchasePrice = productRequestModel.getPurchasePrice();
         int mrp = productRequestModel.getMrp();
@@ -142,6 +152,12 @@ public class ProductHandler {
         }
 
         int productId = productRequestModel.getProductId();
+
+        jdbcTemplate.update(updateInventoryQuery,
+                productRequestModel.getQuantity(),
+                createdBy,
+                productId
+        );
 
         jdbcTemplate.update(updateProductQuery,
                 productRequestModel.getProductName(),
@@ -178,6 +194,7 @@ public class ProductHandler {
                     productId);
 
             if (rowsAffected !=0){
+
 
                 for (String image : imageUrls) {
 

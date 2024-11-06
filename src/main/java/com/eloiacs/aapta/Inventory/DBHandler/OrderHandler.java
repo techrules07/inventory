@@ -59,17 +59,26 @@ public class OrderHandler {
 
         String insertOrderQuery = "insert into orders(orderId,customerId,status,createdBy,createdAt) values(?,?,1,?,current_timestamp())";
         String insertOrderItemsQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
-
+        String updateInventoryQuery = "UPDATE inventory SET count = count - ? WHERE productId = ?";
         if (orderRequestModel.getOrderId() == null || orderRequestModel.getOrderId().isEmpty()) {
             int rowsAffected = jdbcTemplate.update(insertOrderQuery,
                     orderId,
                     orderRequestModel.getCustomerId(),
                     createdBy);
+            // Log event if the order creation is successful
+
+            String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+            String eventName = "New order created";
+            int eventType = 7;
+
+            jdbcTemplate.update(eventInsertQuery, eventName, orderRequestModel.getId(), eventType, createdBy);
+
 
             if (rowsAffected == 0) {
                 return false;
             }
         }
+
 
         for (OrderItemsRequestModel orderItem : orderRequestModel.getOrderItemsList()){
 
@@ -85,6 +94,16 @@ public class OrderHandler {
                     totalAmount,
                     orderItem.getDiscount(),
                     createdBy);
+
+            jdbcTemplate.update(updateInventoryQuery,
+                    orderItem.getQuantity(),
+                    orderItem.getProductId());
+
+            String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+            String eventName = "New order item created";
+            int eventType = 8;
+
+            jdbcTemplate.update(eventInsertQuery, eventName, orderItem.getId(), eventType, createdBy);
         }
 
         return true;
