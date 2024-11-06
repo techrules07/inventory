@@ -2,6 +2,8 @@ package com.eloiacs.aapta.Inventory.Models;
 
 public class OrderItemsRequestModel {
 
+    private int id = 0;
+
     private int productId = 0;
 
     private double unitPrice = 0;
@@ -10,6 +12,13 @@ public class OrderItemsRequestModel {
 
     private int discount = 0;
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public int getProductId() {
         return productId;
