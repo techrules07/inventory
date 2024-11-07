@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -228,13 +227,13 @@ public class ProductController {
                 }
             }
 
-            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
-            if (productNameExist){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Product Name Already Exists");
-                return baseResponse;
-            }
+//            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
+//            if (productNameExist){
+//                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+//                baseResponse.setStatus("Failed");
+//                baseResponse.setMessage("Product Name Already Exists");
+//                return baseResponse;
+//            }
 
             Boolean statusTypeExist = productHandler.statusTypeExistById(productRequestModel.getStatusTypeId());
             if (!statusTypeExist){
