@@ -1,6 +1,7 @@
 package com.eloiacs.aapta.Inventory.DBHandler;
 
 import com.eloiacs.aapta.Inventory.Responses.UnitResponseModel;
+import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,8 +31,8 @@ public class UnitHandler {
                         model.setId(rs.getInt("id"));
                         model.setUnitName(rs.getString("unitName"));
                         model.setUnitSmall(rs.getString("unitSmall"));
-                        model.setModifiedAt(rs.getString("modifiedAt"));
-                        model.setCreatedAt(rs.getString("createdAt"));
+                        model.setModifiedAt(Utils.convertDateToString(rs.getTimestamp("modifiedAt")));
+                        model.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
                         model.setCreatedBy(rs.getString("createdBy"));
                         model.setModifiedBy(rs.getString("modifiedBy"));
                         model.setActive(rs.getBoolean("isActive"));

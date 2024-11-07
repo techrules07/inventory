@@ -35,97 +35,129 @@ public class ProductHandler {
         String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,size,quantity,minPurchaseQuantity,barcodeType,barcodeNo,description,purchasePrice,gstPercentage,salesPrice,mrp,wholesalePrice,wholesaleGSTPercentage,threshold,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
         String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
         String insertBillOfMaterialsQuery = "insert into billOfMaterials(productId,billOfMaterialProductId,quantity,cost,isActive,createdAt) values(?,?,?,?,true,current_timestamp())";
-        final String insertInventoryQuery = "INSERT INTO inventory(productId, category, subCategory, size, count, isActive, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, true, ?, current_timestamp())";
-        // Insert product and retrieve generated productId
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+        String insertInventoryQuery = "INSERT INTO inventory(productId, category, subCategory, size, count, isActive, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, true, ?, current_timestamp())";
+        String checkProductQuery = "select id from products where isActive = true and productName = ? and statusType = ? and category = ? and subCategory = ? and brand = ? and unit = ? and size = ?";
+        String updateProductQuery = "update products set quantity = quantity + ? where id = ?";
+        String updateInventoryQuery = "update inventory set count = count + ?, createdBy = ? where productId = ?";
 
-        int rowsAffected = jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(insertProductQuery, new String[]{"id"});
-            ps.setString(1, productRequestModel.getProductName());
-            ps.setInt(2, productRequestModel.getStatusTypeId());
-            ps.setInt(3, productRequestModel.getCategoryId());
-            ps.setInt(4, productRequestModel.getSubCategoryId());
-            ps.setInt(5, productRequestModel.getBrandId());
-            ps.setInt(6, productRequestModel.getUnitId());
-            ps.setInt(7,productRequestModel.getSizeId());
-            ps.setInt(8, productRequestModel.getQuantity());
-            ps.setInt(9, productRequestModel.getMinPurchaseQuantity());
-            ps.setInt(10, productRequestModel.getBarcodeType());
-            ps.setString(11, productRequestModel.getBarcodeNo());
-            ps.setString(12, productRequestModel.getDescription());
-            int purchasePrice = productRequestModel.getPurchasePrice();
-            int mrp = productRequestModel.getMrp();
-            int salesPricePercentage = productRequestModel.getSalesPricePercentage();
-            ps.setInt(13, purchasePrice);
-            ps.setDouble(14, salesPricePercentage);
-            int salesPrice = purchasePrice + (purchasePrice * salesPricePercentage / 100);
-            if (salesPrice > mrp) {
-                salesPrice = mrp;
-            }
-            ps.setInt(15, salesPrice);
-            ps.setInt(16, mrp);
-            int wholeSalePercentage = productRequestModel.getWholesalePricePercentage();
-            int wholeSalePrice = purchasePrice + (purchasePrice * wholeSalePercentage / 100);
-            if (wholeSalePrice > mrp) {
-                wholeSalePrice = mrp;
-            }
-            ps.setInt(17, wholeSalePrice);
-            ps.setDouble(18, wholeSalePercentage);
-            ps.setInt(19, productRequestModel.getThreshold());
-            ps.setBoolean(20, productRequestModel.getBillOfMaterials());
-            ps.setBoolean(21, productRequestModel.getFreebie());
-            ps.setInt(22, productRequestModel.getFreebieProductId());
-            ps.setString(23, createdBy);
-            return ps;
-        }, keyHolder);
+        // Check if product exists
+        Integer existingProductId = null;
 
-        if (rowsAffected > 0 && keyHolder.getKey() != null) {
-            int productId = keyHolder.getKey().intValue();
-
-            String eventName = "New product created";
-            int eventType = 3;
-            String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
-            jdbcTemplate.update(eventInsertQuery, eventName, productId, eventType, createdBy);
-
-            jdbcTemplate.update(insertInventoryQuery,
-                    productId,
-                    productRequestModel.getCategoryId(),
-                    productRequestModel.getSubCategoryId(),
-                    productRequestModel.getSizeId(),
-                    productRequestModel.getQuantity(),
-                    createdBy);
-
-
-            if (imageUrls != null) {
-                for (String image : imageUrls) {
-                    // Insert into productImages table
-                    jdbcTemplate.update(insertProductImagesQuery,
-                            productId,
-                            productRequestModel.getCategoryId(),
-                            productRequestModel.getSubCategoryId(),
-                            productRequestModel.getBrandId(),
-                            image,
-                            createdBy);
+        existingProductId = jdbcTemplate.query(checkProductQuery, new Object[]{
+                productRequestModel.getProductName(),
+                productRequestModel.getStatusTypeId(),
+                productRequestModel.getCategoryId(),
+                productRequestModel.getSubCategoryId(),
+                productRequestModel.getBrandId(),
+                productRequestModel.getUnitId(),
+                productRequestModel.getSizeId()
+        }, new ResultSetExtractor<Integer>() {
+            @Override
+            public Integer extractData(ResultSet rs) throws SQLException, DataAccessException {
+                if (rs.next()){
+                    return rs.getInt("id");
                 }
+                return null;
             }
+        });
 
-            List<BillOfMaterialsRequestModel> billOfMaterialsList = productRequestModel.getBillOfMaterialsList();
-
-            if (billOfMaterialsList != null) {
-                for (BillOfMaterialsRequestModel billOfMaterials : billOfMaterialsList) {
-
-                    jdbcTemplate.update(insertBillOfMaterialsQuery,
-                            productId,
-                            billOfMaterials.getBillOfMaterialsProductId(),
-                            billOfMaterials.getBillOfMaterialsProductQuantity(),
-                            billOfMaterials.getBillOfMaterialsProductCost());
-                }
-            }
-
+        if (existingProductId != null) {
+            // Product exists, update quantity and inventory
+            jdbcTemplate.update(updateProductQuery, productRequestModel.getQuantity(), existingProductId);
+            jdbcTemplate.update(updateInventoryQuery, productRequestModel.getQuantity(), createdBy, existingProductId);
             return true;
-        }
-        else {
-            return false;
+        } else {
+            // Insert product and retrieve generated productId
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            int rowsAffected = jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(insertProductQuery, new String[]{"id"});
+                ps.setString(1, productRequestModel.getProductName());
+                ps.setInt(2, productRequestModel.getStatusTypeId());
+                ps.setInt(3, productRequestModel.getCategoryId());
+                ps.setInt(4, productRequestModel.getSubCategoryId());
+                ps.setInt(5, productRequestModel.getBrandId());
+                ps.setInt(6, productRequestModel.getUnitId());
+                ps.setInt(7,productRequestModel.getSizeId());
+                ps.setInt(8, productRequestModel.getQuantity());
+                ps.setInt(9, productRequestModel.getMinPurchaseQuantity());
+                ps.setInt(10, productRequestModel.getBarcodeType());
+                ps.setString(11, productRequestModel.getBarcodeNo());
+                ps.setString(12, productRequestModel.getDescription());
+                int purchasePrice = productRequestModel.getPurchasePrice();
+                int mrp = productRequestModel.getMrp();
+                int salesPricePercentage = productRequestModel.getSalesPricePercentage();
+                ps.setInt(13, purchasePrice);
+                ps.setDouble(14, salesPricePercentage);
+                int salesPrice = purchasePrice + (purchasePrice * salesPricePercentage / 100);
+                if (salesPrice > mrp) {
+                    salesPrice = mrp;
+                }
+                ps.setInt(15, salesPrice);
+                ps.setInt(16, mrp);
+                int wholeSalePercentage = productRequestModel.getWholesalePricePercentage();
+                int wholeSalePrice = purchasePrice + (purchasePrice * wholeSalePercentage / 100);
+                if (wholeSalePrice > mrp) {
+                    wholeSalePrice = mrp;
+                }
+                ps.setInt(17, wholeSalePrice);
+                ps.setDouble(18, wholeSalePercentage);
+                ps.setInt(19, productRequestModel.getThreshold());
+                ps.setBoolean(20, productRequestModel.getBillOfMaterials());
+                ps.setBoolean(21, productRequestModel.getFreebie());
+                ps.setInt(22, productRequestModel.getFreebieProductId());
+                ps.setString(23, createdBy);
+                return ps;
+            }, keyHolder);
+
+            if (rowsAffected > 0 && keyHolder.getKey() != null) {
+                int productId = keyHolder.getKey().intValue();
+
+                String eventName = "New product created";
+                int eventType = 3;
+                String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+                jdbcTemplate.update(eventInsertQuery, eventName, productId, eventType, createdBy);
+
+                jdbcTemplate.update(insertInventoryQuery,
+                        productId,
+                        productRequestModel.getCategoryId(),
+                        productRequestModel.getSubCategoryId(),
+                        productRequestModel.getSizeId(),
+                        productRequestModel.getQuantity(),
+                        createdBy);
+
+
+                if (imageUrls != null) {
+                    for (String image : imageUrls) {
+                        // Insert into productImages table
+                        jdbcTemplate.update(insertProductImagesQuery,
+                                productId,
+                                productRequestModel.getCategoryId(),
+                                productRequestModel.getSubCategoryId(),
+                                productRequestModel.getBrandId(),
+                                image,
+                                createdBy);
+                    }
+                }
+
+                List<BillOfMaterialsRequestModel> billOfMaterialsList = productRequestModel.getBillOfMaterialsList();
+
+                if (billOfMaterialsList != null) {
+                    for (BillOfMaterialsRequestModel billOfMaterials : billOfMaterialsList) {
+
+                        jdbcTemplate.update(insertBillOfMaterialsQuery,
+                                productId,
+                                billOfMaterials.getBillOfMaterialsProductId(),
+                                billOfMaterials.getBillOfMaterialsProductQuantity(),
+                                billOfMaterials.getBillOfMaterialsProductCost());
+                    }
+                }
+
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     }
 
