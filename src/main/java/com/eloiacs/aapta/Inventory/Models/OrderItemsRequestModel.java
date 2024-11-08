@@ -2,22 +2,23 @@ package com.eloiacs.aapta.Inventory.Models;
 
 public class OrderItemsRequestModel {
 
-    private int id = 0;
+    private String orderId = null;
 
     private int productId = 0;
 
     private double unitPrice = 0;
 
-    private int quantity = 0;
-
     private int discount = 0;
 
-    public int getId() {
-        return id;
+    private int quantity = 0;
+
+
+    public String getOrderId() {
+        return orderId;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
     }
 
     public int getProductId() {
@@ -36,19 +37,19 @@ public class OrderItemsRequestModel {
         this.unitPrice = unitPrice;
     }
 
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
     public int getDiscount() {
         return discount;
     }
 
     public void setDiscount(int discount) {
         this.discount = discount;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 }
