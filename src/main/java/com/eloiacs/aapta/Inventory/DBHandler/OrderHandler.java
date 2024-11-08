@@ -10,8 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -51,106 +54,158 @@ public class OrderHandler {
         });
     }
 
-    public Boolean addOrder(OrderRequestModel orderRequestModel, String createdBy){
+    public String addOrder(OrderRequestModel orderRequestModel, String createdBy){
 
-        String orderId = (orderRequestModel.getOrderId() != null && !orderRequestModel.getOrderId().isEmpty())
-                ? orderRequestModel.getOrderId()
-                : generateOrderId(findLastOrderId());
+        String orderId = generateOrderId(findLastOrderId());
 
-        String insertOrderQuery = "insert into orders(orderId,customerId,status,createdBy,createdAt) values(?,?,1,?,current_timestamp())";
-        String insertOrderItemsQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
-        String updateInventoryQuery = "UPDATE inventory SET count = count - ? WHERE productId = ?";
-        if (orderRequestModel.getOrderId() == null || orderRequestModel.getOrderId().isEmpty()) {
-            int rowsAffected = jdbcTemplate.update(insertOrderQuery,
-                    orderId,
-                    orderRequestModel.getCustomerId(),
-                    createdBy);
-            // Log event if the order creation is successful
+        String insertOrderQuery = "insert into orders(orderId,customerId,status,createdBy,createdAt) values(?,?,5,?,current_timestamp())";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        int orderInserted = jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(insertOrderQuery, new String[]{"id"});
+            ps.setString(1,orderId);
+            ps.setString(2,orderRequestModel.getCustomerId());
+            ps.setString(3,createdBy);
+            return ps;
+        },keyHolder);
+
+        if (orderInserted != 0 && keyHolder.getKey() != null){
+            int insertedOrderId = keyHolder.getKey().intValue();
 
             String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
             String eventName = "New order created";
             int eventType = 7;
 
-            jdbcTemplate.update(eventInsertQuery, eventName, orderRequestModel.getId(), eventType, createdBy);
+            jdbcTemplate.update(eventInsertQuery, eventName, insertedOrderId, eventType, createdBy);
 
-
-            if (rowsAffected == 0) {
-                return false;
-            }
+            return orderId;
         }
+        return null;
+    }
 
+    public Boolean updateOrder(OrderRequestModel orderRequestModel){
 
-        for (OrderItemsRequestModel orderItem : orderRequestModel.getOrderItemsList()){
+        String orderUpdateQuery = "update orders set customerId = ? where orderId = ?";
 
-            double totalAmount = Math.round(orderItem.getUnitPrice() * orderItem.getQuantity());
-            if (orderItem.getDiscount() != 0){
-                totalAmount = totalAmount * (1 - (double) orderItem.getDiscount() / 100);
-            }
-            jdbcTemplate.update(insertOrderItemsQuery,
-                    orderId,
-                    orderItem.getProductId(),
-                    orderItem.getUnitPrice(),
-                    orderItem.getQuantity(),
-                    totalAmount,
-                    orderItem.getDiscount(),
-                    createdBy);
-
-            jdbcTemplate.update(updateInventoryQuery,
-                    orderItem.getQuantity(),
-                    orderItem.getProductId());
-
-            String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
-            String eventName = "New order item created";
-            int eventType = 8;
-
-            jdbcTemplate.update(eventInsertQuery, eventName, orderItem.getId(), eventType, createdBy);
-        }
+        jdbcTemplate.update(orderUpdateQuery,
+                orderRequestModel.getCustomerId(),
+                orderRequestModel.getOrderId());
 
         return true;
     }
 
-    public Boolean updateOrder(OrderRequestModel orderRequestModel, String createdBy) {
+    public Boolean addOrderItem(OrderItemsRequestModel orderItemsRequestModel, String createdBy){
 
-        String orderId = orderRequestModel.getOrderId();
-
-        String updateOrderQuery = "update orders set customerId = ? where orderId = ?";
-        jdbcTemplate.update(updateOrderQuery,
-                orderRequestModel.getCustomerId(),
-                orderId);
-
-        String updateOrderItemQuery = "update orderItems set unitPrice = ?, quantity = ?, totalAmount = ?, discount = ? where orderId = ? and productId = ?";
         String insertOrderItemQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
+        String updateOrderItemQuery = "update orderItems set quantity = ?, totalAmount = ? where orderId = ? and productId = ?";
+        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
 
-        for (OrderItemsRequestModel orderItem : orderRequestModel.getOrderItemsList()) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
 
-            double totalAmount = Math.round(orderItem.getUnitPrice() * orderItem.getQuantity());
+        String checkOrderItemExistsQuery = "select count(*) from orderItems where orderId = ? and productId = ?";
+        int orderItemExists = jdbcTemplate.queryForObject(checkOrderItemExistsQuery, Integer.class, orderItemsRequestModel.getOrderId(), orderItemsRequestModel.getProductId());
 
-            if (orderItem.getDiscount() != 0) {
-                totalAmount = totalAmount * (1 - (double) orderItem.getDiscount() / 100);
+        if (orderItemExists > 0) {
+
+            String getQuantityQuery = "select quantity from orderItems where orderId = ? and productId = ?";
+            int existingQuantity = jdbcTemplate.queryForObject(getQuantityQuery, Integer.class, orderItemsRequestModel.getOrderId(), orderItemsRequestModel.getProductId());
+
+            int quantity = existingQuantity + 1;
+            if (orderItemsRequestModel.getQuantity()!=0){
+                quantity = existingQuantity + orderItemsRequestModel.getQuantity();
+            }
+            double totalAmount = Math.round(orderItemsRequestModel.getUnitPrice() * quantity);
+            if (orderItemsRequestModel.getDiscount() != 0){
+                totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
             }
 
-            String checkOrderItemExistsQuery = "select count(*) from orderItems where orderId = ? and productId = ?";
-            int orderItemExists = jdbcTemplate.queryForObject(checkOrderItemExistsQuery, Integer.class, orderId, orderItem.getProductId());
+            int updateOrderItem = jdbcTemplate.update(updateOrderItemQuery,
+                    quantity,
+                    totalAmount,
+                    orderItemsRequestModel.getOrderId(),
+                    orderItemsRequestModel.getProductId());
 
-            if (orderItemExists > 0) {
+            if (updateOrderItem != 0){
+                String updateInventoryQuery = "UPDATE inventory SET count = count - ? WHERE productId = ?";
 
-                jdbcTemplate.update(updateOrderItemQuery,
-                        orderItem.getUnitPrice(),
-                        orderItem.getQuantity(),
-                        totalAmount,
-                        orderItem.getDiscount(),
-                        orderId,
-                        orderItem.getProductId());
-            } else {
+                int count = 1;
+                if (orderItemsRequestModel.getQuantity()!=0){
+                    count = orderItemsRequestModel.getQuantity();
+                }
 
-                jdbcTemplate.update(insertOrderItemQuery,
-                        orderId,
-                        orderItem.getProductId(),
-                        orderItem.getUnitPrice(),
-                        orderItem.getQuantity(),
-                        totalAmount,
-                        orderItem.getDiscount(),
-                        createdBy);
+                jdbcTemplate.update(updateInventoryQuery,
+                        count,
+                        orderItemsRequestModel.getProductId());
+
+                String inventoryCountEventName = "Inventory count decreased";
+                int inventoryCountEventType = 9;
+
+                String getInventoryIdQuery = "select id from inventory where productId = ?";
+                int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{orderItemsRequestModel.getProductId()}, Integer.class);
+
+                jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);
+            }
+            else {
+                return false;
+            }
+
+        } else {
+
+            int quantity = 1;
+            if (orderItemsRequestModel.getQuantity()!=0){
+                quantity = orderItemsRequestModel.getQuantity();
+            }
+            double totalAmount = Math.round(orderItemsRequestModel.getUnitPrice() * quantity);
+            if (orderItemsRequestModel.getDiscount() != 0){
+                totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
+            }
+
+            final double amount = totalAmount;
+            final int finalQuantity = quantity;
+
+            int insertOrderItem = jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(insertOrderItemQuery, new String[]{"id"});
+                ps.setString(1,orderItemsRequestModel.getOrderId());
+                ps.setInt(2,orderItemsRequestModel.getProductId());
+                ps.setDouble(3,orderItemsRequestModel.getUnitPrice());
+                ps.setInt(4, finalQuantity);
+                ps.setDouble(5, amount);
+                ps.setInt(6, orderItemsRequestModel.getDiscount());
+                ps.setString(7, createdBy);
+                return ps;
+            },keyHolder);
+
+            if (insertOrderItem != 0 && keyHolder.getKey() != null){
+
+                int insertedOrderItemId = keyHolder.getKey().intValue();
+
+                String eventName = "New order item created";
+                int eventType = 8;
+
+                jdbcTemplate.update(eventInsertQuery, eventName, insertedOrderItemId, eventType, createdBy);
+
+                String updateInventoryQuery = "UPDATE inventory SET count = count - ? WHERE productId = ?";
+
+                int count = 1;
+                if (orderItemsRequestModel.getQuantity()!=0){
+                    count = orderItemsRequestModel.getQuantity();
+                }
+
+                jdbcTemplate.update(updateInventoryQuery,
+                        count,
+                        orderItemsRequestModel.getProductId());
+
+                String inventoryCountEventName = "Inventory count decreased";
+                int inventoryCountEventType = 9;
+
+                String getInventoryIdQuery = "select id from inventory where productId = ?";
+                int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{orderItemsRequestModel.getProductId()}, Integer.class);
+
+                jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);
+            }
+            else {
+                return false;
             }
         }
 
@@ -405,6 +460,15 @@ public class OrderHandler {
         String orderExistByOrderIdQuery = "select count(*) from orders where orderId = ?";
 
         int count = jdbcTemplate.queryForObject(orderExistByOrderIdQuery, new Object[]{orderId}, Integer.class);
+
+        return count > 0;
+    }
+
+    public Boolean inventoryExistByProductId(int productId) {
+
+        String orderExistByOrderIdQuery = "select count(*) from inventory where productId = ?";
+
+        int count = jdbcTemplate.queryForObject(orderExistByOrderIdQuery, new Object[]{productId}, Integer.class);
 
         return count > 0;
     }
