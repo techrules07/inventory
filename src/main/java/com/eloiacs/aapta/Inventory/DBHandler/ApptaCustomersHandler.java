@@ -9,12 +9,17 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -23,15 +28,34 @@ public class ApptaCustomersHandler {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
-    public boolean addCustomers(ApptaCustomersRequestModel model,String createdBy){
 
-        String query = "insert into apptaCustomers(customerName,customerId,mobile,email,address,paylater,loyaltyPoints,createdBy)values('"+model.getCustomerName()+"','"+model.getCustomerId()+"','"+model.getMobile()+"','"+model.getEmail()+"','"+model.getAddress()+"',"+model.isPaylater()+",'"+model.getLoyaltyPoints()+"','"+createdBy+"') ";
-        jdbcTemplate.execute(query);
+    public boolean addCustomers(ApptaCustomersRequestModel model, String createdBy) {
+
+        String customerId = generateCustomerId();
+
+        String query = "INSERT INTO apptaCustomers (customerName, customerId, mobile, email, address, paylater, loyaltyPoints, createdBy) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, model.getCustomerName());
+            ps.setString(2, customerId);
+            ps.setString(3, model.getMobile());
+            ps.setString(4, model.getEmail());
+            ps.setString(5, model.getAddress());
+            ps.setBoolean(6, model.isPaylater());
+            ps.setInt(7, model.getLoyaltyPoints());
+            ps.setString(8, createdBy);
+            return ps;
+        }, keyHolder);
+
         return true;
     }
 
     public boolean updateCustomers(ApptaCustomersRequestModel model,String createdBy){
-        String query = "update apptaCustomers set customerName='"+model.getCustomerName()+"',customerId='"+model.getCustomerId()+"',mobile='"+model.getMobile()+"',email='"+model.getEmail()+"',address='"+model.getAddress()+"',paylater="+model.isPaylater()+",loyaltyPoints='"+model.getLoyaltyPoints()+"',createdBy='"+createdBy+"' where id="+model.getId()+" ";
+        String query = "update apptaCustomers set customerName='"+model.getCustomerName()+"',mobile='"+model.getMobile()+"',email='"+model.getEmail()+"',address='"+model.getAddress()+"',paylater="+model.isPaylater()+",loyaltyPoints='"+model.getLoyaltyPoints()+"',createdBy='"+createdBy+"' where id="+model.getId()+" ";
         jdbcTemplate.execute(query);
         return true;
     }
@@ -85,5 +109,40 @@ public class ApptaCustomersHandler {
         });
     }
 
+    private String generateCustomerId() {
+        int lastCustomerIdNumber = findLastCustomerIdNumber(); // Get the last customer ID number
+        Date date = new Date(); // Get current date
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd"); // Format date as YYYYMMDD
+        String formattedDate = sdf.format(date);
+
+        // Return the generated customer ID, combining "APPTA-" with today's date and incremented ID
+        return "APPTA-" + formattedDate + "-" + (lastCustomerIdNumber + 1);
+    }
+
+    private int findLastCustomerIdNumber() {
+        String query = "SELECT customerId FROM apptaCustomers ORDER BY id DESC LIMIT 1";
+
+        return jdbcTemplate.query(query, new ResultSetExtractor<Integer>() {
+            @Override
+            public Integer extractData(ResultSet rs) throws SQLException, DataAccessException {
+                if (rs.next()) {
+                    String lastCustomerId = rs.getString("customerId");
+
+                    // Split the customerId by "-" and ensure it has at least 3 parts
+                    String[] parts = lastCustomerId.split("-");
+
+                    if (parts.length >= 3) {
+                        try {
+                            return Integer.parseInt(parts[2]); // Extract the number part after the date
+                        } catch (NumberFormatException e) {
+                            // Handle the case where the number part is not a valid integer
+                            return 0;
+                        }
+                    }
+                }
+                return 0; // Return 0 if no valid customerId is found
+            }
+        });
+    }
 
 }

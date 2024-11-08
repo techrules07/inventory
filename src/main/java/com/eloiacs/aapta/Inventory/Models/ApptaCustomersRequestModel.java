@@ -3,7 +3,6 @@ package com.eloiacs.aapta.Inventory.Models;
 public class ApptaCustomersRequestModel {
     private int id = 0;
     private String customerName = null;
-    private String customerId = null;
     private String mobile = null;
     private String email = null;
     private String address = null;
@@ -24,14 +23,6 @@ public class ApptaCustomersRequestModel {
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
-    }
-
-    public String getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(String customerId) {
-        this.customerId = customerId;
     }
 
     public String getMobile() {
