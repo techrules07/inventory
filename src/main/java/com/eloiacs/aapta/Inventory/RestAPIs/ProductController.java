@@ -116,19 +116,6 @@ public class ProductController {
                 return baseResponse;
             }
 
-            if (productRequestModel.getQuantity() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Quantity cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getMinPurchaseQuantity() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Minimum Purchase Quantity cannot be zero");
-                return baseResponse;
-            }
 
             if (productRequestModel.getBarcodeType() == 0){
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
@@ -151,40 +138,6 @@ public class ProductController {
                 return baseResponse;
             }
 
-            if (productRequestModel.getPurchasePrice() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Purchase Price cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getSalesPricePercentage() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Sales Price Percentage cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getMrp() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("MRP cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getWholesalePricePercentage() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Wholesale Price Percentage cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getThreshold() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Threshold cannot be zero");
-                return baseResponse;
-            }
 
             if (productRequestModel.getFreebie()){
                 if (productRequestModel.getFreebieProductId() == 0){
@@ -398,20 +351,6 @@ public class ProductController {
                 return baseResponse;
             }
 
-            if (productRequestModel.getQuantity() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Quantity cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getMinPurchaseQuantity() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Minimum Purchase Quantity cannot be zero");
-                return baseResponse;
-            }
-
             if (productRequestModel.getBarcodeType() == 0){
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
@@ -430,41 +369,6 @@ public class ProductController {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
                 baseResponse.setMessage("Description cannot be null or empty");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getPurchasePrice() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Purchase Price cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getSalesPricePercentage() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Sales Price Percentage cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getMrp() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("MRP cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getWholesalePricePercentage() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Wholesale Price Percentage cannot be zero");
-                return baseResponse;
-            }
-
-            if (productRequestModel.getThreshold() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Threshold cannot be zero");
                 return baseResponse;
             }
 

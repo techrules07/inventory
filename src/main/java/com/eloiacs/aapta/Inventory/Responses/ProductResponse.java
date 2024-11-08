@@ -43,20 +43,6 @@ public class ProductResponse {
 
     private String description = null;
 
-    private int purchasePrice = 0;
-
-    private int salesPricePercentage = 0;
-
-    private int salesPrice = 0;
-
-    private int mrp = 0;
-
-    private int wholesalePricePercentage = 0;
-
-    private int wholesalePrice = 0;
-
-    private int threshold = 0;
-
     private Boolean billOfMaterials = false;
 
     private List<BillOfMaterialsResponse> billOfMaterialsList = new ArrayList<>();
@@ -228,62 +214,6 @@ public class ProductResponse {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public int getPurchasePrice() {
-        return purchasePrice;
-    }
-
-    public void setPurchasePrice(int purchasePrice) {
-        this.purchasePrice = purchasePrice;
-    }
-
-    public int getSalesPricePercentage() {
-        return salesPricePercentage;
-    }
-
-    public void setSalesPricePercentage(int salesPricePercentage) {
-        this.salesPricePercentage = salesPricePercentage;
-    }
-
-    public int getSalesPrice() {
-        return salesPrice;
-    }
-
-    public void setSalesPrice(int salesPrice) {
-        this.salesPrice = salesPrice;
-    }
-
-    public int getMrp() {
-        return mrp;
-    }
-
-    public void setMrp(int mrp) {
-        this.mrp = mrp;
-    }
-
-    public int getWholesalePricePercentage() {
-        return wholesalePricePercentage;
-    }
-
-    public void setWholesalePricePercentage(int wholesalePricePercentage) {
-        this.wholesalePricePercentage = wholesalePricePercentage;
-    }
-
-    public int getWholesalePrice() {
-        return wholesalePrice;
-    }
-
-    public void setWholesalePrice(int wholesalePrice) {
-        this.wholesalePrice = wholesalePrice;
-    }
-
-    public int getThreshold() {
-        return threshold;
-    }
-
-    public void setThreshold(int threshold) {
-        this.threshold = threshold;
     }
 
     public Boolean getBillOfMaterials() {

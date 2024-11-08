@@ -21,25 +21,11 @@ public class ProductRequestModel {
 
     private int sizeId = 0;
 
-    private int quantity = 0;
-
-    private int minPurchaseQuantity = 0;
-
     private int barcodeType = 0;
 
     private String barcodeNo = null;
 
     private String description = null;
-
-    private int purchasePrice = 0;
-
-    private int salesPricePercentage = 0;
-
-    private int mrp = 0;
-
-    private int wholesalePricePercentage = 0;
-
-    private int threshold = 0;
 
     private Boolean billOfMaterials = false;
 
@@ -116,22 +102,6 @@ public class ProductRequestModel {
         this.unitId = unitId;
     }
 
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public int getMinPurchaseQuantity() {
-        return minPurchaseQuantity;
-    }
-
-    public void setMinPurchaseQuantity(int minPurchaseQuantity) {
-        this.minPurchaseQuantity = minPurchaseQuantity;
-    }
-
     public int getBarcodeType() {
         return barcodeType;
     }
@@ -154,46 +124,6 @@ public class ProductRequestModel {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public int getPurchasePrice() {
-        return purchasePrice;
-    }
-
-    public void setPurchasePrice(int purchasePrice) {
-        this.purchasePrice = purchasePrice;
-    }
-
-    public int getSalesPricePercentage() {
-        return salesPricePercentage;
-    }
-
-    public void setSalesPricePercentage(int salesPricePercentage) {
-        this.salesPricePercentage = salesPricePercentage;
-    }
-
-    public int getMrp() {
-        return mrp;
-    }
-
-    public void setMrp(int mrp) {
-        this.mrp = mrp;
-    }
-
-    public int getWholesalePricePercentage() {
-        return wholesalePricePercentage;
-    }
-
-    public void setWholesalePricePercentage(int wholesalePricePercentage) {
-        this.wholesalePricePercentage = wholesalePricePercentage;
-    }
-
-    public int getThreshold() {
-        return threshold;
-    }
-
-    public void setThreshold(int threshold) {
-        this.threshold = threshold;
     }
 
     public Boolean getBillOfMaterials() {
