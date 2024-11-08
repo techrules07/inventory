@@ -32,7 +32,7 @@ public class ProductHandler {
     @Transactional
     public Boolean insertProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
-        String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,size,quantity,minPurchaseQuantity,barcodeType,barcodeNo,description,purchasePrice,gstPercentage,salesPrice,mrp,wholesalePrice,wholesaleGSTPercentage,threshold,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
+        String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,size,quantity,minPurchaseQuantity,barcodeType,barcodeNo,description,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
         String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
         String insertBillOfMaterialsQuery = "insert into billOfMaterials(productId,billOfMaterialProductId,quantity,cost,isActive,createdAt) values(?,?,?,?,true,current_timestamp())";
         String insertInventoryQuery = "INSERT INTO inventory(productId, category, subCategory, size, count, isActive, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, true, ?, current_timestamp())";
@@ -42,6 +42,8 @@ public class ProductHandler {
 
         // Check if product exists
         Integer existingProductId = null;
+        int quantity = 0;
+        int minPurchaseQuantity = 0;
 
         existingProductId = jdbcTemplate.query(checkProductQuery, new Object[]{
                 productRequestModel.getProductName(),
@@ -63,8 +65,8 @@ public class ProductHandler {
 
         if (existingProductId != null) {
             // Product exists, update quantity and inventory
-            jdbcTemplate.update(updateProductQuery, productRequestModel.getQuantity(), existingProductId);
-            jdbcTemplate.update(updateInventoryQuery, productRequestModel.getQuantity(), createdBy, existingProductId);
+            jdbcTemplate.update(updateProductQuery, quantity, existingProductId);
+            jdbcTemplate.update(updateInventoryQuery, quantity, createdBy, existingProductId);
             return true;
         } else {
             // Insert product and retrieve generated productId
@@ -79,34 +81,15 @@ public class ProductHandler {
                 ps.setInt(5, productRequestModel.getBrandId());
                 ps.setInt(6, productRequestModel.getUnitId());
                 ps.setInt(7,productRequestModel.getSizeId());
-                ps.setInt(8, productRequestModel.getQuantity());
-                ps.setInt(9, productRequestModel.getMinPurchaseQuantity());
+                ps.setInt(8, quantity);
+                ps.setInt(9, minPurchaseQuantity);
                 ps.setInt(10, productRequestModel.getBarcodeType());
                 ps.setString(11, productRequestModel.getBarcodeNo());
                 ps.setString(12, productRequestModel.getDescription());
-                int purchasePrice = productRequestModel.getPurchasePrice();
-                int mrp = productRequestModel.getMrp();
-                int salesPricePercentage = productRequestModel.getSalesPricePercentage();
-                ps.setInt(13, purchasePrice);
-                ps.setDouble(14, salesPricePercentage);
-                int salesPrice = purchasePrice + (purchasePrice * salesPricePercentage / 100);
-                if (salesPrice > mrp) {
-                    salesPrice = mrp;
-                }
-                ps.setInt(15, salesPrice);
-                ps.setInt(16, mrp);
-                int wholeSalePercentage = productRequestModel.getWholesalePricePercentage();
-                int wholeSalePrice = purchasePrice + (purchasePrice * wholeSalePercentage / 100);
-                if (wholeSalePrice > mrp) {
-                    wholeSalePrice = mrp;
-                }
-                ps.setInt(17, wholeSalePrice);
-                ps.setDouble(18, wholeSalePercentage);
-                ps.setInt(19, productRequestModel.getThreshold());
-                ps.setBoolean(20, productRequestModel.getBillOfMaterials());
-                ps.setBoolean(21, productRequestModel.getFreebie());
-                ps.setInt(22, productRequestModel.getFreebieProductId());
-                ps.setString(23, createdBy);
+                ps.setBoolean(13, productRequestModel.getBillOfMaterials());
+                ps.setBoolean(14, productRequestModel.getFreebie());
+                ps.setInt(15, productRequestModel.getFreebieProductId());
+                ps.setString(16, createdBy);
                 return ps;
             }, keyHolder);
 
@@ -123,7 +106,7 @@ public class ProductHandler {
                         productRequestModel.getCategoryId(),
                         productRequestModel.getSubCategoryId(),
                         productRequestModel.getSizeId(),
-                        productRequestModel.getQuantity(),
+                        quantity,
                         createdBy);
 
 
@@ -164,29 +147,20 @@ public class ProductHandler {
     @Transactional
     public Boolean updateProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
-        String updateProductQuery = "update products set productName = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?, quantity = ?, minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, purchasePrice = ?, gstPercentage = ?, salesPrice = ?, mrp = ?, wholesalePrice = ?, wholesaleGSTPercentage = ?, threshold = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
+
+        String updateProductQuery = "update products set productName = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?, quantity = 0, minPurchaseQuantity = 0, barcodeType = ?, barcodeNo = ?, description = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
         String updateInventoryQuery = "update inventory set count=?,createdBy=? where productId=? ";
 
-        int purchasePrice = productRequestModel.getPurchasePrice();
-        int mrp = productRequestModel.getMrp();
-        int salesPricePercentage = productRequestModel.getSalesPricePercentage();
+        int quantity = 0;
+        int minPurchaseQuantity = 0;
 
-        int salesPrice = purchasePrice + (purchasePrice * salesPricePercentage / 100);
-        if (salesPrice > mrp) {
-            salesPrice = mrp;
-        }
 
-        int wholeSalePercentage = productRequestModel.getWholesalePricePercentage();
 
-        int wholeSalePrice = purchasePrice + (purchasePrice * wholeSalePercentage / 100);
-        if (wholeSalePrice > mrp) {
-            wholeSalePrice = mrp;
-        }
 
         int productId = productRequestModel.getProductId();
 
         jdbcTemplate.update(updateInventoryQuery,
-                productRequestModel.getQuantity(),
+              quantity,
                 createdBy,
                 productId
         );
@@ -199,18 +173,9 @@ public class ProductHandler {
                 productRequestModel.getBrandId(),
                 productRequestModel.getUnitId(),
                 productRequestModel.getSizeId(),
-                productRequestModel.getQuantity(),
-                productRequestModel.getMinPurchaseQuantity(),
                 productRequestModel.getBarcodeType(),
                 productRequestModel.getBarcodeNo(),
                 productRequestModel.getDescription(),
-                purchasePrice,
-                salesPricePercentage,
-                salesPrice,
-                mrp,
-                wholeSalePrice,
-                wholeSalePercentage,
-                productRequestModel.getThreshold(),
                 productRequestModel.getBillOfMaterials(),
                 productRequestModel.getFreebie(),
                 productRequestModel.getFreebieProductId(),
@@ -347,13 +312,6 @@ public class ProductHandler {
                         productResponse.setBarcodeType(rs.getInt("barcodeType"));
                         productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                         productResponse.setDescription(rs.getString("description"));
-                        productResponse.setPurchasePrice(rs.getInt("purchasePrice"));
-                        productResponse.setSalesPricePercentage(rs.getInt("gstPercentage"));
-                        productResponse.setSalesPrice(rs.getInt("salesPrice"));
-                        productResponse.setMrp(rs.getInt("mrp"));
-                        productResponse.setWholesalePrice(rs.getInt("wholesalePrice"));
-                        productResponse.setWholesalePricePercentage(rs.getInt("wholesaleGSTPercentage"));
-                        productResponse.setThreshold(rs.getInt("threshold"));
                         productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                         // Concatenated strings for bill of materials
@@ -448,13 +406,6 @@ public class ProductHandler {
                     productResponse.setBarcodeType(rs.getInt("barcodeType"));
                     productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                     productResponse.setDescription(rs.getString("description"));
-                    productResponse.setPurchasePrice(rs.getInt("purchasePrice"));
-                    productResponse.setSalesPricePercentage(rs.getInt("gstPercentage"));
-                    productResponse.setSalesPrice(rs.getInt("salesPrice"));
-                    productResponse.setMrp(rs.getInt("mrp"));
-                    productResponse.setWholesalePrice(rs.getInt("wholesalePrice"));
-                    productResponse.setWholesalePricePercentage(rs.getInt("wholesaleGSTPercentage"));
-                    productResponse.setThreshold(rs.getInt("threshold"));
                     productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                     // Concatenated strings for bill of materials
@@ -544,13 +495,6 @@ public class ProductHandler {
                     productResponse.setBarcodeType(rs.getInt("barcodeType"));
                     productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                     productResponse.setDescription(rs.getString("description"));
-                    productResponse.setPurchasePrice(rs.getInt("purchasePrice"));
-                    productResponse.setSalesPricePercentage(rs.getInt("gstPercentage"));
-                    productResponse.setSalesPrice(rs.getInt("salesPrice"));
-                    productResponse.setMrp(rs.getInt("mrp"));
-                    productResponse.setWholesalePrice(rs.getInt("wholesalePrice"));
-                    productResponse.setWholesalePricePercentage(rs.getInt("wholesaleGSTPercentage"));
-                    productResponse.setThreshold(rs.getInt("threshold"));
                     productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                     // Concatenated strings for bill of materials
@@ -644,13 +588,6 @@ public class ProductHandler {
                         productResponse.setBarcodeType(rs.getInt("barcodeType"));
                         productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                         productResponse.setDescription(rs.getString("description"));
-                        productResponse.setPurchasePrice(rs.getInt("purchasePrice"));
-                        productResponse.setSalesPricePercentage(rs.getInt("gstPercentage"));
-                        productResponse.setSalesPrice(rs.getInt("salesPrice"));
-                        productResponse.setMrp(rs.getInt("mrp"));
-                        productResponse.setWholesalePrice(rs.getInt("wholesalePrice"));
-                        productResponse.setWholesalePricePercentage(rs.getInt("wholesaleGSTPercentage"));
-                        productResponse.setThreshold(rs.getInt("threshold"));
                         productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                         // Concatenated strings for bill of materials
