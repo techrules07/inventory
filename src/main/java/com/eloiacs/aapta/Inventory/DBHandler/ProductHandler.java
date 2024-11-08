@@ -522,13 +522,11 @@ public class ProductHandler {
                             // Create a new instance for each bill of material
                             BillOfMaterialsResponse billOfMaterialsResponse = new BillOfMaterialsResponse();
 
-                            // Set the values for each BillOfMaterialsResponse object
                             billOfMaterialsResponse.setBillOfMaterialsProductId(Integer.parseInt(billOfMaterialsProductIds[i]));
                             billOfMaterialsResponse.setBillOfMaterialsProductName(billOfMaterialsProductNames[i]);
                             billOfMaterialsResponse.setBillOfMaterialsProductQuantity(Integer.parseInt(billOfMaterialsProductQuantities[i]));
                             billOfMaterialsResponse.setBillOfMaterialsProductCost(Integer.parseInt(billOfMaterialsProductCosts[i]));
 
-                            // Add the populated response object to the list
                             billOfMaterialsList.add(billOfMaterialsResponse);
                         }
                     }
