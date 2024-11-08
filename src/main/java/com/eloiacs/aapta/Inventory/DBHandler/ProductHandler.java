@@ -519,7 +519,7 @@ public class ProductHandler {
 
                         // Loop through the arrays to create BillOfMaterialsResponse objects
                         for (int i = 0; i < billOfMaterialsProductIds.length; i++) {
-                            // Create a new instance for each bill of material
+
                             BillOfMaterialsResponse billOfMaterialsResponse = new BillOfMaterialsResponse();
 
                             billOfMaterialsResponse.setBillOfMaterialsProductId(Integer.parseInt(billOfMaterialsProductIds[i]));
