@@ -212,12 +212,13 @@ public class ProductHandler {
 
     public List<ProductResponse> getProducts(String productName){
 
-        StringBuilder getProductsQuery =new StringBuilder("select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName,psize.size as sizeName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join productSize psize on psize.id=pd.size left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true ");
+        StringBuilder getProductsQuery =new StringBuilder("select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, psize.size as sizeName, pp.mrp, pp.salesPrice, pp.salesPercentage, pp.wholesalePrice, pp.wholesalePercentage, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join productSize psize on psize.id=pd.size left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true LEFT OUTER join productPrice pp on pp.productId=pd.id and pp.category=pd.category and pp.subCategory=pd.subCategory and pp.size=pd.size where pd.isActive = true ");
         if (productName != null && !productName.trim().isEmpty()) {
             getProductsQuery.append("and pd.productName LIKE ? ");
         }
 
-        getProductsQuery.append("group by pd.id order by pd.id desc");
+        getProductsQuery.append("group by pd.id,pp.mrp, pp.salesPrice, pp.salesPercentage, pp.wholesalePrice, pp.wholesalePercentage order by pd.id desc");
+
 
         return jdbcTemplate.query(getProductsQuery.toString(), new PreparedStatementSetter() {
             @Override
@@ -304,6 +305,12 @@ public class ProductHandler {
                         productResponse.setCreatedById(rs.getInt("createdBy"));
                         productResponse.setCreatedBy(rs.getString("createdByUsername"));
                         String imagesConcat = rs.getString("images");
+                        productResponse.setMrp(rs.getDouble("mrp"));
+                        productResponse.setWholesalePrice(rs.getDouble("wholesalePrice"));
+                        productResponse.setWholsesalePercentage(rs.getDouble("wholesalePercentage"));
+                        productResponse.setRetailPrice(rs.getDouble("salesPrice"));
+                        productResponse.setRetailPercentage(rs.getDouble("salesPercentage"));
+
                         if (imagesConcat != null) {
                             List<String> images = Arrays.asList(imagesConcat.split(","));
                             productResponse.setImages(images);
