@@ -194,12 +194,6 @@ public class OrderController {
                 baseResponse.setMessage("Product Id cannot be zero");
                 return baseResponse;
             }
-            if (orderItemsRequestModel.getUnitPrice() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Product Unit Price cannot be zero");
-                return baseResponse;
-            }
 
             Boolean orderIdExist = orderHandler.orderExistByOrderId(orderItemsRequestModel.getOrderId());
             if (!orderIdExist) {
@@ -225,12 +219,13 @@ public class OrderController {
                 return baseResponse;
             }
 
-            Boolean responseStatus = orderHandler.addOrderItem(orderItemsRequestModel, createdBy);
+            OrderResponse responseStatus = orderHandler.addOrderItem(orderItemsRequestModel, createdBy);
 
-            if(responseStatus){
+            if(responseStatus != null){
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
                 baseResponse.setMessage("OrderItem Added Successfully");
+                baseResponse.setData(responseStatus);
             } else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");

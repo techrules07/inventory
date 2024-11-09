@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -26,6 +27,9 @@ public class OrderHandler {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    ProductHandler productHandler;
 
     public String generateOrderId(int previousId) {
         Date date = new Date();
@@ -96,7 +100,9 @@ public class OrderHandler {
         return true;
     }
 
-    public Boolean addOrderItem(OrderItemsRequestModel orderItemsRequestModel, String createdBy){
+    public OrderResponse addOrderItem(OrderItemsRequestModel orderItemsRequestModel, String createdBy){
+
+        ProductResponse response = productHandler.getProductById(orderItemsRequestModel.getProductId());
 
         String insertOrderItemQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
         String updateOrderItemQuery = "update orderItems set quantity = ?, totalAmount = ? where orderId = ? and productId = ?";
@@ -116,7 +122,7 @@ public class OrderHandler {
             if (orderItemsRequestModel.getQuantity()!=0){
                 quantity = existingQuantity + orderItemsRequestModel.getQuantity();
             }
-            double totalAmount = Math.round(orderItemsRequestModel.getUnitPrice() * quantity);
+            double totalAmount = Math.round(response.getWholesalePrice() * quantity);
             if (orderItemsRequestModel.getDiscount() != 0){
                 totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
             }
@@ -148,7 +154,7 @@ public class OrderHandler {
                 jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);
             }
             else {
-                return false;
+                return getOrderByOrderId(orderItemsRequestModel.getOrderId());
             }
 
         } else {
@@ -169,9 +175,9 @@ public class OrderHandler {
                 PreparedStatement ps = connection.prepareStatement(insertOrderItemQuery, new String[]{"id"});
                 ps.setString(1,orderItemsRequestModel.getOrderId());
                 ps.setInt(2,orderItemsRequestModel.getProductId());
-                ps.setDouble(3,orderItemsRequestModel.getUnitPrice());
+                ps.setDouble(3, response.getWholesalePrice());
                 ps.setInt(4, finalQuantity);
-                ps.setDouble(5, amount);
+                ps.setDouble(5, response.getWholesalePrice() * finalQuantity);
                 ps.setInt(6, orderItemsRequestModel.getDiscount());
                 ps.setString(7, createdBy);
                 return ps;
@@ -201,16 +207,16 @@ public class OrderHandler {
                 int inventoryCountEventType = 9;
 
                 String getInventoryIdQuery = "select id from inventory where productId = ?";
-                int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{orderItemsRequestModel.getProductId()}, Integer.class);
+                int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{response.getProductId()}, Integer.class);
 
                 jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);
             }
             else {
-                return false;
+                return getOrderByOrderId(orderItemsRequestModel.getOrderId());
             }
         }
 
-        return true;
+        return getOrderByOrderId(orderItemsRequestModel.getOrderId());
     }
 
     public Boolean holdOrder(String orderId){
@@ -448,7 +454,7 @@ public class OrderHandler {
                     orderResponse.setTotalUnitPrice(totalUnitPrice);
                     orderResponse.setTotalPrice(totalPrice);
                     orderResponse.setTotalAmount(totalAmount);
-                    orderResponse.setTotalDiscount(totalDiscount);
+                    orderResponse.setTotalDiscount(Double.parseDouble(new DecimalFormat("##.##").format(totalDiscount)));
                 }
 
                 return orderResponse;
