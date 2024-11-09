@@ -32,147 +32,92 @@ public class ProductHandler {
     @Transactional
     public Boolean insertProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
-        String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,size,quantity,minPurchaseQuantity,barcodeType,barcodeNo,description,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
+        String insertProductQuery = "insert into products(productName,HSNCode,statusType,category,subCategory,brand,unit,size,minPurchaseQuantity,barcodeType,barcodeNo,description,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
         String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
         String insertBillOfMaterialsQuery = "insert into billOfMaterials(productId,billOfMaterialProductId,quantity,cost,isActive,createdAt) values(?,?,?,?,true,current_timestamp())";
-        String insertInventoryQuery = "INSERT INTO inventory(productId, category, subCategory, size, count, isActive, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, true, ?, current_timestamp())";
-        String checkProductQuery = "select id from products where isActive = true and productName = ? and statusType = ? and category = ? and subCategory = ? and brand = ? and unit = ? and size = ?";
-        String updateProductQuery = "update products set quantity = quantity + ? where id = ?";
-        String updateInventoryQuery = "update inventory set count = count + ?, createdBy = ? where productId = ?";
 
-        // Check if product exists
-        Integer existingProductId = null;
-        int quantity = 0;
-        int minPurchaseQuantity = 0;
+        // Insert product and retrieve generated productId
+        KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        existingProductId = jdbcTemplate.query(checkProductQuery, new Object[]{
-                productRequestModel.getProductName(),
-                productRequestModel.getStatusTypeId(),
-                productRequestModel.getCategoryId(),
-                productRequestModel.getSubCategoryId(),
-                productRequestModel.getBrandId(),
-                productRequestModel.getUnitId(),
-                productRequestModel.getSizeId()
-        }, new ResultSetExtractor<Integer>() {
-            @Override
-            public Integer extractData(ResultSet rs) throws SQLException, DataAccessException {
-                if (rs.next()){
-                    return rs.getInt("id");
+        int rowsAffected = jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(insertProductQuery, new String[]{"id"});
+            ps.setString(1, productRequestModel.getProductName());
+            ps.setString(2,productRequestModel.getHSNCode());
+            ps.setInt(3, productRequestModel.getStatusTypeId());
+            ps.setInt(4, productRequestModel.getCategoryId());
+            ps.setInt(5, productRequestModel.getSubCategoryId());
+            ps.setInt(6, productRequestModel.getBrandId());
+            ps.setInt(7, productRequestModel.getUnitId());
+            ps.setInt(8,productRequestModel.getSizeId());
+            ps.setInt(9, productRequestModel.getMinimumPurchaseQuantity());
+            ps.setInt(10, productRequestModel.getBarcodeType());
+            ps.setString(11, productRequestModel.getBarcodeNo());
+            ps.setString(12, productRequestModel.getDescription());
+            ps.setBoolean(13, productRequestModel.getBillOfMaterials());
+            ps.setBoolean(14, productRequestModel.getFreebie());
+            ps.setInt(15, productRequestModel.getFreebieProductId());
+            ps.setString(16, createdBy);
+            return ps;
+        }, keyHolder);
+
+        if (rowsAffected > 0 && keyHolder.getKey() != null) {
+            int productId = keyHolder.getKey().intValue();
+
+            String eventName = "New product created";
+            int eventType = 3;
+            String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+            jdbcTemplate.update(eventInsertQuery, eventName, productId, eventType, createdBy);
+
+            if (imageUrls != null) {
+                for (String image : imageUrls) {
+                    // Insert into productImages table
+                    jdbcTemplate.update(insertProductImagesQuery,
+                            productId,
+                            productRequestModel.getCategoryId(),
+                            productRequestModel.getSubCategoryId(),
+                            productRequestModel.getBrandId(),
+                            image,
+                            createdBy);
                 }
-                return null;
             }
-        });
 
-        if (existingProductId != null) {
-            // Product exists, update quantity and inventory
-            jdbcTemplate.update(updateProductQuery, quantity, existingProductId);
-            jdbcTemplate.update(updateInventoryQuery, quantity, createdBy, existingProductId);
+            List<BillOfMaterialsRequestModel> billOfMaterialsList = productRequestModel.getBillOfMaterialsList();
+
+            if (billOfMaterialsList != null) {
+                for (BillOfMaterialsRequestModel billOfMaterials : billOfMaterialsList) {
+
+                    jdbcTemplate.update(insertBillOfMaterialsQuery,
+                            productId,
+                            billOfMaterials.getBillOfMaterialsProductId(),
+                            billOfMaterials.getBillOfMaterialsProductQuantity(),
+                            billOfMaterials.getBillOfMaterialsProductCost());
+                }
+            }
+
             return true;
-        } else {
-            // Insert product and retrieve generated productId
-            KeyHolder keyHolder = new GeneratedKeyHolder();
-
-            int rowsAffected = jdbcTemplate.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(insertProductQuery, new String[]{"id"});
-                ps.setString(1, productRequestModel.getProductName());
-                ps.setInt(2, productRequestModel.getStatusTypeId());
-                ps.setInt(3, productRequestModel.getCategoryId());
-                ps.setInt(4, productRequestModel.getSubCategoryId());
-                ps.setInt(5, productRequestModel.getBrandId());
-                ps.setInt(6, productRequestModel.getUnitId());
-                ps.setInt(7,productRequestModel.getSizeId());
-                ps.setInt(8, quantity);
-                ps.setInt(9, minPurchaseQuantity);
-                ps.setInt(10, productRequestModel.getBarcodeType());
-                ps.setString(11, productRequestModel.getBarcodeNo());
-                ps.setString(12, productRequestModel.getDescription());
-                ps.setBoolean(13, productRequestModel.getBillOfMaterials());
-                ps.setBoolean(14, productRequestModel.getFreebie());
-                ps.setInt(15, productRequestModel.getFreebieProductId());
-                ps.setString(16, createdBy);
-                return ps;
-            }, keyHolder);
-
-            if (rowsAffected > 0 && keyHolder.getKey() != null) {
-                int productId = keyHolder.getKey().intValue();
-
-                String eventName = "New product created";
-                int eventType = 3;
-                String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
-                jdbcTemplate.update(eventInsertQuery, eventName, productId, eventType, createdBy);
-
-                jdbcTemplate.update(insertInventoryQuery,
-                        productId,
-                        productRequestModel.getCategoryId(),
-                        productRequestModel.getSubCategoryId(),
-                        productRequestModel.getSizeId(),
-                        quantity,
-                        createdBy);
-
-
-                if (imageUrls != null) {
-                    for (String image : imageUrls) {
-                        // Insert into productImages table
-                        jdbcTemplate.update(insertProductImagesQuery,
-                                productId,
-                                productRequestModel.getCategoryId(),
-                                productRequestModel.getSubCategoryId(),
-                                productRequestModel.getBrandId(),
-                                image,
-                                createdBy);
-                    }
-                }
-
-                List<BillOfMaterialsRequestModel> billOfMaterialsList = productRequestModel.getBillOfMaterialsList();
-
-                if (billOfMaterialsList != null) {
-                    for (BillOfMaterialsRequestModel billOfMaterials : billOfMaterialsList) {
-
-                        jdbcTemplate.update(insertBillOfMaterialsQuery,
-                                productId,
-                                billOfMaterials.getBillOfMaterialsProductId(),
-                                billOfMaterials.getBillOfMaterialsProductQuantity(),
-                                billOfMaterials.getBillOfMaterialsProductCost());
-                    }
-                }
-
-                return true;
-            }
-            else {
-                return false;
-            }
+        }
+        else {
+            return false;
         }
     }
 
     @Transactional
     public Boolean updateProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
-
-        String updateProductQuery = "update products set productName = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?, quantity = 0, minPurchaseQuantity = 0, barcodeType = ?, barcodeNo = ?, description = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
-        String updateInventoryQuery = "update inventory set count=?,createdBy=? where productId=? ";
-
-        int quantity = 0;
-        int minPurchaseQuantity = 0;
-
-
-
+        String updateProductQuery = "update products set productName = ?, HSNCode = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?,minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
 
         int productId = productRequestModel.getProductId();
 
-        jdbcTemplate.update(updateInventoryQuery,
-              quantity,
-                createdBy,
-                productId
-        );
-
         jdbcTemplate.update(updateProductQuery,
                 productRequestModel.getProductName(),
+                productRequestModel.getHSNCode(),
                 productRequestModel.getStatusTypeId(),
                 productRequestModel.getCategoryId(),
                 productRequestModel.getSubCategoryId(),
                 productRequestModel.getBrandId(),
                 productRequestModel.getUnitId(),
                 productRequestModel.getSizeId(),
+                productRequestModel.getMinimumPurchaseQuantity(),
                 productRequestModel.getBarcodeType(),
                 productRequestModel.getBarcodeNo(),
                 productRequestModel.getDescription(),
@@ -191,8 +136,6 @@ public class ProductHandler {
                     productId);
 
             if (rowsAffected !=0){
-
-
                 for (String image : imageUrls) {
 
                     String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
@@ -295,6 +238,7 @@ public class ProductHandler {
 
                         productResponse.setProductId(rs.getInt("id"));
                         productResponse.setProductName(rs.getString("productName"));
+                        productResponse.setHSNCode(rs.getString("HSNCode"));
                         productResponse.setStatusTypeId(rs.getInt("statusType"));
                         productResponse.setStatusType(rs.getString("status"));
                         productResponse.setCategoryId(rs.getInt("category"));
@@ -307,7 +251,6 @@ public class ProductHandler {
                         productResponse.setUnit(rs.getString("unitName"));
                         productResponse.setSizeId(rs.getInt("size"));
                         productResponse.setSize(rs.getString("sizeName"));
-                        productResponse.setQuantity(rs.getInt("quantity"));
                         productResponse.setMinPurchaseQuantity(rs.getInt("minPurchaseQuantity"));
                         productResponse.setBarcodeType(rs.getInt("barcodeType"));
                         productResponse.setBarcodeNo(rs.getString("barcodeNo"));
@@ -391,6 +334,7 @@ public class ProductHandler {
 
                     productResponse.setProductId(rs.getInt("id"));
                     productResponse.setProductName(rs.getString("productName"));
+                    productResponse.setHSNCode(rs.getString("HSNCode"));
                     productResponse.setStatusTypeId(rs.getInt("statusType"));
                     productResponse.setStatusType(rs.getString("status"));
                     productResponse.setCategoryId(rs.getInt("category"));
@@ -401,7 +345,6 @@ public class ProductHandler {
                     productResponse.setBrand(rs.getString("brandName"));
                     productResponse.setUnitId(rs.getInt("unit"));
                     productResponse.setUnit(rs.getString("unitName"));
-                    productResponse.setQuantity(rs.getInt("quantity"));
                     productResponse.setMinPurchaseQuantity(rs.getInt("minPurchaseQuantity"));
                     productResponse.setBarcodeType(rs.getInt("barcodeType"));
                     productResponse.setBarcodeNo(rs.getString("barcodeNo"));
@@ -480,6 +423,7 @@ public class ProductHandler {
 
                     productResponse.setProductId(rs.getInt("id"));
                     productResponse.setProductName(rs.getString("productName"));
+                    productResponse.setHSNCode(rs.getString("HSNCode"));
                     productResponse.setStatusTypeId(rs.getInt("statusType"));
                     productResponse.setStatusType(rs.getString("status"));
                     productResponse.setCategoryId(rs.getInt("category"));
@@ -490,7 +434,6 @@ public class ProductHandler {
                     productResponse.setBrand(rs.getString("brandName"));
                     productResponse.setUnitId(rs.getInt("unit"));
                     productResponse.setUnit(rs.getString("unitName"));
-                    productResponse.setQuantity(rs.getInt("quantity"));
                     productResponse.setMinPurchaseQuantity(rs.getInt("minPurchaseQuantity"));
                     productResponse.setBarcodeType(rs.getInt("barcodeType"));
                     productResponse.setBarcodeNo(rs.getString("barcodeNo"));
@@ -571,6 +514,7 @@ public class ProductHandler {
 
                         productResponse.setProductId(rs.getInt("id"));
                         productResponse.setProductName(rs.getString("productName"));
+                        productResponse.setHSNCode(rs.getString("HSNCode"));
                         productResponse.setStatusTypeId(rs.getInt("statusType"));
                         productResponse.setStatusType(rs.getString("status"));
                         productResponse.setCategoryId(rs.getInt("category"));
@@ -581,7 +525,6 @@ public class ProductHandler {
                         productResponse.setBrand(rs.getString("brandName"));
                         productResponse.setUnitId(rs.getInt("unit"));
                         productResponse.setUnit(rs.getString("unitName"));
-                        productResponse.setQuantity(rs.getInt("quantity"));
                         productResponse.setMinPurchaseQuantity(rs.getInt("minPurchaseQuantity"));
                         productResponse.setBarcodeType(rs.getInt("barcodeType"));
                         productResponse.setBarcodeNo(rs.getString("barcodeNo"));

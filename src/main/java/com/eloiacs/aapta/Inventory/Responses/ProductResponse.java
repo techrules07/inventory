@@ -9,6 +9,8 @@ public class ProductResponse {
 
     private String productName = null;
 
+    private String HSNCode = null;
+
     private int statusTypeId = 0;
 
     private String statusType = null;
@@ -32,8 +34,6 @@ public class ProductResponse {
     private int sizeId = 0;
 
     private String size = null;
-
-    private int quantity = 0;
 
     private int minPurchaseQuantity = 0;
 
@@ -78,6 +78,14 @@ public class ProductResponse {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public String getHSNCode() {
+        return HSNCode;
+    }
+
+    public void setHSNCode(String HSNCode) {
+        this.HSNCode = HSNCode;
     }
 
     public int getStatusTypeId() {
@@ -174,14 +182,6 @@ public class ProductResponse {
 
     public void setSize(String size) {
         this.size = size;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
     }
 
     public int getMinPurchaseQuantity() {

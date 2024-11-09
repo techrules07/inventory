@@ -9,6 +9,8 @@ public class ProductRequestModel {
 
     private String productName = null;
 
+    private String HSNCode = null;
+
     private int statusTypeId = 0;
 
     private int categoryId = 0;
@@ -20,6 +22,8 @@ public class ProductRequestModel {
     private int unitId = 0;
 
     private int sizeId = 0;
+
+    private int minimumPurchaseQuantity = 0;
 
     private int barcodeType = 0;
 
@@ -46,6 +50,14 @@ public class ProductRequestModel {
         this.sizeId = sizeId;
     }
 
+    public int getMinimumPurchaseQuantity() {
+        return minimumPurchaseQuantity;
+    }
+
+    public void setMinimumPurchaseQuantity(int minimumPurchaseQuantity) {
+        this.minimumPurchaseQuantity = minimumPurchaseQuantity;
+    }
+
     public int getProductId() {
         return productId;
     }
@@ -60,6 +72,14 @@ public class ProductRequestModel {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public String getHSNCode() {
+        return HSNCode;
+    }
+
+    public void setHSNCode(String HSNCode) {
+        this.HSNCode = HSNCode;
     }
 
     public int getStatusTypeId() {
