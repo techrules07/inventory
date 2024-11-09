@@ -480,7 +480,7 @@ public class OrderHandler {
         return count > 0;
     }
 
-    public OrderResponse createOrderByCustomerd(String createdBy) {
+    public OrderResponse createOrderByCustomerId(String createdBy) {
 
         String query = "SELECT * FROM orders WHERE status=6 and createdBy='" + createdBy+ "'";
 
@@ -538,6 +538,14 @@ public class OrderHandler {
                 return rs.next();
             }
         }));
+    }
+
+    public OrderResponse completeOrder(String orderId, String paymentType) {
+        String query = "UPDATE orders SET status=7, paymentType='" + paymentType + "' WHERE orderId = '" + orderId + "'";
+
+        jdbcTemplate.update(query);
+
+        return getOrderByOrderId(orderId);
     }
 
 }

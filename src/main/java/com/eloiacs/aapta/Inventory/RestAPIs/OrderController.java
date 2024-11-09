@@ -44,6 +44,9 @@ public class OrderController {
     @Autowired
     PaymentsHandler paymentsHandler;
 
+    @Autowired
+    PDFHandler pdfHanlder;
+
     @RequestMapping(value = "/addOrder", method = RequestMethod.POST)
     public BaseResponse addOrder(@RequestBody OrderRequestModel orderRequestModel,
                                  HttpServletRequest httpServletRequest){
@@ -603,11 +606,30 @@ public class OrderController {
                 }
             }
 
-            OrderResponse response = orderHandler.createOrderByCustomerd(createdBy);
+            OrderResponse response = orderHandler.createOrderByCustomerId(createdBy);
             baseResponse.setCode(HttpStatus.OK.value());
             baseResponse.setData(response);
         }
 
         return baseResponse;
+    }
+
+    @RequestMapping(value = "/completeOrder", method = RequestMethod.POST)
+    public BaseResponse completeOrder(HttpServletRequest httpServletRequest, @RequestParam("orderId") String orderId, @RequestParam("paymentType") String paymentType) {
+
+        BaseResponse response = new BaseResponse();
+        OrderResponse orderResponse = orderHandler.completeOrder(orderId, paymentType);
+
+        if (orderResponse != null) {
+            response.setCode(HttpStatus.OK.value());
+            response.setData(orderResponse);
+            pdfHanlder.generatePDFForOrders(orderResponse);
+        }
+        else {
+            response.setCode(HttpStatus.NO_CONTENT.value());
+            response.setMessage("Order Not available");
+        }
+
+        return response;
     }
 }

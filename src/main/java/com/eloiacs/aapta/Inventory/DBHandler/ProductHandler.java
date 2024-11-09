@@ -610,11 +610,11 @@ public class ProductHandler {
         });
     }
 
-    public Boolean productExistByName(String name){
+    public Boolean productExistByName(String name, int category, int subCat, int unit, int size, int brandId){
 
-        String productExistByNameQuery = "select count(*) from products where productName = ? and isActive = true";
+        String productExistByNameQuery = "select count(*) from products where productName = ? and category = ? and  subCategory = ? and brand=? and unit =? and size=? and isActive = true";
 
-        int count = jdbcTemplate.queryForObject(productExistByNameQuery, new Object[]{name}, Integer.class);
+        int count = jdbcTemplate.queryForObject(productExistByNameQuery, new Object[]{name, category, subCat, brandId, unit, size}, Integer.class);
 
         return count > 0;
     }

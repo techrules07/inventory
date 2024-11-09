@@ -180,7 +180,7 @@ public class ProductController {
                 }
             }
 
-            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
+            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName(), productRequestModel.getCategoryId(), productRequestModel.getSubCategoryId(), productRequestModel.getUnitId(), productRequestModel.getSizeId(), productRequestModel.getBrandId());
             if (productNameExist){
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
@@ -421,7 +421,7 @@ public class ProductController {
                 return baseResponse;
             }
 
-            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
+            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName(), productRequestModel.getCategoryId(), productRequestModel.getSubCategoryId(), productRequestModel.getUnitId(), productRequestModel.getSizeId(), productRequestModel.getBrandId());
             if (productNameExist){
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
