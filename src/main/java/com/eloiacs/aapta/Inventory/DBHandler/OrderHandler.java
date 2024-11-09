@@ -5,6 +5,7 @@ import com.eloiacs.aapta.Inventory.Models.OrderItemsRequestModel;
 import com.eloiacs.aapta.Inventory.Models.OrderRequestModel;
 import com.eloiacs.aapta.Inventory.Responses.OrderItemsResponse;
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
+import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
 import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -475,7 +476,7 @@ public class OrderHandler {
 
     public OrderResponse createOrderByCustomerd(String createdBy) {
 
-        String query = "SELECT * FROM orders WHERE status=6";
+        String query = "SELECT * FROM orders WHERE status=6 and createdBy='" + createdBy+ "'";
 
         OrderResponse response = jdbcTemplate.query(query, new ResultSetExtractor<OrderResponse>() {
             @Override
@@ -492,7 +493,6 @@ public class OrderHandler {
         });
 
         if (response == null) {
-            System.out.println("response is null");
             String orderId = generateOrderId(findLastOrderId());
 
             String insertOrderQuery = "insert into orders(orderId,status,createdBy) values(?,6,?)";
