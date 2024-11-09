@@ -23,6 +23,14 @@ public class Utils {
         return null;
     }
 
+    public static String convertDateOnlyToString(Date date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        if (date != null) {
+            return dateFormat.format(date);
+        }
+        return null;
+    }
+
     public static boolean checkExpired(String unixTime){
         Date startDate = null;
         Date endDate = null;

@@ -3,6 +3,9 @@ package com.eloiacs.aapta.Inventory.DBHandler;
 import com.eloiacs.aapta.Inventory.Models.PurchaseOrderRequestModel;
 import com.eloiacs.aapta.Inventory.Models.PurchaseRequestModel;
 import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
+import com.eloiacs.aapta.Inventory.Responses.PurchaseItemsResponse;
+import com.eloiacs.aapta.Inventory.Responses.PurchaseResponse;
+import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,8 +21,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class PurchaseHandler {
@@ -216,5 +218,59 @@ public class PurchaseHandler {
         }
 
         return null;
+    }
+
+    public List<PurchaseResponse> getPurchase(){
+
+        String getPurchaseQuery = "select po.*, s.name, usr.username, pi.id as itemId, pi.orderId as itemOrderId, pi.productId, pi.qty, pi.purchasePrice, pi.createdAt as itemCreatedAt from purchaseOrder po left join users usr on usr.id = po.createdBy left join supplier s on s.id = po.supplier left join purchaseItems pi on pi.orderId = po.orderId order by po.orderId desc";
+
+        return jdbcTemplate.query(getPurchaseQuery, new ResultSetExtractor<List<PurchaseResponse>>() {
+            @Override
+            public List<PurchaseResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+                Map<String, PurchaseResponse> purchaseResponseMap = new LinkedHashMap<>();
+
+                while (rs.next()) {
+                    String orderId = rs.getString("orderId");
+                    // If the purchase order does not exist in the map, create a new one
+                    PurchaseResponse purchaseResponse = purchaseResponseMap.get(orderId);
+                    if (purchaseResponse == null) {
+                        purchaseResponse = new PurchaseResponse();
+                        purchaseResponse.setId(rs.getInt("id"));
+                        purchaseResponse.setOrderId(orderId);
+                        purchaseResponse.setSupplierId(rs.getInt("supplier"));
+                        purchaseResponse.setSupplierName(rs.getString("name"));
+                        purchaseResponse.setPurchaseDate(Utils.convertDateOnlyToString(rs.getDate("purchaseDate")));
+                        purchaseResponse.setInvoiceId(rs.getString("invoiceId"));
+                        purchaseResponse.setInvoiceUrl(rs.getString("invoiceUrl"));
+                        purchaseResponse.setTotalAmount(rs.getDouble("totalAmount"));
+                        purchaseResponse.setCreatedBy(rs.getInt("createdBy"));
+                        purchaseResponse.setCreatedByUsername(rs.getString("username"));
+                        purchaseResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+
+                        // Initialize the list of purchase items
+                        purchaseResponse.setPurchaseItemsList(new ArrayList<>());
+
+                        // Put the purchaseResponse object into the map
+                        purchaseResponseMap.put(orderId, purchaseResponse);
+                    }
+
+                    // Add the current purchase item to the list
+                    PurchaseItemsResponse purchaseItem = new PurchaseItemsResponse();
+                    purchaseItem.setPurchaseItemId(rs.getInt("itemId"));
+                    purchaseItem.setPurchaseItemOrderId(rs.getString("itemOrderId"));
+                    purchaseItem.setProductId(rs.getInt("productId"));
+                    purchaseItem.setQuantity(rs.getInt("qty"));
+                    purchaseItem.setPurchasePrice(rs.getDouble("purchasePrice"));
+                    purchaseItem.setPurchaseItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("itemCreatedAt")));
+
+                    // Add item to the purchase order's item list
+                    purchaseResponse.getPurchaseItemsList().add(purchaseItem);
+                }
+
+                // Return all purchase orders with their associated items
+                return new ArrayList<>(purchaseResponseMap.values());
+            }
+        });
     }
 }
