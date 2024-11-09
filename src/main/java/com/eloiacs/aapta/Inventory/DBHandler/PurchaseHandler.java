@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -57,13 +58,14 @@ public class PurchaseHandler {
         });
     }
 
+    @Transactional
     public String insertPurchaseOrder(PurchaseOrderRequestModel purchaseOrderRequestModel, String createdBy, String invoiceUrl){
 
         String purchaseOrderId = generatePurchaseOrderId(findLastPurchaseOrderId());
 
         String insertPurchaseOrderQuery = "insert into purchaseOrder (orderId,supplier,gstAmount,gstPercentage,cgst,sgst,purchaseDate,invoiceId,invoiceUrl,totalAmount,createdby,createdAt) values (?,?,0,0,0,0,?,?,?,?,?,current_timestamp())";
         String insertPurchaseItemsQuery = "insert into purchaseItems(orderId, productId, qty, purchasePrice, createdAt) values(?,?,?,?,current_timestamp())";
-        String insertProductPriceQuery = "insert into productPrice(productId,category,subCategory,mrp,salesPrice,salesPercentage,wholesalePrice,wholesalePercentage,createdAt) values(?,?,?,?,?,?,?,?,current_timestamp())";
+        String insertProductPriceQuery = "insert into productPrice(productId,category,subCategory,size,mrp,salesPrice,salesPercentage,wholesalePrice,wholesalePercentage,createdAt) values(?,?,?,?,?,?,?,?,?,current_timestamp())";
         String insertInventoryQuery = "INSERT INTO inventory(productId, category, subCategory, size, count, isActive, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, true, ?, current_timestamp())";
         String updateInventoryQuery = "update inventory set count = count + ?, createdBy = ? where productId = ?";
         String checkInventoryExistQuery = "select count(*) from inventory where isActive = true and productId = ?";
@@ -141,50 +143,69 @@ public class PurchaseHandler {
                             wholesalesPrice = Math.min(wholesalesPrice, purchaseItem.getMrp());
                         }
 
-                        int insertedProductPrice = jdbcTemplate.update(insertProductPriceQuery,
-                                purchaseItem.getProductId(),
-                                productResponse.getCategoryId(),
-                                productResponse.getSubCategoryId(),
-                                purchaseItem.getMrp(),
-                                salesPrice,
-                                purchaseItem.getSalesPercentage(),
-                                wholesalesPrice,
-                                purchaseItem.getWholesalePercentage());
+                        String checkProductPriceExistQuery = "SELECT COUNT(*) FROM productPrice WHERE productId = ? AND category = ? AND subCategory = ? and size = ?";
+                        int productPriceExists = jdbcTemplate.queryForObject(checkProductPriceExistQuery, Integer.class, purchaseItem.getProductId(), productResponse.getCategoryId(), productResponse.getSubCategoryId(), productResponse.getSizeId());
 
-                        if (insertedProductPrice > 0){
+                        if (productPriceExists > 0) {
+                            String updateProductPriceQuery = "UPDATE productPrice SET mrp = ?, salesPrice = ?, salesPercentage = ?, wholesalePrice = ?, wholesalePercentage = ? WHERE productId = ? AND category = ? AND subCategory = ? and size = ?";
 
-                            int inventoryExists = jdbcTemplate.queryForObject(checkInventoryExistQuery,
-                                    Integer.class, purchaseItem.getProductId());
+                            jdbcTemplate.update(updateProductPriceQuery,
+                                    purchaseItem.getMrp(),
+                                    salesPrice,
+                                    purchaseItem.getSalesPercentage(),
+                                    wholesalesPrice,
+                                    purchaseItem.getWholesalePercentage(),
+                                    purchaseItem.getProductId(),
+                                    productResponse.getCategoryId(),
+                                    productResponse.getSubCategoryId(),
+                                    productResponse.getSizeId());
+                        } else {
+                            int insertedProductPrice = jdbcTemplate.update(insertProductPriceQuery,
+                                    purchaseItem.getProductId(),
+                                    productResponse.getCategoryId(),
+                                    productResponse.getSubCategoryId(),
+                                    productResponse.getSizeId(),
+                                    purchaseItem.getMrp(),
+                                    salesPrice,
+                                    purchaseItem.getSalesPercentage(),
+                                    wholesalesPrice,
+                                    purchaseItem.getWholesalePercentage());
 
-                            if (inventoryExists == 0){
+                            if (insertedProductPrice > 0){
 
-                                KeyHolder inventoryKeyHolder = new GeneratedKeyHolder();
+                                int inventoryExists = jdbcTemplate.queryForObject(checkInventoryExistQuery,
+                                        Integer.class, purchaseItem.getProductId());
 
-                                int insertedInventory = jdbcTemplate.update(connection -> {
-                                    PreparedStatement ps = connection.prepareStatement(insertInventoryQuery, new String[]{"id"});
-                                    ps.setInt(1,purchaseItem.getProductId());
-                                    ps.setInt(2,productResponse.getCategoryId());
-                                    ps.setInt(3,productResponse.getSubCategoryId());
-                                    ps.setInt(4,productResponse.getSizeId());
-                                    ps.setInt(5,purchaseItem.getQuantity());
-                                    ps.setString(6,createdBy);
-                                    return ps;
-                                        }, inventoryKeyHolder);
+                                if (inventoryExists == 0){
 
-                                if (insertedInventory > 0){
-                                    int inventoryId = inventoryKeyHolder.getKey().intValue();
+                                    KeyHolder inventoryKeyHolder = new GeneratedKeyHolder();
 
-                                    String insertInventoryEvent = "New product added to inventory";
-                                    int inventoryEventType = 9;
+                                    int insertedInventory = jdbcTemplate.update(connection -> {
+                                        PreparedStatement ps = connection.prepareStatement(insertInventoryQuery, new String[]{"id"});
+                                        ps.setInt(1,purchaseItem.getProductId());
+                                        ps.setInt(2,productResponse.getCategoryId());
+                                        ps.setInt(3,productResponse.getSubCategoryId());
+                                        ps.setInt(4,productResponse.getSizeId());
+                                        ps.setInt(5,purchaseItem.getQuantity());
+                                        ps.setString(6,createdBy);
+                                        return ps;
+                                    }, inventoryKeyHolder);
 
-                                    jdbcTemplate.update(eventInsertQuery, insertInventoryEvent, inventoryId, inventoryEventType, createdBy);
+                                    if (insertedInventory > 0){
+                                        int inventoryId = inventoryKeyHolder.getKey().intValue();
+
+                                        String insertInventoryEvent = "New product added to inventory";
+                                        int inventoryEventType = 9;
+
+                                        jdbcTemplate.update(eventInsertQuery, insertInventoryEvent, inventoryId, inventoryEventType, createdBy);
+                                    }
                                 }
-                            }
-                            else {
-                                jdbcTemplate.update(updateInventoryQuery,
-                                        purchaseItem.getQuantity(),
-                                        createdBy,
-                                        purchaseItem.getProductId());
+                                else {
+                                    jdbcTemplate.update(updateInventoryQuery,
+                                            purchaseItem.getQuantity(),
+                                            createdBy,
+                                            purchaseItem.getProductId());
+                                }
                             }
                         }
                     }

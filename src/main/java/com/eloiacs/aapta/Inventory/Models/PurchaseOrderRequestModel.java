@@ -11,6 +11,8 @@ public class PurchaseOrderRequestModel {
 
     private String invoiceId = null;
 
+    private String invoiceImage = null;
+
     private List<PurchaseRequestModel> purchaseItems = new ArrayList<>();
 
 
@@ -36,6 +38,14 @@ public class PurchaseOrderRequestModel {
 
     public void setInvoiceId(String invoiceId) {
         this.invoiceId = invoiceId;
+    }
+
+    public String getInvoiceImage() {
+        return invoiceImage;
+    }
+
+    public void setInvoiceImage(String invoiceImage) {
+        this.invoiceImage = invoiceImage;
     }
 
     public List<PurchaseRequestModel> getPurchaseItems() {
