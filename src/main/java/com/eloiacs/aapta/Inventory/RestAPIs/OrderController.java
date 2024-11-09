@@ -481,7 +481,7 @@ public class OrderController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/getHeldOrders", method = RequestMethod.POST)
+    @RequestMapping(value = "/getHoldOrders", method = RequestMethod.POST)
     public BaseResponse getHeldOrders(HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
@@ -580,6 +580,37 @@ public class OrderController {
             baseResponse.setCode(HttpStatus.FORBIDDEN.value());
             baseResponse.setStatus("Failed");
             baseResponse.setMessage("Please login again");
+        }
+
+        return baseResponse;
+    }
+
+    @RequestMapping(value = "/createOrder", method = RequestMethod.POST)
+    public BaseResponse createOrder(HttpServletRequest httpServletRequest) {
+        BaseResponse baseResponse = new BaseResponse();
+
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if (claims != null) {
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+
+            OrderResponse response = orderHandler.createOrderByCustomerd(createdBy);
+            baseResponse.setCode(HttpStatus.OK.value());
+            baseResponse.setData(response);
         }
 
         return baseResponse;
