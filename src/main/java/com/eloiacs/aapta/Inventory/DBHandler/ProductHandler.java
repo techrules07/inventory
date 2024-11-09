@@ -324,7 +324,7 @@ public class ProductHandler {
 
     public ProductResponse getProductById(int id){
 
-        String getProductByIdQuery = "select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true and pd.id = ? group by pd.id";
+        String getProductByIdQuery = "select pd.*, st.statusType as status, c.category_name, sc.subCategoryName, b.brandName, ut.unitName, ps.size as productSize, GROUP_CONCAT(bom.billOfMaterialProductId SEPARATOR ',') as billOfMaterialProductId, GROUP_CONCAT(bom.quantity SEPARATOR ',') as billOfMaterialQuantity, GROUP_CONCAT(bom.cost SEPARATOR ',') as billOfMaterialCost, GROUP_CONCAT(bomProduct.productName SEPARATOR ',') AS billOfMaterialProductName, fp.productName as freebieProductName, user.username as createdByUsername, GROUP_CONCAT(DISTINCT pi.imageUrl SEPARATOR ',') as images from products pd left join statusType st on st.id = pd.statusType left join category c on c.id = pd.category left join subcategory sc on sc.id = pd.subCategory left join brand b on b.id = pd.brand left join unitTable ut on ut.id = pd.unit left join productSize ps on ps.id = pd.size left join billOfMaterials bom on bom.productId = pd.id and bom.isActive = true left join products bomProduct ON billOfMaterialProductId = bomProduct.id left join products fp on fp.id = pd.freebieProduct left join users user on user.id = pd.createdBy left join productImages pi on pi.productId = pd.id and pi.isActive = true where pd.isActive = true and pd.id = ? group by pd.id";
 
         return jdbcTemplate.query(getProductByIdQuery, new Object[]{id}, new ResultSetExtractor<ProductResponse>() {
             @Override
@@ -345,6 +345,8 @@ public class ProductHandler {
                     productResponse.setBrand(rs.getString("brandName"));
                     productResponse.setUnitId(rs.getInt("unit"));
                     productResponse.setUnit(rs.getString("unitName"));
+                    productResponse.setSizeId(rs.getInt("size"));
+                    productResponse.setSize(rs.getString("productSize"));
                     productResponse.setMinPurchaseQuantity(rs.getInt("minPurchaseQuantity"));
                     productResponse.setBarcodeType(rs.getInt("barcodeType"));
                     productResponse.setBarcodeNo(rs.getString("barcodeNo"));
