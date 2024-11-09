@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -94,6 +95,22 @@ public class AWSConfig {
         }
 
         return filePaths;
+    }
+
+    public String uploadMultiPartFileToS3(File file) {
+
+        AmazonS3 s3 = setupS3Client(accessKey, secretKey);
+
+        PutObjectRequest request = new PutObjectRequest(bucketName, "appta/invoice/" + file.getName(), file);
+        PutObjectResult result = s3.putObject(request);
+
+        String fileName = s3.getUrl(bucketName, "appta/invoice/" + file.getName()).toString();
+
+        if (file.exists()) {
+            file.delete();
+        }
+
+        return fileName;
     }
 
 }

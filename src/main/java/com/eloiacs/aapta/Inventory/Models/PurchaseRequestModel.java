@@ -12,13 +12,9 @@ public class PurchaseRequestModel {
 
     private int salesPercentage = 0;
 
-    private int salesGstPercentage = 0;
-
     private double salesPrice = 0;
 
     private int wholesalePercentage = 0;
-
-    private int wholesaleGstPercentage = 0;
 
     private double wholesalePrice = 0;
 
@@ -63,14 +59,6 @@ public class PurchaseRequestModel {
         this.salesPercentage = salesPercentage;
     }
 
-    public int getSalesGstPercentage() {
-        return salesGstPercentage;
-    }
-
-    public void setSalesGstPercentage(int salesGstPercentage) {
-        this.salesGstPercentage = salesGstPercentage;
-    }
-
     public double getSalesPrice() {
         return salesPrice;
     }
@@ -85,14 +73,6 @@ public class PurchaseRequestModel {
 
     public void setWholesalePercentage(int wholesalePercentage) {
         this.wholesalePercentage = wholesalePercentage;
-    }
-
-    public int getWholesaleGstPercentage() {
-        return wholesaleGstPercentage;
-    }
-
-    public void setWholesaleGstPercentage(int wholesaleGstPercentage) {
-        this.wholesaleGstPercentage = wholesaleGstPercentage;
     }
 
     public double getWholesalePrice() {
