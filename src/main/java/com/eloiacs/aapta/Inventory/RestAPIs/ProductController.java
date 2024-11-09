@@ -180,13 +180,13 @@ public class ProductController {
                 }
             }
 
-//            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
-//            if (productNameExist){
-//                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-//                baseResponse.setStatus("Failed");
-//                baseResponse.setMessage("Product Name Already Exists");
-//                return baseResponse;
-//            }
+            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
+            if (productNameExist){
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Product Name Already Exists");
+                return baseResponse;
+            }
 
             Boolean statusTypeExist = productHandler.statusTypeExistById(productRequestModel.getStatusTypeId());
             if (!statusTypeExist){
@@ -421,13 +421,13 @@ public class ProductController {
                 return baseResponse;
             }
 
-//            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
-//            if (productNameExist){
-//                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-//                baseResponse.setStatus("Failed");
-//                baseResponse.setMessage("Product Name Already Exists");
-//                return baseResponse;
-//            }
+            Boolean productNameExist = productHandler.productExistByName(productRequestModel.getProductName());
+            if (productNameExist){
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Product Name Already Exists");
+                return baseResponse;
+            }
 
             Boolean statusTypeExist = productHandler.statusTypeExistById(productRequestModel.getStatusTypeId());
             if (!statusTypeExist){
