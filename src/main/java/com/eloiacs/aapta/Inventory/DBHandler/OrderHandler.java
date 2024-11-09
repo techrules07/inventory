@@ -5,6 +5,7 @@ import com.eloiacs.aapta.Inventory.Models.OrderItemsRequestModel;
 import com.eloiacs.aapta.Inventory.Models.OrderRequestModel;
 import com.eloiacs.aapta.Inventory.Responses.OrderItemsResponse;
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
+import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
 import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -472,4 +473,65 @@ public class OrderHandler {
 
         return count > 0;
     }
+
+    public OrderResponse createOrderByCustomerd(String createdBy) {
+
+        String query = "SELECT * FROM orders WHERE status=6 and createdBy='" + createdBy+ "'";
+
+        OrderResponse response = jdbcTemplate.query(query, new ResultSetExtractor<OrderResponse>() {
+            @Override
+            public OrderResponse extractData(ResultSet rs) throws SQLException, DataAccessException {
+                if (rs.next()) {
+                    OrderResponse response1 = new OrderResponse();
+                    response1.setOrderId(rs.getString("orderId"));
+                    response1.setCustomerId(rs.getString("customerId"));
+
+                    return response1;
+                }
+                return null;
+            }
+        });
+
+        if (response == null) {
+            String orderId = generateOrderId(findLastOrderId());
+
+            String insertOrderQuery = "insert into orders(orderId,status,createdBy) values(?,6,?)";
+
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            int orderInserted = jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(insertOrderQuery, new String[]{"id"});
+                ps.setString(1,orderId);
+                ps.setString(2,createdBy);
+                return ps;
+            },keyHolder);
+
+            if (orderInserted != 0 && keyHolder.getKey() != null){
+                int insertedOrderId = keyHolder.getKey().intValue();
+
+                String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+                String eventName = "New order created";
+                int eventType = 7;
+
+                jdbcTemplate.update(eventInsertQuery, eventName, insertedOrderId, eventType, createdBy);
+            }
+
+            return getOrderByOrderId(orderId);
+        }
+        else {
+            return response;
+        }
+    }
+
+    public boolean checkCreatedOrder(String createdById) {
+
+        String query = "SELECT * FROM orders WHERE status=6";
+        return Boolean.TRUE.equals(jdbcTemplate.query(query, new ResultSetExtractor<Boolean>() {
+            @Override
+            public Boolean extractData(ResultSet rs) throws SQLException, DataAccessException {
+                return rs.next();
+            }
+        }));
+    }
+
 }

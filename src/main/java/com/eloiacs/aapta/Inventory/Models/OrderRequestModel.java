@@ -6,6 +6,8 @@ public class OrderRequestModel {
 
     private String customerId = null;
 
+    private String createBy = null;
+
 
     public String getOrderId() {
         return orderId;
@@ -21,5 +23,13 @@ public class OrderRequestModel {
 
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
+    }
+
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
     }
 }

@@ -63,6 +63,12 @@ public class ProductResponse {
 
     private String createdBy = null;
 
+    private double mrp = 0;
+    private double wholesalePrice = 0;
+    private double wholsesalePercentage = 0;
+    private double retailPrice = 0;
+    private double retailPercentage = 0;
+
 
     public int getProductId() {
         return productId;
@@ -294,5 +300,45 @@ public class ProductResponse {
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public double getMrp() {
+        return mrp;
+    }
+
+    public void setMrp(double mrp) {
+        this.mrp = mrp;
+    }
+
+    public double getWholesalePrice() {
+        return wholesalePrice;
+    }
+
+    public void setWholesalePrice(double wholesalePrice) {
+        this.wholesalePrice = wholesalePrice;
+    }
+
+    public double getWholsesalePercentage() {
+        return wholsesalePercentage;
+    }
+
+    public void setWholsesalePercentage(double wholsesalePercentage) {
+        this.wholsesalePercentage = wholsesalePercentage;
+    }
+
+    public double getRetailPrice() {
+        return retailPrice;
+    }
+
+    public void setRetailPrice(double retailPrice) {
+        this.retailPrice = retailPrice;
+    }
+
+    public double getRetailPercentage() {
+        return retailPercentage;
+    }
+
+    public void setRetailPercentage(double retailPercentage) {
+        this.retailPercentage = retailPercentage;
     }
 }
