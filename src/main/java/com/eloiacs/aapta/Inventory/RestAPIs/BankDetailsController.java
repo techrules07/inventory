@@ -160,6 +160,15 @@ public class BankDetailsController {
                 }
             }
 
+            BankDetailsResponseModel bankDetailsResponseModel = bankDetailsHandler.getBankDetailsById(model.getId());
+
+            if (bankDetailsResponseModel == null) {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Bank Details Id Does Not Exist");
+                return baseResponse;
+            }
+
             Boolean bank = bankDetailsHandler.updateBankDetails(model);
 
             if (bank) {

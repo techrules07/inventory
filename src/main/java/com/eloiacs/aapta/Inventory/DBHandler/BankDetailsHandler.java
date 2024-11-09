@@ -132,27 +132,20 @@ public class BankDetailsHandler {
         return rowsAffected > 0;
     }
 
-    public BankDetailsResponseModel getBankDetailsById(int id) {
-        String query = "SELECT bd.customerId, ac.customerId as customerIdName, bd.name, ac.customerName, bd.accountNo, bd.branch, bd.ifscCode, bd.gstNo, bd.customerType, ct.customerType as customerTypeName, bd.isActive, bd.createdBy, bd.createdAt " +
-                "FROM bankDetails bd " +
-                "INNER JOIN customerType ct ON bd.customerType = ct.id " +
-                "INNER JOIN apptaCustomers ac ON bd.customerId = ac.customerId " +
-                "WHERE bd.id = ?";
+    public BankDetailsResponseModel getBankDetailsById(int id){
 
-        return jdbcTemplate.query(query, new PreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps) throws SQLException {
-                ps.setInt(1, id);
-            }
-        }, new ResultSetExtractor<BankDetailsResponseModel>() {
+       String query = "select bd.customerId,ac.customerId as customerIdCode,ac.customerName, bd.name as bankName,bd.accountNo,bd.branch,bd.ifscCode,bd.gstNo,bd.customerType,ct.customerType as customerTypeName ,bd.isActive,bd.createdBy,bd.createdAt from bankDetails bd left join customerType ct on bd.customerType=ct.id left join apptaCustomers ac on bd.customerId=ac.customerId  where bd.id=? ";
+
+        return jdbcTemplate.query(query, new Object[]{id}, new ResultSetExtractor<BankDetailsResponseModel>() {
             @Override
             public BankDetailsResponseModel extractData(ResultSet rs) throws SQLException, DataAccessException {
-                if (rs.next()) {
+                if(rs.next()){
                     BankDetailsResponseModel response = new BankDetailsResponseModel();
+
                     response.setCustomerId(rs.getInt("customerId"));
-                    response.setCustomerIdCode(rs.getString("customerIdName"));
+                    response.setCustomerIdCode(rs.getString("customerIdCode"));
                     response.setCustomerName(rs.getString("customerName"));
-                    response.setBankName(rs.getString("name"));
+                    response.setBankName(rs.getString("bankName"));
                     response.setAccountNo(rs.getString("accountNo"));
                     response.setBranch(rs.getString("branch"));
                     response.setIfscCode(rs.getString("ifscCode"));
@@ -162,6 +155,8 @@ public class BankDetailsHandler {
                     response.setActive(rs.getBoolean("isActive"));
                     response.setCreatedBy(rs.getString("createdBy"));
                     response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+
+
                     return response;
                 }
                 return null;
