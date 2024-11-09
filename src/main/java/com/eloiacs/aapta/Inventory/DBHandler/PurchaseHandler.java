@@ -65,7 +65,7 @@ public class PurchaseHandler {
 
         String insertPurchaseOrderQuery = "insert into purchaseOrder (orderId,supplier,gstAmount,gstPercentage,cgst,sgst,purchaseDate,invoiceId,invoiceUrl,totalAmount,createdby,createdAt) values (?,?,0,0,0,0,?,?,?,?,?,current_timestamp())";
         String insertPurchaseItemsQuery = "insert into purchaseItems(orderId, productId, qty, purchasePrice, createdAt) values(?,?,?,?,current_timestamp())";
-        String insertProductPriceQuery = "insert into productPrice(productId,category,subCategory,mrp,salesPrice,salesPercentage,wholesalePrice,wholesalePercentage,createdAt) values(?,?,?,?,?,?,?,?,current_timestamp())";
+        String insertProductPriceQuery = "insert into productPrice(productId,category,subCategory,size,mrp,salesPrice,salesPercentage,wholesalePrice,wholesalePercentage,createdAt) values(?,?,?,?,?,?,?,?,?,current_timestamp())";
         String insertInventoryQuery = "INSERT INTO inventory(productId, category, subCategory, size, count, isActive, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, true, ?, current_timestamp())";
         String updateInventoryQuery = "update inventory set count = count + ?, createdBy = ? where productId = ?";
         String checkInventoryExistQuery = "select count(*) from inventory where isActive = true and productId = ?";
@@ -143,11 +143,11 @@ public class PurchaseHandler {
                             wholesalesPrice = Math.min(wholesalesPrice, purchaseItem.getMrp());
                         }
 
-                        String checkProductPriceExistQuery = "SELECT COUNT(*) FROM productPrice WHERE productId = ? AND category = ? AND subCategory = ?";
-                        int productPriceExists = jdbcTemplate.queryForObject(checkProductPriceExistQuery, Integer.class, purchaseItem.getProductId(), productResponse.getCategoryId(), productResponse.getSubCategoryId());
+                        String checkProductPriceExistQuery = "SELECT COUNT(*) FROM productPrice WHERE productId = ? AND category = ? AND subCategory = ? and size = ?";
+                        int productPriceExists = jdbcTemplate.queryForObject(checkProductPriceExistQuery, Integer.class, purchaseItem.getProductId(), productResponse.getCategoryId(), productResponse.getSubCategoryId(), productResponse.getSizeId());
 
                         if (productPriceExists > 0) {
-                            String updateProductPriceQuery = "UPDATE productPrice SET mrp = ?, salesPrice = ?, salesPercentage = ?, wholesalePrice = ?, wholesalePercentage = ? WHERE productId = ? AND category = ? AND subCategory = ?";
+                            String updateProductPriceQuery = "UPDATE productPrice SET mrp = ?, salesPrice = ?, salesPercentage = ?, wholesalePrice = ?, wholesalePercentage = ? WHERE productId = ? AND category = ? AND subCategory = ? and size = ?";
 
                             jdbcTemplate.update(updateProductPriceQuery,
                                     purchaseItem.getMrp(),
@@ -157,12 +157,14 @@ public class PurchaseHandler {
                                     purchaseItem.getWholesalePercentage(),
                                     purchaseItem.getProductId(),
                                     productResponse.getCategoryId(),
-                                    productResponse.getSubCategoryId());
+                                    productResponse.getSubCategoryId(),
+                                    productResponse.getSizeId());
                         } else {
                             int insertedProductPrice = jdbcTemplate.update(insertProductPriceQuery,
                                     purchaseItem.getProductId(),
                                     productResponse.getCategoryId(),
                                     productResponse.getSubCategoryId(),
+                                    productResponse.getSizeId(),
                                     purchaseItem.getMrp(),
                                     salesPrice,
                                     purchaseItem.getSalesPercentage(),
