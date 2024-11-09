@@ -64,7 +64,7 @@ public class BankDetailsHandler {
 
     public List<BankDetailsResponseModel> getBankDetails(String customerName){
 
-        StringBuilder  query= new StringBuilder("select bd.id,bd.customerId,ac.customerId as customerIdCode,ac.customerName, bd.name as bankName,bd.accountNo,bd.branch,bd.ifscCode,bd.gstNo,bd.customerType,ct.customerType as customerTypeName ,bd.isActive,bd.createdBy,bd.createdAt from bankDetails bd left join customerType ct on bd.customerType=ct.id left join apptaCustomers ac on bd.customerId=ac.customerId  where isActive=true ");
+        StringBuilder  query= new StringBuilder("select bd.id,bd.customerId,ac.customerId as customerIdCode,ac.customerName, bd.name as bankName,bd.accountNo,bd.branch,bd.ifscCode,bd.gstNo,bd.customerType,ct.customerType as customerTypeName ,bd.isActive,bd.createdBy,bd.createdAt from bankDetails bd left join customerType ct on bd.customerType=ct.id left join apptaCustomers ac on bd.customerId=ac.id  where isActive=true ");
 
             if (customerName != null && !customerName.trim().isEmpty()) {
                 query.append(" and LOWER(bd.name) LIKE LOWER(?) ");
