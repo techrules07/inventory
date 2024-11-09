@@ -12,9 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
@@ -43,11 +41,8 @@ public class PurchaseController {
     @Autowired
     PurchaseHandler purchaseHandler;
 
-    @RequestMapping(value = "/addPurchase", method = RequestMethod.POST/*,consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}*/)
-    public BaseResponse addPurchase(
-//            @RequestParam(value = "invoice", required = false) MultipartFile invoice,
-//                                    @ModelAttribute
-                                    @RequestBody PurchaseOrderRequestModel purchaseOrderRequestModel,
+    @RequestMapping(value = "/addPurchase", method = RequestMethod.POST)
+    public BaseResponse addPurchase(@RequestBody PurchaseOrderRequestModel purchaseOrderRequestModel,
                                     HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
@@ -72,9 +67,9 @@ public class PurchaseController {
 
             String filePath = "";
 
-//            if (invoice != null && !invoice.isEmpty()) {
-//                filePath = awsConfig.uploadMultiPartFileToS3(Utils.convertMultipartToFile(invoice));
-//            }
+            if (purchaseOrderRequestModel.getInvoiceImage()!=null && !purchaseOrderRequestModel.getInvoiceImage().isEmpty()){
+                filePath = awsConfig.uploadBase64ImageToS3(purchaseOrderRequestModel.getInvoiceImage(), purchaseOrderRequestModel.getInvoiceId());
+            }
 
             String purchaseOrderId = purchaseHandler.insertPurchaseOrder(purchaseOrderRequestModel, createdBy, filePath);
 
