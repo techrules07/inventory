@@ -34,39 +34,6 @@ public class ProductHandler {
 
         int sizeId;
 
-//        if (productRequestModel.getManualSize()) {
-//            // Get the manual size value from the request
-//            int manualSizeValue = productRequestModel.getSizeId();  // Assuming user manual input is stored in description
-//
-//            // Query to check if the size already exists
-//            String selectSizeQuery = "SELECT id FROM productSize WHERE size = ?";
-//            List<Integer> existingSizeIds = jdbcTemplate.queryForList(selectSizeQuery, new Object[]{manualSizeValue}, Integer.class);
-//
-//            if (existingSizeIds.isEmpty()) {
-//                // If the size doesn't exist, insert it into the productSize table
-//                String insertSizeQuery = "INSERT INTO productSize(size, createdBy, modifiedBy) VALUES(?, ?, ?)";
-//                KeyHolder sizeKeyHolder = new GeneratedKeyHolder();
-//
-//                jdbcTemplate.update(connection -> {
-//                    PreparedStatement ps = connection.prepareStatement(insertSizeQuery, new String[]{"id"});
-//                    ps.setInt(1, manualSizeValue); // Set the manual size value
-//                    ps.setString(2, createdBy);
-//                    ps.setString(3, createdBy);
-//                    return ps;
-//                }, sizeKeyHolder);
-//
-//                // Retrieve the generated ID of the new size
-//                sizeId = sizeKeyHolder.getKey().intValue();
-//            } else {
-//                // If the size already exists, use the first existing size ID
-//                sizeId = existingSizeIds.get(0);
-//            }
-//        } else {
-//            // If no manual size is provided, use the selected sizeId from the request model
-//            sizeId = productRequestModel.getSizeId();
-//        }
-
-
         // If size is manually entered by the user
         if (productRequestModel.getManualSize()) {
             int manualSizeValue = productRequestModel.getSizeId();  // Assuming sizeId is the manual input
