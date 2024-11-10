@@ -44,7 +44,7 @@ public class CSVReaderService {
 
     public void csvToDbProduct(List<ExcelItem> items){
 
-        String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,quantity,minPurchaseQuantity,barcodeType,barcodeNo,description,purchasePrice,gstPercentage,salesPrice,mrp,wholesalePrice,wholesaleGSTPercentage,threshold,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,current_timestamp(),?)";
+        String insertProductQuery = "insert into products(productName,statusType,category,subCategory,brand,unit,minPurchaseQuantity,barcodeType,barcodeNo,description,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,current_timestamp(),?)";
 
         for(ExcelItem item : items){
 
@@ -64,16 +64,8 @@ public class CSVReaderService {
                     item.getUnit(),
                     1,
                     1,
-                    1,
                     item.getMfgBarcode(),
                     item.getDescription(),
-                    item.getPRate(),
-                    10,
-                    item.getSRate(),
-                    item.getMRP(),
-                    wholesalesPrice,
-                    2,
-                    1,
                     0,
                     0,
                     0,
