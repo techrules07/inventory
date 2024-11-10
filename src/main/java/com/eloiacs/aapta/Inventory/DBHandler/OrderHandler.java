@@ -111,7 +111,7 @@ public class OrderHandler {
         }
 
         String insertOrderItemQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
-        String updateOrderItemQuery = "update orderItems set quantity = ?, totalAmount = ? where orderId = ? and productId = ?";
+        String updateOrderItemQuery = "update orderItems set unitPrice = ?, quantity = ?, totalAmount = ? where orderId = ? and productId = ?";
         String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -134,6 +134,7 @@ public class OrderHandler {
             }
 
             int updateOrderItem = jdbcTemplate.update(updateOrderItemQuery,
+                    response.getWholesalePrice(),
                     quantity,
                     totalAmount,
                     orderItemsRequestModel.getOrderId(),
@@ -159,9 +160,9 @@ public class OrderHandler {
                 PreparedStatement ps = connection.prepareStatement(insertOrderItemQuery, new String[]{"id"});
                 ps.setString(1,orderItemsRequestModel.getOrderId());
                 ps.setInt(2,orderItemsRequestModel.getProductId());
-                ps.setDouble(3, amount);
+                ps.setDouble(3, response.getWholesalePrice());
                 ps.setInt(4, finalQuantity);
-                ps.setDouble(5, response.getWholesalePrice() * finalQuantity);
+                ps.setDouble(5, amount);
                 ps.setInt(6, orderItemsRequestModel.getDiscount());
                 ps.setString(7, createdBy);
                 return ps;
