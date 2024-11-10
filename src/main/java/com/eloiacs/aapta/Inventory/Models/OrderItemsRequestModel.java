@@ -1,5 +1,7 @@
 package com.eloiacs.aapta.Inventory.Models;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 public class OrderItemsRequestModel {
 
     private String orderId = null;
@@ -9,6 +11,8 @@ public class OrderItemsRequestModel {
     private int discount = 0;
 
     private int quantity = 0;
+
+    private Boolean manuallyEntered = false;
 
 
     public String getOrderId() {
@@ -41,5 +45,13 @@ public class OrderItemsRequestModel {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public Boolean isManuallyEntered() {
+        return manuallyEntered;
+    }
+
+    public void setManuallyEntered(boolean manuallyEntered) {
+        this.manuallyEntered = manuallyEntered;
     }
 }
