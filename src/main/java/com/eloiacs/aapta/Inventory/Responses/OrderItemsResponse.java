@@ -24,6 +24,11 @@ public class OrderItemsResponse {
 
     private String orderItemCreatedAt = null;
 
+    private String category = null;
+    private String subCategory = null;
+    private String size = null;
+    private String unit = null;
+
 
     public int getOrderItemId() {
         return orderItemId;
@@ -111,5 +116,37 @@ public class OrderItemsResponse {
 
     public void setOrderItemCreatedAt(String orderItemCreatedAt) {
         this.orderItemCreatedAt = orderItemCreatedAt;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getSubCategory() {
+        return subCategory;
+    }
+
+    public void setSubCategory(String subCategory) {
+        this.subCategory = subCategory;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 }
