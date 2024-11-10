@@ -6,8 +6,6 @@ public class OrderItemsRequestModel {
 
     private int productId = 0;
 
-    private double unitPrice = 0;
-
     private int discount = 0;
 
     private int quantity = 0;
@@ -27,14 +25,6 @@ public class OrderItemsRequestModel {
 
     public void setProductId(int productId) {
         this.productId = productId;
-    }
-
-    public double getUnitPrice() {
-        return unitPrice;
-    }
-
-    public void setUnitPrice(double unitPrice) {
-        this.unitPrice = unitPrice;
     }
 
     public int getDiscount() {
