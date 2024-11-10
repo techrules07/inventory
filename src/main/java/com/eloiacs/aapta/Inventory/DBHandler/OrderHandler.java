@@ -505,12 +505,33 @@ public class OrderHandler {
         }));
     }
 
-    public OrderResponse completeOrder(String orderId, String paymentType) {
+    public OrderResponse completeOrder(String orderId, String paymentType, String createdBy) {
         String query = "UPDATE orders SET status=7, paymentType='" + paymentType + "' WHERE orderId = '" + orderId + "'";
+        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
 
-        jdbcTemplate.update(query);
+        OrderResponse orderResponse = getOrderByOrderId(orderId);
+        int orderUpdated = jdbcTemplate.update(query);
 
-        return getOrderByOrderId(orderId);
+        if (orderUpdated > 0){
+
+            for (OrderItemsResponse orderItem : orderResponse.getOrderItems()){
+                String updateInventoryQuery = "UPDATE inventory SET count = count - ? WHERE productId = ?";
+
+                jdbcTemplate.update(updateInventoryQuery,
+                        orderItem.getQuantity(),
+                        orderItem.getProductId());
+
+                String inventoryCountEventName = "Inventory count decreased";
+                int inventoryCountEventType = 9;
+
+                String getInventoryIdQuery = "select id from inventory where productId = ?";
+                int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{orderItem.getProductId()}, Integer.class);
+
+                jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);
+            }
+        }
+
+        return orderResponse;
     }
 
 }

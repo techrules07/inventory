@@ -607,29 +607,72 @@ public class OrderController {
             }
 
             OrderResponse response = orderHandler.createOrderByCustomerId(createdBy);
-            baseResponse.setCode(HttpStatus.OK.value());
-            baseResponse.setData(response);
+            if (response != null){
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setMessage("Order successfully created");
+                baseResponse.setData(response);
+            }
+            else {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Order failed to create");
+            }
+        }
+        else {
+            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
         }
 
         return baseResponse;
     }
 
     @RequestMapping(value = "/completeOrder", method = RequestMethod.POST)
-    public BaseResponse completeOrder(HttpServletRequest httpServletRequest, @RequestParam("orderId") String orderId, @RequestParam("paymentType") String paymentType) {
+    public BaseResponse completeOrder(HttpServletRequest httpServletRequest,
+                                      @RequestParam("orderId") String orderId,
+                                      @RequestParam("paymentType") String paymentType) {
 
-        BaseResponse response = new BaseResponse();
-        OrderResponse orderResponse = orderHandler.completeOrder(orderId, paymentType);
+        BaseResponse baseResponse = new BaseResponse();
 
-        if (orderResponse != null) {
-            response.setCode(HttpStatus.OK.value());
-            response.setData(orderResponse);
-            pdfHanlder.generatePDFForOrders(orderResponse);
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if (claims != null) {
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+
+            OrderResponse orderResponse = orderHandler.completeOrder(orderId, paymentType, createdBy);
+
+            if (orderResponse != null) {
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setData(orderResponse);
+                pdfHanlder.generatePDFForOrders(orderResponse);
+            }
+            else {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Order Not available");
+            }
+        }else {
+            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
         }
-        else {
-            response.setCode(HttpStatus.NO_CONTENT.value());
-            response.setMessage("Order Not available");
-        }
 
-        return response;
+        return baseResponse;
     }
 }
