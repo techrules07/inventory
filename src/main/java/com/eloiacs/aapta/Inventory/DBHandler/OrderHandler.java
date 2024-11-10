@@ -14,10 +14,12 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -26,6 +28,9 @@ public class OrderHandler {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    ProductHandler productHandler;
 
     public String generateOrderId(int previousId) {
         Date date = new Date();
@@ -96,10 +101,17 @@ public class OrderHandler {
         return true;
     }
 
-    public Boolean addOrderItem(OrderItemsRequestModel orderItemsRequestModel, String createdBy){
+    @Transactional
+    public OrderResponse addOrderItem(OrderItemsRequestModel orderItemsRequestModel, String createdBy){
+
+        ProductResponse response = productHandler.getProductById(orderItemsRequestModel.getProductId());
+
+        if (response == null) {
+            return getOrderByOrderId(orderItemsRequestModel.getOrderId());
+        }
 
         String insertOrderItemQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
-        String updateOrderItemQuery = "update orderItems set quantity = ?, totalAmount = ? where orderId = ? and productId = ?";
+        String updateOrderItemQuery = "update orderItems set unitPrice = ?, quantity = ?, totalAmount = ? where orderId = ? and productId = ?";
         String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -114,42 +126,21 @@ public class OrderHandler {
 
             int quantity = existingQuantity + 1;
             if (orderItemsRequestModel.getQuantity()!=0){
-                quantity = existingQuantity + orderItemsRequestModel.getQuantity();
+                quantity = orderItemsRequestModel.getQuantity();
             }
-            double totalAmount = Math.round(orderItemsRequestModel.getUnitPrice() * quantity);
+            double totalAmount = Math.round(response.getWholesalePrice() * quantity);
             if (orderItemsRequestModel.getDiscount() != 0){
                 totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
             }
 
             int updateOrderItem = jdbcTemplate.update(updateOrderItemQuery,
+                    response.getWholesalePrice(),
                     quantity,
                     totalAmount,
                     orderItemsRequestModel.getOrderId(),
                     orderItemsRequestModel.getProductId());
 
-            if (updateOrderItem != 0){
-                String updateInventoryQuery = "UPDATE inventory SET count = count - ? WHERE productId = ?";
-
-                int count = 1;
-                if (orderItemsRequestModel.getQuantity()!=0){
-                    count = orderItemsRequestModel.getQuantity();
-                }
-
-                jdbcTemplate.update(updateInventoryQuery,
-                        count,
-                        orderItemsRequestModel.getProductId());
-
-                String inventoryCountEventName = "Inventory count decreased";
-                int inventoryCountEventType = 9;
-
-                String getInventoryIdQuery = "select id from inventory where productId = ?";
-                int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{orderItemsRequestModel.getProductId()}, Integer.class);
-
-                jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);
-            }
-            else {
-                return false;
-            }
+            return getOrderByOrderId(orderItemsRequestModel.getOrderId());
 
         } else {
 
@@ -157,7 +148,7 @@ public class OrderHandler {
             if (orderItemsRequestModel.getQuantity()!=0){
                 quantity = orderItemsRequestModel.getQuantity();
             }
-            double totalAmount = Math.round(orderItemsRequestModel.getUnitPrice() * quantity);
+            double totalAmount = Math.round(response.getWholesalePrice() * quantity);
             if (orderItemsRequestModel.getDiscount() != 0){
                 totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
             }
@@ -169,7 +160,7 @@ public class OrderHandler {
                 PreparedStatement ps = connection.prepareStatement(insertOrderItemQuery, new String[]{"id"});
                 ps.setString(1,orderItemsRequestModel.getOrderId());
                 ps.setInt(2,orderItemsRequestModel.getProductId());
-                ps.setDouble(3,orderItemsRequestModel.getUnitPrice());
+                ps.setDouble(3, response.getWholesalePrice());
                 ps.setInt(4, finalQuantity);
                 ps.setDouble(5, amount);
                 ps.setInt(6, orderItemsRequestModel.getDiscount());
@@ -186,31 +177,11 @@ public class OrderHandler {
 
                 jdbcTemplate.update(eventInsertQuery, eventName, insertedOrderItemId, eventType, createdBy);
 
-                String updateInventoryQuery = "UPDATE inventory SET count = count - ? WHERE productId = ?";
-
-                int count = 1;
-                if (orderItemsRequestModel.getQuantity()!=0){
-                    count = orderItemsRequestModel.getQuantity();
-                }
-
-                jdbcTemplate.update(updateInventoryQuery,
-                        count,
-                        orderItemsRequestModel.getProductId());
-
-                String inventoryCountEventName = "Inventory count decreased";
-                int inventoryCountEventType = 9;
-
-                String getInventoryIdQuery = "select id from inventory where productId = ?";
-                int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{orderItemsRequestModel.getProductId()}, Integer.class);
-
-                jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);
-            }
-            else {
-                return false;
+                return getOrderByOrderId(orderItemsRequestModel.getOrderId());
             }
         }
 
-        return true;
+        return getOrderByOrderId(orderItemsRequestModel.getOrderId());
     }
 
     public Boolean holdOrder(String orderId){
@@ -448,7 +419,7 @@ public class OrderHandler {
                     orderResponse.setTotalUnitPrice(totalUnitPrice);
                     orderResponse.setTotalPrice(totalPrice);
                     orderResponse.setTotalAmount(totalAmount);
-                    orderResponse.setTotalDiscount(totalDiscount);
+                    orderResponse.setTotalDiscount(Double.parseDouble(new DecimalFormat("##.##").format(totalDiscount)));
                 }
 
                 return orderResponse;
@@ -474,7 +445,7 @@ public class OrderHandler {
         return count > 0;
     }
 
-    public OrderResponse createOrderByCustomerd(String createdBy) {
+    public OrderResponse createOrderByCustomerId(String createdBy) {
 
         String query = "SELECT * FROM orders WHERE status=6 and createdBy='" + createdBy+ "'";
 
@@ -532,6 +503,14 @@ public class OrderHandler {
                 return rs.next();
             }
         }));
+    }
+
+    public OrderResponse completeOrder(String orderId, String paymentType) {
+        String query = "UPDATE orders SET status=7, paymentType='" + paymentType + "' WHERE orderId = '" + orderId + "'";
+
+        jdbcTemplate.update(query);
+
+        return getOrderByOrderId(orderId);
     }
 
 }

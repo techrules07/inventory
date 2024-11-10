@@ -64,9 +64,13 @@ public class ProductResponse {
     private String createdBy = null;
 
     private double mrp = 0;
+
     private double wholesalePrice = 0;
+
     private double wholsesalePercentage = 0;
+
     private double retailPrice = 0;
+
     private double retailPercentage = 0;
 
 

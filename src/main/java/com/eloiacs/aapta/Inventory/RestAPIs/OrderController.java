@@ -44,6 +44,9 @@ public class OrderController {
     @Autowired
     PaymentsHandler paymentsHandler;
 
+    @Autowired
+    PDFHandler pdfHanlder;
+
     @RequestMapping(value = "/addOrder", method = RequestMethod.POST)
     public BaseResponse addOrder(@RequestBody OrderRequestModel orderRequestModel,
                                  HttpServletRequest httpServletRequest){
@@ -194,12 +197,6 @@ public class OrderController {
                 baseResponse.setMessage("Product Id cannot be zero");
                 return baseResponse;
             }
-            if (orderItemsRequestModel.getUnitPrice() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Product Unit Price cannot be zero");
-                return baseResponse;
-            }
 
             Boolean orderIdExist = orderHandler.orderExistByOrderId(orderItemsRequestModel.getOrderId());
             if (!orderIdExist) {
@@ -225,12 +222,13 @@ public class OrderController {
                 return baseResponse;
             }
 
-            Boolean responseStatus = orderHandler.addOrderItem(orderItemsRequestModel, createdBy);
+            OrderResponse responseStatus = orderHandler.addOrderItem(orderItemsRequestModel, createdBy);
 
-            if(responseStatus){
+            if(responseStatus != null){
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
                 baseResponse.setMessage("OrderItem Added Successfully");
+                baseResponse.setData(responseStatus);
             } else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
@@ -608,11 +606,30 @@ public class OrderController {
                 }
             }
 
-            OrderResponse response = orderHandler.createOrderByCustomerd(createdBy);
+            OrderResponse response = orderHandler.createOrderByCustomerId(createdBy);
             baseResponse.setCode(HttpStatus.OK.value());
             baseResponse.setData(response);
         }
 
         return baseResponse;
+    }
+
+    @RequestMapping(value = "/completeOrder", method = RequestMethod.POST)
+    public BaseResponse completeOrder(HttpServletRequest httpServletRequest, @RequestParam("orderId") String orderId, @RequestParam("paymentType") String paymentType) {
+
+        BaseResponse response = new BaseResponse();
+        OrderResponse orderResponse = orderHandler.completeOrder(orderId, paymentType);
+
+        if (orderResponse != null) {
+            response.setCode(HttpStatus.OK.value());
+            response.setData(orderResponse);
+            pdfHanlder.generatePDFForOrders(orderResponse);
+        }
+        else {
+            response.setCode(HttpStatus.NO_CONTENT.value());
+            response.setMessage("Order Not available");
+        }
+
+        return response;
     }
 }
