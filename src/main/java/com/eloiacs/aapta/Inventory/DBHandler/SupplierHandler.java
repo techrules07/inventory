@@ -135,11 +135,14 @@ public class SupplierHandler {
                 if(rs.next()){
                     SupplierResponseModel response = new SupplierResponseModel();
 
+
                     response.setSupplierCode(rs.getString("supplierCode"));
+                    response.setName(rs.getString("name"));
                     response.setEmail(rs.getString("email"));
                     response.setAltEmail(rs.getString("altEmail"));
                     response.setPhone(rs.getString("phone"));
                     response.setAltPhone(rs.getString("altPhone"));
+                    response.setStatus(rs.getBoolean("staus"));
                     response.setCreatedBy(rs.getString("createdBy"));
                     response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
 
