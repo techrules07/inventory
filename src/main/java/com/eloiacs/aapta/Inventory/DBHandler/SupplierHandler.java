@@ -142,7 +142,6 @@ public class SupplierHandler {
                     response.setAltEmail(rs.getString("altEmail"));
                     response.setPhone(rs.getString("phone"));
                     response.setAltPhone(rs.getString("altPhone"));
-                    response.setStatus(rs.getBoolean("staus"));
                     response.setCreatedBy(rs.getString("createdBy"));
                     response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
 
