@@ -384,6 +384,7 @@ public class OrderHandler {
 
         String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
 
+        System.out.println(getOrderByOrderIdQuery);
         return jdbcTemplate.query(getOrderByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<OrderResponse>() {
             @Override
             public OrderResponse extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -542,6 +543,7 @@ public class OrderHandler {
         if (orderUpdated > 0){
 
             for (OrderItemsResponse orderItem : orderResponse.getOrderItems()){
+                System.out.println(orderItem.getProductId());
                 String updateInventoryQuery = "UPDATE inventory SET count = count - ? WHERE productId = ?";
 
                 jdbcTemplate.update(updateInventoryQuery,
@@ -552,6 +554,7 @@ public class OrderHandler {
                 int inventoryCountEventType = 9;
 
                 String getInventoryIdQuery = "select id from inventory where productId = ?";
+                System.out.println("select id from inventory where productId = '" + orderItem.getProductId() + "'");
                 int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{orderItem.getProductId()}, Integer.class);
 
                 jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);

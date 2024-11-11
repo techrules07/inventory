@@ -413,22 +413,20 @@ public class PDFHandler {
             totalItemsCell.addElement(totalItemsTable);
             discountTableMain.addCell(totalItemsCell);
 
-            PdfPCell totalAmount = new PdfPCell();
-            totalAmount.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            PdfPCell totalAmountCell = new PdfPCell();
+            totalAmountCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             PdfPTable totalAMountTable = new PdfPTable(2);
             totalAMountTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
             totalAMountTable.setLockedWidth(true);
             totalAMountTable.setTotalWidth(new float[]{100, 80});
-            PdfPCell totalAmountStatic = new PdfPCell(new Paragraph("Total Amount", level4));
-            PdfPCell totalAmountDynamic = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().size()), level4Bold));
+            PdfPCell totalAmountStatic = new PdfPCell(new Paragraph("Amount", level4));
+            PdfPCell totalAmountDynamic = new PdfPCell(new Paragraph(String.valueOf(response.getTotalUnitPrice()), level4Bold));
             totalAmountDynamic.setHorizontalAlignment(Element.ALIGN_RIGHT);
 
-            totalItemsTable.addCell(totalAmountStatic);
-            totalItemsTable.addCell(totalAmountDynamic);
-            totalItemsCell.addElement(totalItemsTable);
-
-            discountTableMain.addCell(totalItemsCell);
-            discountTableMain.addCell(totalAmount);
+            totalAMountTable.addCell(totalAmountStatic);
+            totalAMountTable.addCell(totalAmountDynamic);
+            totalAmountCell.addElement(totalAMountTable);
+            discountTableMain.addCell(totalAmountCell);
 
             pdfPCell.addElement(discountTableMain);
             table.addCell(pdfPCell);
