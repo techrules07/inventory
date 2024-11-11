@@ -1,6 +1,5 @@
 package com.eloiacs.aapta.Inventory.Models;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 public class OrderItemsRequestModel {
 
