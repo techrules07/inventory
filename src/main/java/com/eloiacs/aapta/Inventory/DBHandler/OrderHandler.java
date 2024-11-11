@@ -278,9 +278,9 @@ public class OrderHandler {
                     orderItem.setOrderItemOrderId(orderId);
                     orderItem.setProductId(rs.getInt("productId"));
                     orderItem.setProductName(rs.getString("productName"));
-                    orderItem.setUnitPrice(rs.getDouble("unitPrice"));
+                    orderItem.setUnitPrice(Math.round(rs.getDouble("unitPrice")));
                     orderItem.setQuantity(rs.getInt("quantity"));
-                    orderItem.setTotalAmount(rs.getDouble("totalAmount"));
+                    orderItem.setTotalAmount(Math.round(rs.getDouble("totalAmount")));
                     orderItem.setDiscount(rs.getInt("discount"));
                     orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
@@ -288,11 +288,11 @@ public class OrderHandler {
 
                     double unitPrice = rs.getDouble("unitPrice");
                     int quantity = rs.getInt("quantity");
-                    double discount = rs.getDouble("discount");
+                    double discount = Math.round(rs.getDouble("discount"));
 
-                    double itemTotalPrice = unitPrice * quantity;
-                    double itemDiscountAmount = itemTotalPrice * (discount / 100);
-                    double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
+                    double itemTotalPrice = Math.round(unitPrice * quantity);
+                    double itemDiscountAmount = Math.round(itemTotalPrice * (discount / 100));
+                    double itemTotalAmountAfterDiscount =Math.round(itemTotalPrice - itemDiscountAmount);
 
                     // Add the item to the list in the corresponding order
                     orderResponse.getOrderItems().add(orderItem);
