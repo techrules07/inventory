@@ -205,15 +205,37 @@ public class OrderHandler {
         return true;
     }
 
-    public Boolean deleteOrderItem(DeleteOrderItemModel deleteOrderItemModel) {
+    public Boolean deleteOrderItems(List<DeleteOrderItemModel> deleteOrderItemModelList) {
 
+        String checkOrderCompletedQuery = "select count(*) from orders where orderId = ? and status != 7";
         String deleteOrderItemQuery = "delete from orderItems where orderId = ? and productId = ?";
 
-        jdbcTemplate.update(deleteOrderItemQuery,
-                deleteOrderItemModel.getOrderId(),
-                deleteOrderItemModel.getProductId());
+        List<DeleteOrderItemModel> deletableItems = new ArrayList<>();
 
-        return true;
+        for (DeleteOrderItemModel item : deleteOrderItemModelList) {
+
+            int orderChecked = jdbcTemplate.queryForObject(
+                    checkOrderCompletedQuery,
+                    new Object[]{item.getOrderId()},
+                    Integer.class
+            );
+
+            if (orderChecked > 0) {
+                deletableItems.add(item);
+            }
+        }
+
+        if (!deletableItems.isEmpty()) {
+            jdbcTemplate.batchUpdate(deleteOrderItemQuery, deletableItems, deletableItems.size(),
+                    (ps, deletableItem) -> {
+                        ps.setString(1, deletableItem.getOrderId());
+                        ps.setInt(2, deletableItem.getProductId());
+                    }
+            );
+            return true;
+        }
+
+        return false;
     }
 
     public List<OrderResponse> getOrders(){

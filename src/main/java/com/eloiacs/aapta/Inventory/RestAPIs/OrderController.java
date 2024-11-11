@@ -214,13 +214,13 @@ public class OrderController {
                 return baseResponse;
             }
 
-            Boolean inventoryExistByProductId = orderHandler.inventoryExistByProductId(orderItemsRequestModel.getProductId());
-            if (!inventoryExistByProductId){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Product doesn't exist in Inventory");
-                return baseResponse;
-            }
+//            Boolean inventoryExistByProductId = orderHandler.inventoryExistByProductId(orderItemsRequestModel.getProductId());
+//            if (!inventoryExistByProductId){
+//                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+//                baseResponse.setStatus("Failed");
+//                baseResponse.setMessage("Product doesn't exist in Inventory");
+//                return baseResponse;
+//            }
 
             OrderResponse responseStatus = orderHandler.addOrderItem(orderItemsRequestModel, createdBy);
 
@@ -361,8 +361,8 @@ public class OrderController {
         return baseResponse;
     }
 
-    @RequestMapping(value = "/deleteOrderItem", method = RequestMethod.POST)
-    public BaseResponse deleteOrderItem(@RequestBody DeleteOrderItemModel deleteOrderItemModel,
+    @RequestMapping(value = "/deleteOrderItems", method = RequestMethod.POST)
+    public BaseResponse deleteOrderItems(@RequestBody List<DeleteOrderItemModel> deleteOrderItemModelList,
                                         HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
@@ -385,46 +385,56 @@ public class OrderController {
                 }
             }
 
-            if (deleteOrderItemModel.getOrderId() == null || deleteOrderItemModel.getOrderId().isEmpty()){
+            if (deleteOrderItemModelList == null || deleteOrderItemModelList.isEmpty()) {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
-                baseResponse.setMessage("OrderId cannot be null or empty");
+                baseResponse.setMessage("No items provided for deletion");
                 return baseResponse;
             }
 
-            Boolean orderIdExist = orderHandler.orderExistByOrderId(deleteOrderItemModel.getOrderId());
-            if (!orderIdExist) {
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Order doesn't exist");
-                return baseResponse;
+            for (DeleteOrderItemModel deleteOrderItemModel : deleteOrderItemModelList) {
+
+                if (deleteOrderItemModel.getOrderId() == null || deleteOrderItemModel.getOrderId().isEmpty()) {
+                    baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                    baseResponse.setStatus("Failed");
+                    baseResponse.setMessage("OrderId cannot be null or empty");
+                    return baseResponse;
+                }
+
+                Boolean orderIdExist = orderHandler.orderExistByOrderId(deleteOrderItemModel.getOrderId());
+                if (!orderIdExist) {
+                    baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                    baseResponse.setStatus("Failed");
+                    baseResponse.setMessage("Order doesn't exist");
+                    return baseResponse;
+                }
+
+                if (deleteOrderItemModel.getProductId() == 0) {
+                    baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                    baseResponse.setStatus("Failed");
+                    baseResponse.setMessage("Product Id cannot be zero");
+                    return baseResponse;
+                }
+
+                Boolean productExist = productHandler.productExistById(deleteOrderItemModel.getProductId());
+                if (!productExist) {
+                    baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                    baseResponse.setStatus("Failed");
+                    baseResponse.setMessage("Product doesn't exist");
+                    return baseResponse;
+                }
             }
 
-            if (deleteOrderItemModel.getProductId() == 0){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Product Id cannot be zero");
-                return baseResponse;
-            }
-
-            Boolean productExist = productHandler.productExistById(deleteOrderItemModel.getProductId());
-            if (!productExist){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Product doesn't exist");
-                return baseResponse;
-            }
-
-            Boolean responseStatus = orderHandler.deleteOrderItem(deleteOrderItemModel);
+            Boolean responseStatus = orderHandler.deleteOrderItems(deleteOrderItemModelList);
 
             if(responseStatus){
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setMessage("OrderItem removed successfully");
+                baseResponse.setMessage("OrderItems removed successfully");
             } else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
-                baseResponse.setMessage("OrderItem remove Failed");
+                baseResponse.setMessage("OrderItems remove Failed");
             }
         } else {
             baseResponse.setCode(HttpStatus.FORBIDDEN.value());
