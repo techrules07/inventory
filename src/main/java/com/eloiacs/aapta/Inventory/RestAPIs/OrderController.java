@@ -214,13 +214,13 @@ public class OrderController {
                 return baseResponse;
             }
 
-            Boolean inventoryExistByProductId = orderHandler.inventoryExistByProductId(orderItemsRequestModel.getProductId());
-            if (!inventoryExistByProductId){
-                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
-                baseResponse.setStatus("Failed");
-                baseResponse.setMessage("Product doesn't exist in Inventory");
-                return baseResponse;
-            }
+//            Boolean inventoryExistByProductId = orderHandler.inventoryExistByProductId(orderItemsRequestModel.getProductId());
+//            if (!inventoryExistByProductId){
+//                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+//                baseResponse.setStatus("Failed");
+//                baseResponse.setMessage("Product doesn't exist in Inventory");
+//                return baseResponse;
+//            }
 
             OrderResponse responseStatus = orderHandler.addOrderItem(orderItemsRequestModel, createdBy);
 
