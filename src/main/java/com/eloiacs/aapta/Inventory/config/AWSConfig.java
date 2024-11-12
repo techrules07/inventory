@@ -113,4 +113,21 @@ public class AWSConfig {
         return fileName;
     }
 
+    public String uploadImageToS3(File file) {
+
+        AmazonS3 s3 = setupS3Client(accessKey, secretKey);
+//
+        PutObjectRequest request = new PutObjectRequest(bucketName, "appta/invoice/" + file.getName(), file);
+        PutObjectResult result = s3.putObject(request);
+
+
+        String fileName = s3.getUrl(bucketName, "appta/invoice/" + file.getName()).toString();
+//
+        if (file.exists()) {
+            file.delete();
+        }
+
+        return fileName;
+    }
+
 }

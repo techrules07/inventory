@@ -1,23 +1,24 @@
 package com.eloiacs.aapta.Inventory.DBHandler;
 
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
+import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.HeaderFooterPageEvent;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 @Service
 public class PDFHandler {
+    @Autowired
+    AWSConfig awsConfig;
 
     private int TABLE_WIDTH = 550;
     private Font level1 = null;
@@ -30,7 +31,7 @@ public class PDFHandler {
     @Value("classpath:Assets/logo.png")
     Resource resource;
 
-    public void generatePDFForOrders(OrderResponse orderResponse) {
+    public String generatePDFForOrders(OrderResponse orderResponse) {
 
         level1 = new Font(Font.FontFamily.COURIER, 13, Font.BOLD);
         level3 = new Font(Font.FontFamily.COURIER, 10);
@@ -63,15 +64,21 @@ public class PDFHandler {
 
             document.close();
 
+            File file = new File(fileName+".pdf");
+            if(file.exists()){
+                String fileUrl = awsConfig.uploadImageToS3(file);
+                return fileUrl;
+
+            }else {
+                return fileName;
+            }
+
         } catch (DocumentException e) {
             throw new RuntimeException(e);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-
-
     }
-
 
     public void addHeader(PdfPTable table) {
         PdfPCell cell = new PdfPCell();

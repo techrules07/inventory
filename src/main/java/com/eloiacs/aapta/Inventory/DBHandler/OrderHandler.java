@@ -6,7 +6,9 @@ import com.eloiacs.aapta.Inventory.Models.OrderRequestModel;
 import com.eloiacs.aapta.Inventory.Responses.OrderItemsResponse;
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
+import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.Utils;
+import com.itextpdf.text.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,6 +18,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,6 +34,12 @@ public class OrderHandler {
 
     @Autowired
     ProductHandler productHandler;
+
+    @Autowired
+    PDFHandler pdfHandler;
+
+    @Autowired
+    AWSConfig awsConfig;
 
     public String generateOrderId(int previousId) {
         Date date = new Date();
@@ -239,7 +248,7 @@ public class OrderHandler {
 
     public List<OrderResponse> getOrders(){
 
-        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy order by o.orderId desc";
+        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId,o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy order by o.orderId desc";
 
         return jdbcTemplate.query(getAllOrdersQuery, new ResultSetExtractor<List<OrderResponse>>() {
             @Override
@@ -256,6 +265,7 @@ public class OrderHandler {
                         orderResponse.setId(rs.getInt("oId"));
                         orderResponse.setOrderId(orderId);
                         orderResponse.setCustomerId(rs.getString("customerId"));
+                        orderResponse.setInvoiceUrl(rs.getString("invoiceUrl"));
                         orderResponse.setStatusId(rs.getInt("status"));
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
@@ -310,7 +320,7 @@ public class OrderHandler {
 
     public List<OrderResponse> getHeldOrders(){
 
-        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.status = 2 order by o.orderId desc";
+        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId,o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.status = 2 order by o.orderId desc";
 
         return jdbcTemplate.query(getAllOrdersQuery, new ResultSetExtractor<List<OrderResponse>>() {
             @Override
@@ -327,6 +337,7 @@ public class OrderHandler {
                         orderResponse.setId(rs.getInt("oId"));
                         orderResponse.setOrderId(orderId);
                         orderResponse.setCustomerId(rs.getString("customerId"));
+                        orderResponse.setInvoiceUrl(rs.getString("invoiceUrl"));
                         orderResponse.setStatusId(rs.getInt("status"));
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
@@ -381,7 +392,7 @@ public class OrderHandler {
 
     public OrderResponse getOrderByOrderId(String orderId) {
 
-        String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
+        String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
 
         System.out.println(getOrderByOrderIdQuery);
         return jdbcTemplate.query(getOrderByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<OrderResponse>() {
@@ -399,6 +410,7 @@ public class OrderHandler {
                         orderResponse.setId(rs.getInt("oId"));
                         orderResponse.setOrderId(rs.getString("oOrderId"));
                         orderResponse.setCustomerId(rs.getString("customerId"));
+                        orderResponse.setInvoiceUrl(rs.getString("invoiceUrl"));
                         orderResponse.setStatusId(rs.getInt("status"));
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
@@ -533,11 +545,23 @@ public class OrderHandler {
     }
 
     public OrderResponse completeOrder(String orderId, String paymentType, String createdBy) {
-        String query = "UPDATE orders SET status=7, paymentType='" + paymentType + "' WHERE orderId = '" + orderId + "'";
-        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
 
         OrderResponse orderResponse = getOrderByOrderId(orderId);
+
+        String filePath = "";
+        String pdfFile = pdfHandler.generatePDFForOrders(orderResponse);
+
+        if (pdfFile != null && !pdfFile.isEmpty()) {
+            filePath = pdfFile;
+        }
+
+        String query = "UPDATE orders SET status=7,invoiceUrl='"+filePath+"' ,paymentType='" + paymentType + "' WHERE orderId = '" + orderId + "'";
+
+        String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
+
+
         int orderUpdated = jdbcTemplate.update(query);
+
 
         if (orderUpdated > 0){
 
