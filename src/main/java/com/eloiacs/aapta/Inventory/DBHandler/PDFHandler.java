@@ -14,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.time.LocalDate;
 
 @Service
 public class PDFHandler {
@@ -54,7 +55,7 @@ public class PDFHandler {
             pdfPTable.setTotalWidth(TABLE_WIDTH);
             pdfPTable.setLockedWidth(true);
             addHeader(pdfPTable);
-            header2Section(pdfPTable);
+            header2Section(pdfPTable, orderResponse);
 
             addProductTable(pdfPTable, orderResponse);
             addDiscounts(pdfPTable, orderResponse);
@@ -141,7 +142,7 @@ public class PDFHandler {
         table.addCell(cell);
     }
 
-    public void header2Section(PdfPTable table) {
+    public void header2Section(PdfPTable table, OrderResponse orderResponse) {
         PdfPCell cell = new PdfPCell();
         cell.setBorder(Rectangle.BOTTOM);
         cell.setPaddingTop(10);
@@ -175,7 +176,7 @@ public class PDFHandler {
         PdfPCell staticCell = new PdfPCell(new Paragraph("Invoice No", level4));
         staticCell.setBorder(0);
         staticCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-        PdfPCell dynamicValue = new PdfPCell(new Paragraph("100", level4));
+        PdfPCell dynamicValue = new PdfPCell(new Paragraph(orderResponse.getOrderId(), level4));
         dynamicValue.setBorder(0);
         dynamicValue.setHorizontalAlignment(Element.ALIGN_LEFT);
 
@@ -196,7 +197,7 @@ public class PDFHandler {
         PdfPCell staticDataCell = new PdfPCell(new Paragraph("Customer:", level4));
         staticDataCell.setBorder(0);
         staticDataCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-        PdfPCell dynamicDataCell = new PdfPCell(new Paragraph("Sujith", level4));
+        PdfPCell dynamicDataCell = new PdfPCell(new Paragraph(orderResponse.getCustomerName(), level4));
         dynamicDataCell.setBorder(0);
         dynamicDataCell.setHorizontalAlignment(Element.ALIGN_LEFT);
 
@@ -222,12 +223,17 @@ public class PDFHandler {
         dateMainCell.setBorder(0);
         dateMainCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
 
+        String createdAt = orderResponse.getCreatedAt();
+        String[] dateTimeParts = createdAt.split(" ");
+        String date = dateTimeParts[0];
+        String time = dateTimeParts[1];
+
         PdfPTable dateContentTable = new PdfPTable(2);
         dateContentTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
         PdfPCell staticDateCell = new PdfPCell(new Paragraph("Date", level4));
         staticDateCell.setBorder(0);
         staticDateCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        PdfPCell dynamicDateCell = new PdfPCell(new Paragraph("09/11/2024", level4));
+        PdfPCell dynamicDateCell = new PdfPCell(new Paragraph(date, level4));
         dynamicDateCell.setBorder(0);
         dynamicDateCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         dateContentTable.addCell(staticDateCell);
@@ -247,7 +253,7 @@ public class PDFHandler {
         PdfPCell timeCellStatic = new PdfPCell(new Paragraph("Time", level4));
         timeCellStatic.setBorder(0);
         timeCellStatic.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        PdfPCell timeCellDynamic = new PdfPCell(new Paragraph("01:05 AM", level4));
+        PdfPCell timeCellDynamic = new PdfPCell(new Paragraph(time, level4));
         timeCellDynamic.setBorder(0);
         timeCellDynamic.setHorizontalAlignment(Element.ALIGN_RIGHT);
 
@@ -375,7 +381,7 @@ public class PDFHandler {
                 p4.setHorizontalAlignment(Element.ALIGN_CENTER);
                 p4.setPaddingTop(5);
                 p4.setPaddingBottom(5);
-                PdfPCell p5 = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().get(i).getTotalAmount()), level4));
+                PdfPCell p5 = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().get(i).getUnitPrice() * response.getOrderItems().get(i).getQuantity()), level4));
                 p5.setBorder(0);
                 p5.setHorizontalAlignment(Element.ALIGN_CENTER);
                 p5.setPaddingTop(5);
@@ -462,7 +468,7 @@ public class PDFHandler {
             totalAMountTable.setLockedWidth(true);
             totalAMountTable.setTotalWidth(new float[]{100, 80});
             PdfPCell totalAmountStatic = new PdfPCell(new Paragraph("Amount", level4));
-            PdfPCell totalAmountDynamic = new PdfPCell(new Paragraph(String.valueOf(response.getTotalUnitPrice()), level4Bold));
+            PdfPCell totalAmountDynamic = new PdfPCell(new Paragraph(String.valueOf(response.getTotalPrice()), level4Bold));
             totalAmountDynamic.setHorizontalAlignment(Element.ALIGN_RIGHT);
             totalAmountStatic.setBorder(0);
             totalAmountDynamic.setBorder(0);
@@ -499,13 +505,17 @@ public class PDFHandler {
             beforeTaxMainTable.setTotalWidth(new float[]{100, 80});
             PdfPCell beforeTaxStaticCell = new PdfPCell(new Paragraph("Before Tax", level4));
             beforeTaxStaticCell.setBorder(0);
-            PdfPCell beforeTaxDynamicCell = new PdfPCell(new Paragraph(String.valueOf(0), level4Bold));
+            PdfPCell beforeTaxDynamicCell = new PdfPCell(new Paragraph(String.valueOf(response.getTotalAmount()), level4Bold));
             beforeTaxDynamicCell.setBorder(0);
             beforeTaxDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             beforeTaxMainTable.addCell(beforeTaxStaticCell);
             beforeTaxMainTable.addCell(beforeTaxDynamicCell);
             beforeTaxMainCell.addElement(beforeTaxMainTable);
             discountTableMain.addCell(beforeTaxMainCell);
+
+            double tax = 0;
+            double sgst = 0;
+            double cgst = 0;
 
             PdfPCell taxMainCell = new PdfPCell();
             taxMainCell.setBorder(0);
@@ -516,7 +526,7 @@ public class PDFHandler {
             taxMainTable.setTotalWidth(new float[]{100, 80});
             PdfPCell taxStaticCell = new PdfPCell(new Paragraph("Tax:", level4));
             taxStaticCell.setBorder(0);
-            PdfPCell taxDynamicCell = new PdfPCell(new Paragraph(String.valueOf(0), level4Bold));
+            PdfPCell taxDynamicCell = new PdfPCell(new Paragraph(String.valueOf(tax), level4Bold));
             taxDynamicCell.setBorder(0);
             taxDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             taxMainTable.addCell(taxStaticCell);
@@ -534,7 +544,7 @@ public class PDFHandler {
             cgstMainTable.setTotalWidth(new float[]{100, 80});
             PdfPCell cgstStaticCell = new PdfPCell(new Paragraph("CGST:", level4));
             cgstStaticCell.setBorder(0);
-            PdfPCell cgstDynamicCell = new PdfPCell(new Paragraph(String.valueOf(0), level4Bold));
+            PdfPCell cgstDynamicCell = new PdfPCell(new Paragraph(String.valueOf(cgst), level4Bold));
             cgstDynamicCell.setBorder(0);
             cgstDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             cgstMainTable.addCell(cgstStaticCell);
@@ -551,7 +561,7 @@ public class PDFHandler {
             sgstMainTable.setTotalWidth(new float[]{100, 80});
             PdfPCell sgstStaticCell = new PdfPCell(new Paragraph("SGST", level4));
             sgstStaticCell.setBorder(0);
-            PdfPCell sgstDynamicCell = new PdfPCell(new Paragraph(String.valueOf(0), level4Bold));
+            PdfPCell sgstDynamicCell = new PdfPCell(new Paragraph(String.valueOf(sgst), level4Bold));
             sgstDynamicCell.setBorder(0);
             sgstDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             sgstMainTable.addCell(sgstStaticCell);
@@ -571,7 +581,7 @@ public class PDFHandler {
             totalStaticCell.setBorder(0);
             totalStaticCell.setPaddingBottom(8);
 //            totalStaticCell.setBackgroundColor(new BaseColor(193, 211, 197));
-            PdfPCell totalDynamicCell = new PdfPCell(new Paragraph(String.valueOf(0), level3Bold));
+            PdfPCell totalDynamicCell = new PdfPCell(new Paragraph(String.valueOf(response.getTotalAmount() + tax), level3Bold));
             totalDynamicCell.setBorder(0);
             totalDynamicCell.setPaddingBottom(8);
 //            totalDynamicCell.setBackgroundColor(new BaseColor(193, 211, 197));

@@ -11,6 +11,8 @@ public class OrderResponse {
 
     private String customerId = null;
 
+    private String customerName = null;
+
     private String invoiceUrl = null;
 
     private int statusId = 0;
@@ -63,6 +65,14 @@ public class OrderResponse {
 
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
     }
 
     public int getStatusId() {

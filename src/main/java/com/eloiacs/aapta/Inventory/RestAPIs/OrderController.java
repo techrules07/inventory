@@ -671,7 +671,6 @@ public class OrderController {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
                 baseResponse.setData(orderResponse);
-                pdfHanlder.generatePDFForOrders(orderResponse);
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
