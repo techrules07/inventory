@@ -65,13 +65,13 @@ public class PDFHandler {
 
             document.close();
 
-            File file = new File(fileName+".pdf");
+            File file = new File(fileName.toUpperCase()+".pdf");
             if(file.exists()){
                 String fileUrl = awsConfig.uploadImageToS3(file);
                 return fileUrl;
 
             }else {
-                return fileName;
+                return "na";
             }
 
         } catch (DocumentException e) {
