@@ -81,6 +81,14 @@ public class ProductController {
                 return baseResponse;
             }
 
+            Boolean barcodeExists = productHandler.barcodeExist(productRequestModel.getBarcodeNo());
+            if (barcodeExists) {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("Barcode already exists");
+                return baseResponse;
+            }
+
             if (productRequestModel.getStatusTypeId() == 0){
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
