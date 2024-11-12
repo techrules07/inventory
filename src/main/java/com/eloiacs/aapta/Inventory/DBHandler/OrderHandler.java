@@ -555,4 +555,20 @@ public class OrderHandler {
         return orderResponse;
     }
 
+    public String initializePayments(String orderId){
+
+        String getTotalAmountByOrderIdQuery = "select sum(totalAmount) as totalAmount from orderItems where orderId = ?";
+
+        return jdbcTemplate.query(getTotalAmountByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<String>() {
+            @Override
+            public String extractData(ResultSet rs) throws SQLException, DataAccessException {
+                if (rs.next()){
+                    return rs.getString("totalAmount");
+                }
+
+                return null;
+            }
+        });
+    }
+
 }
