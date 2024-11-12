@@ -421,39 +421,41 @@ public class OrderHandler {
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize the list for order items
                     }
 
-                    // Create an OrderItemResponse for the current row and add it to the order's item list
-                    OrderItemsResponse orderItem = new OrderItemsResponse();
-                    orderItem.setOrderItemId(rs.getInt("id"));
-                    orderItem.setOrderItemOrderId(rs.getString("orderId"));
-                    orderItem.setProductId(rs.getInt("productId"));
-                    orderItem.setProductName(rs.getString("productName"));
-                    orderItem.setUnitPrice(rs.getDouble("unitPrice"));
-                    orderItem.setQuantity(rs.getInt("quantity"));
-                    orderItem.setTotalAmount(rs.getDouble("totalAmount"));
-                    orderItem.setDiscount(rs.getInt("discount"));
-                    orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
-                    orderItem.setOrderItemCreatedBy(rs.getString("username"));
-                    orderItem.setCategory(rs.getString("categoryName"));
-                    orderItem.setSubCategory(rs.getString("subCategoryName"));
-                    orderItem.setUnit(rs.getString("unitName"));
-                    orderItem.setSize(rs.getString("size"));
-                    orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                    if (rs.getString("orderId") != null) {
+                        // Create an OrderItemResponse for the current row and add it to the order's item list
+                        OrderItemsResponse orderItem = new OrderItemsResponse();
+                        orderItem.setOrderItemId(rs.getInt("id"));
+                        orderItem.setOrderItemOrderId(rs.getString("orderId"));
+                        orderItem.setProductId(rs.getInt("productId"));
+                        orderItem.setProductName(rs.getString("productName"));
+                        orderItem.setUnitPrice(rs.getDouble("unitPrice"));
+                        orderItem.setQuantity(rs.getInt("quantity"));
+                        orderItem.setTotalAmount(rs.getDouble("totalAmount"));
+                        orderItem.setDiscount(rs.getInt("discount"));
+                        orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
+                        orderItem.setOrderItemCreatedBy(rs.getString("username"));
+                        orderItem.setCategory(rs.getString("categoryName"));
+                        orderItem.setSubCategory(rs.getString("subCategoryName"));
+                        orderItem.setUnit(rs.getString("unitName"));
+                        orderItem.setSize(rs.getString("size"));
+                        orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
 
-                    double unitPrice = rs.getDouble("unitPrice");
-                    int quantity = rs.getInt("quantity");
-                    double discount = rs.getDouble("discount");
+                        double unitPrice = rs.getDouble("unitPrice");
+                        int quantity = rs.getInt("quantity");
+                        double discount = rs.getDouble("discount");
 
-                    double itemTotalPrice = unitPrice * quantity;
-                    double itemDiscountAmount = itemTotalPrice * (discount / 100);
-                    double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
+                        double itemTotalPrice = unitPrice * quantity;
+                        double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                        double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
 
-                    // Add the item to the list in the corresponding order
-                    orderResponse.getOrderItems().add(orderItem);
+                        // Add the item to the list in the corresponding order
+                        orderResponse.getOrderItems().add(orderItem);
 
-                    totalUnitPrice += unitPrice;
-                    totalPrice += itemTotalPrice;
-                    totalAmount += itemTotalAmountAfterDiscount;
-                    totalDiscount += itemDiscountAmount;
+                        totalUnitPrice += unitPrice;
+                        totalPrice += itemTotalPrice;
+                        totalAmount += itemTotalAmountAfterDiscount;
+                        totalDiscount += itemDiscountAmount;
+                    }
                 }
 
                 if (orderResponse != null) {
@@ -495,39 +497,42 @@ public class OrderHandler {
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize the list for order items
                     }
 
-                    // Create an OrderItemResponse for the current row and add it to the order's item list
-                    OrderItemsResponse orderItem = new OrderItemsResponse();
-                    orderItem.setOrderItemId(rs.getInt("id"));
-                    orderItem.setOrderItemOrderId(rs.getString("orderId"));
-                    orderItem.setProductId(rs.getInt("productId"));
-                    orderItem.setProductName(rs.getString("productName"));
-                    orderItem.setUnitPrice(rs.getDouble("unitPrice"));
-                    orderItem.setQuantity(rs.getInt("quantity"));
-                    orderItem.setTotalAmount(rs.getDouble("totalAmount"));
-                    orderItem.setDiscount(rs.getInt("discount"));
-                    orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
-                    orderItem.setOrderItemCreatedBy(rs.getString("username"));
-                    orderItem.setCategory(rs.getString("categoryName"));
-                    orderItem.setSubCategory(rs.getString("subCategoryName"));
-                    orderItem.setUnit(rs.getString("unitName"));
-                    orderItem.setSize(rs.getString("size"));
-                    orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                    if (rs.getString("orderId") != null) {
+                        // Create an OrderItemResponse for the current row and add it to the order's item list
+                        OrderItemsResponse orderItem = new OrderItemsResponse();
+                        orderItem.setOrderItemId(rs.getInt("id"));
+                        orderItem.setOrderItemOrderId(rs.getString("orderId"));
+                        orderItem.setProductId(rs.getInt("productId"));
+                        orderItem.setProductName(rs.getString("productName"));
+                        orderItem.setUnitPrice(rs.getDouble("unitPrice"));
+                        orderItem.setQuantity(rs.getInt("quantity"));
+                        orderItem.setTotalAmount(rs.getDouble("totalAmount"));
+                        orderItem.setDiscount(rs.getInt("discount"));
+                        orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
+                        orderItem.setOrderItemCreatedBy(rs.getString("username"));
+                        orderItem.setCategory(rs.getString("categoryName"));
+                        orderItem.setSubCategory(rs.getString("subCategoryName"));
+                        orderItem.setUnit(rs.getString("unitName"));
+                        orderItem.setSize(rs.getString("size"));
+                        orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
 
-                    double unitPrice = rs.getDouble("unitPrice");
-                    int quantity = rs.getInt("quantity");
-                    double discount = rs.getDouble("discount");
+                        double unitPrice = rs.getDouble("unitPrice");
+                        int quantity = rs.getInt("quantity");
+                        double discount = rs.getDouble("discount");
 
-                    double itemTotalPrice = unitPrice * quantity;
-                    double itemDiscountAmount = itemTotalPrice * (discount / 100);
-                    double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
+                        double itemTotalPrice = unitPrice * quantity;
+                        double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                        double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
 
-                    // Add the item to the list in the corresponding order
+                        // Add the item to the list in the corresponding order
 //                    orderResponse.getOrderItems().add(orderItem);
 
-                    totalUnitPrice += unitPrice;
-                    totalPrice += itemTotalPrice;
-                    totalAmount += itemTotalAmountAfterDiscount;
-                    totalDiscount += itemDiscountAmount;
+                        totalUnitPrice += unitPrice;
+                        totalPrice += itemTotalPrice;
+                        totalAmount += itemTotalAmountAfterDiscount;
+                        totalDiscount += itemDiscountAmount;
+                    }
+
                 }
 
                 if (orderResponse != null) {
@@ -629,6 +634,7 @@ public class OrderHandler {
 
         if (pdfFile != null && !pdfFile.isEmpty()) {
             filePath = pdfFile;
+            orderResponse.setInvoiceUrl(filePath);
         }
 
         String query = "UPDATE orders SET status=7,invoiceUrl='"+filePath+"' ,paymentType='" + paymentType + "' WHERE orderId = '" + orderId + "'";
