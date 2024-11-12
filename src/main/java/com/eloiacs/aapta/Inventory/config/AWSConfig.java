@@ -117,11 +117,11 @@ public class AWSConfig {
 
         AmazonS3 s3 = setupS3Client(accessKey, secretKey);
 //
-        PutObjectRequest request = new PutObjectRequest(bucketName, "bismiAdmin/" + file.getName(), file);
+        PutObjectRequest request = new PutObjectRequest(bucketName, "appta/supermart/" + file.getName(), file);
         PutObjectResult result = s3.putObject(request);
 
 
-        String fileName = s3.getUrl(bucketName, "bismiAdmin/" + file.getName()).toString();
+        String fileName = s3.getUrl(bucketName, "appta/supermart/" + file.getName()).toString();
 //
         if (file.exists()) {
             file.delete();
