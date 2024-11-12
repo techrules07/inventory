@@ -12,6 +12,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Random;
 
 public class Utils {
 
@@ -116,6 +117,15 @@ public class Utils {
         }
 
         return convFile;
+    }
+
+
+    public static int generateBarcodes() {
+        Random random = new Random();
+        int n = 10000000 + random.nextInt(90000000);
+
+        return n;
+
     }
 
 }
