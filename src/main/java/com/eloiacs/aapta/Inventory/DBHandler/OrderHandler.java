@@ -205,7 +205,7 @@ public class OrderHandler {
         return true;
     }
 
-    public Boolean deleteOrderItems(List<DeleteOrderItemModel> deleteOrderItemModelList) {
+    public OrderResponse deleteOrderItems(List<DeleteOrderItemModel> deleteOrderItemModelList) {
 
         String checkOrderCompletedQuery = "select count(*) from orders where orderId = ? and status != 7";
         String deleteOrderItemQuery = "delete from orderItems where orderId = ? and productId = ?";
@@ -232,10 +232,9 @@ public class OrderHandler {
                         ps.setInt(2, deletableItem.getProductId());
                     }
             );
-            return true;
         }
 
-        return false;
+        return getOrderByOrderId(deleteOrderItemModelList.get(0).getOrderId());
     }
 
     public List<OrderResponse> getOrders(){

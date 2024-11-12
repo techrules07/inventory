@@ -363,7 +363,7 @@ public class OrderController {
 
     @RequestMapping(value = "/deleteOrderItems", method = RequestMethod.POST)
     public BaseResponse deleteOrderItems(@RequestBody List<DeleteOrderItemModel> deleteOrderItemModelList,
-                                        HttpServletRequest httpServletRequest){
+                                         HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -425,12 +425,13 @@ public class OrderController {
                 }
             }
 
-            Boolean responseStatus = orderHandler.deleteOrderItems(deleteOrderItemModelList);
+            OrderResponse orderResponse = orderHandler.deleteOrderItems(deleteOrderItemModelList);
 
-            if(responseStatus){
+            if(orderResponse != null){
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
                 baseResponse.setMessage("OrderItems removed successfully");
+                baseResponse.setData(orderResponse);
             } else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
