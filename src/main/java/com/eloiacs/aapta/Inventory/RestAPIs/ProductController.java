@@ -614,6 +614,50 @@ public class ProductController {
         return baseResponse;
     }
 
+    @RequestMapping(value = "/getProductsWithProductPrice", method = RequestMethod.POST)
+    public BaseResponse getProductsWithProductPrice(@RequestParam(value ="productName" ,required = false) String productName, HttpServletRequest httpServletRequest){
+
+        BaseResponse baseResponse = new BaseResponse();
+
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if (claims != null) {
+
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+
+            List<ProductResponse> productResponses = productHandler.getProductsWithProductPrice(productName);
+
+            if (productResponses!=null && !productResponses.isEmpty()){
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setMessage("Products got successfully");
+                baseResponse.setData(productResponses);
+            }else {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setStatus("Failed");
+                baseResponse.setMessage("No product found");
+            }
+        }else {
+            baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
+        }
+
+        return baseResponse;
+    }
+
     @RequestMapping(value = "/getProductById", method = RequestMethod.POST)
     public BaseResponse getProductsById(@RequestParam int productId, HttpServletRequest httpServletRequest){
 
