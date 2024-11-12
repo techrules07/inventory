@@ -11,6 +11,8 @@ public class OrderResponse {
 
     private String customerId = null;
 
+    private String invoiceUrl = null;
+
     private int statusId = 0;
 
     private String status = null;
@@ -31,6 +33,13 @@ public class OrderResponse {
 
     private List<OrderItemsResponse> orderItems = new ArrayList<>();
 
+    public String getInvoiceUrl() {
+        return invoiceUrl;
+    }
+
+    public void setInvoiceUrl(String invoiceUrl) {
+        this.invoiceUrl = invoiceUrl;
+    }
 
     public int getId() {
         return id;
