@@ -23,6 +23,8 @@ public class ProductRequestModel {
 
     private int sizeId = 0;
 
+    private boolean manualSize = false;
+
     private int minimumPurchaseQuantity = 0;
 
     private int barcodeType = 0;
@@ -42,6 +44,8 @@ public class ProductRequestModel {
     private List<String> images = new ArrayList<>();
 
 
+
+
     public int getSizeId() {
         return sizeId;
     }
@@ -56,6 +60,14 @@ public class ProductRequestModel {
 
     public void setMinimumPurchaseQuantity(int minimumPurchaseQuantity) {
         this.minimumPurchaseQuantity = minimumPurchaseQuantity;
+    }
+
+    public boolean getManualSize() {
+        return manualSize;
+    }
+
+    public void setManualSize(boolean manualSize) {
+        this.manualSize = manualSize;
     }
 
     public int getProductId() {

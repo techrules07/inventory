@@ -32,7 +32,42 @@ public class ProductHandler {
     @Transactional
     public Boolean insertProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
+        int sizeId;
+
+        // If size is manually entered by the user
+        if (productRequestModel.getManualSize()) {
+            int manualSizeValue = productRequestModel.getSizeId();  // Assuming sizeId is the manual input
+
+            // Query to check if the size already exists
+            String selectSizeQuery = "SELECT id FROM productSize WHERE size = ?";
+            List<Integer> existingSizeIds = jdbcTemplate.queryForList(selectSizeQuery, new Object[]{manualSizeValue}, Integer.class);
+
+            if (existingSizeIds.isEmpty()) {
+                // If the size doesn't exist, insert it into the productSize table
+                String insertSizeQuery = "INSERT INTO productSize(size, createdBy, modifiedBy) VALUES(?, ?, ?)";
+                KeyHolder sizeKeyHolder = new GeneratedKeyHolder();
+
+                jdbcTemplate.update(connection -> {
+                    PreparedStatement ps = connection.prepareStatement(insertSizeQuery, new String[]{"id"});
+                    ps.setInt(1, manualSizeValue); // Set the manual size value
+                    ps.setString(2, createdBy);
+                    ps.setString(3, createdBy);
+                    return ps;
+                }, sizeKeyHolder);
+
+                // Retrieve the generated ID of the new size
+                sizeId = sizeKeyHolder.getKey().intValue();
+            } else {
+                // If the size already exists, use the first existing size ID
+                sizeId = existingSizeIds.get(0);
+            }
+        } else {
+            // If no manual size is provided, use the selected sizeId from the request model
+            sizeId = productRequestModel.getSizeId();
+        }
+
         String insertProductQuery = "insert into products(productName,HSNCode,statusType,category,subCategory,brand,unit,size,minPurchaseQuantity,barcodeType,barcodeNo,description,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
+
         String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
         String insertBillOfMaterialsQuery = "insert into billOfMaterials(productId,billOfMaterialProductId,quantity,cost,isActive,createdAt) values(?,?,?,?,true,current_timestamp())";
 
@@ -48,7 +83,7 @@ public class ProductHandler {
             ps.setInt(5, productRequestModel.getSubCategoryId());
             ps.setInt(6, productRequestModel.getBrandId());
             ps.setInt(7, productRequestModel.getUnitId());
-            ps.setInt(8,productRequestModel.getSizeId());
+            ps.setInt(8,sizeId);
             ps.setInt(9, productRequestModel.getMinimumPurchaseQuantity());
             ps.setInt(10, productRequestModel.getBarcodeType());
             ps.setString(11, productRequestModel.getBarcodeNo());
@@ -59,6 +94,8 @@ public class ProductHandler {
             ps.setString(16, createdBy);
             return ps;
         }, keyHolder);
+
+
 
         if (rowsAffected > 0 && keyHolder.getKey() != null) {
             int productId = keyHolder.getKey().intValue();
@@ -104,6 +141,40 @@ public class ProductHandler {
     @Transactional
     public Boolean updateProduct(ProductRequestModel productRequestModel, String createdBy, List<String> imageUrls){
 
+        int sizeId;
+
+        // If size is manually entered by the user
+        if (productRequestModel.getManualSize()) {
+            int manualSizeValue = productRequestModel.getSizeId();  // Assuming sizeId is the manual input
+
+            // Query to check if the size already exists
+            String selectSizeQuery = "SELECT id FROM productSize WHERE size = ?";
+            List<Integer> existingSizeIds = jdbcTemplate.queryForList(selectSizeQuery, new Object[]{manualSizeValue}, Integer.class);
+
+            if (existingSizeIds.isEmpty()) {
+                // If the size doesn't exist, insert it into the productSize table
+                String insertSizeQuery = "INSERT INTO productSize(size, createdBy, modifiedBy) VALUES(?, ?, ?)";
+                KeyHolder sizeKeyHolder = new GeneratedKeyHolder();
+
+                jdbcTemplate.update(connection -> {
+                    PreparedStatement ps = connection.prepareStatement(insertSizeQuery, new String[]{"id"});
+                    ps.setInt(1, manualSizeValue); // Set the manual size value
+                    ps.setString(2, createdBy);
+                    ps.setString(3, createdBy);
+                    return ps;
+                }, sizeKeyHolder);
+
+                // Retrieve the generated ID of the new size
+                sizeId = sizeKeyHolder.getKey().intValue();
+            } else {
+                // If the size already exists, use the first existing size ID
+                sizeId = existingSizeIds.get(0);
+            }
+        } else {
+            // If no manual size is provided, use the selected sizeId from the request model
+            sizeId = productRequestModel.getSizeId();
+        }
+
         String updateProductQuery = "update products set productName = ?, HSNCode = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?,minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
 
         int productId = productRequestModel.getProductId();
@@ -116,7 +187,7 @@ public class ProductHandler {
                 productRequestModel.getSubCategoryId(),
                 productRequestModel.getBrandId(),
                 productRequestModel.getUnitId(),
-                productRequestModel.getSizeId(),
+                sizeId,
                 productRequestModel.getMinimumPurchaseQuantity(),
                 productRequestModel.getBarcodeType(),
                 productRequestModel.getBarcodeNo(),
@@ -219,6 +290,7 @@ public class ProductHandler {
 
         getProductsQuery.append("group by pd.id,pp.mrp, pp.salesPrice, pp.salesPercentage, pp.wholesalePrice, pp.wholesalePercentage order by pd.id desc");
 
+        System.out.println(getProductsQuery.toString());
 
         return jdbcTemplate.query(getProductsQuery.toString(), new PreparedStatementSetter() {
             @Override
@@ -805,4 +877,6 @@ public class ProductHandler {
 
         return count > 0;
     }
+
+
 }

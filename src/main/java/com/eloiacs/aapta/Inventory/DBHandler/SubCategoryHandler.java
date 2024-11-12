@@ -133,4 +133,42 @@ public class SubCategoryHandler {
             }
         });
     }
+
+    public List<SubCategoryResponseModel> getAllSubcategoryByCategory(String parentCategory){
+        StringBuilder query =  new StringBuilder(" select sc.id,sc.subCategoryName,sc.createdBy,sc.modifiedBy,sc.createdAt,sc.modifiedAt,sc.isActive,c.id as category_id,c.category_name ,sc.image_url from subcategory sc left join category c on sc.category_id=c.id where sc.category_id='" + parentCategory + "' and sc.isActive=true ");
+
+
+        query.append("group by sc.id order by sc.id desc");
+
+        return jdbcTemplate.query(query.toString(),new ResultSetExtractor<List<SubCategoryResponseModel>>() {
+            @Override
+            public List<SubCategoryResponseModel> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+                if(rs.next()){
+                    List <SubCategoryResponseModel> subCategoryResponseModel = new ArrayList<>();
+
+                    do {
+                        SubCategoryResponseModel response = new SubCategoryResponseModel();
+
+                        response.setId(rs.getInt("id"));
+                        response.setSubCategoryName(rs.getString("subCategoryName"));
+                        response.setCreatedBy(rs.getString("createdBy"));
+                        response.setModifiedBy(rs.getString("modifiedBy"));
+                        response.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                        response.setModifiedAt(Utils.convertDateToString(rs.getTimestamp("modifiedAt")));
+                        response.setActive(rs.getBoolean("isActive"));
+                        response.setCategoryId(rs.getInt("category_id"));
+                        response.setCategoryName(rs.getString("category_name"));
+                        response.setImageUrl(rs.getString("image_url"));
+
+                        subCategoryResponseModel.add(response);
+
+                    }while (rs.next());
+
+                    return subCategoryResponseModel;
+                }
+                return null;
+            }
+        });
+    }
 }

@@ -226,7 +226,48 @@ public class SubCategoryController {
 
     @RequestMapping(value = "/getSubCategory", method = RequestMethod.POST)
     @ResponseBody
-    public BaseResponse getSubCategory(@RequestParam (value="subCategory",required = false)String subCategory,HttpServletRequest httpServletRequest){
+    public BaseResponse getSubCategory(@RequestParam (value="parentCategory",required = false)String subCategory,HttpServletRequest httpServletRequest){
+
+        BaseResponse baseResponse = new BaseResponse();
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
+
+        if (claims != null) {
+            String createdBy = claims.get("id").toString();
+            String expireDate = claims.get("exp").toString();
+
+            if (Utils.checkExpired(expireDate)){
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
+                AuthModel model1 = authHandler.accountDetails(loginModel);
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                }
+                else {
+                    baseResponse.setAccessToken("");
+                }
+            }
+            List<SubCategoryResponseModel> subCategoryResponseModels = subCategoryHandler.getAllSubcategoryByCategory(subCategory);
+            if (subCategoryResponseModels == null || subCategoryResponseModels.isEmpty()) {
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                baseResponse.setMessage("No SubCategory available");
+                baseResponse.setStatus("Failed");
+            }
+            else {
+                baseResponse.setCode(HttpStatus.OK.value());
+                baseResponse.setStatus("Success");
+                baseResponse.setData(subCategoryResponseModels);
+            }
+        }
+        else {
+            baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Please login again");
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping(value = "/getAllSubCategory", method = RequestMethod.POST)
+    @ResponseBody
+    public BaseResponse getSubCategories(@RequestParam (value="subCategory",required = false)String subCategory,HttpServletRequest httpServletRequest){
 
         BaseResponse baseResponse = new BaseResponse();
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
