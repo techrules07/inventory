@@ -34,16 +34,13 @@ public class ProductHandler {
 
         int sizeId;
 
-        // If size is manually entered by the user
         if (productRequestModel.getManualSize()) {
-            int manualSizeValue = productRequestModel.getSizeId();  // Assuming sizeId is the manual input
+            int manualSizeValue = productRequestModel.getSizeId();
 
-            // Query to check if the size already exists
             String selectSizeQuery = "SELECT id FROM productSize WHERE size = ?";
             List<Integer> existingSizeIds = jdbcTemplate.queryForList(selectSizeQuery, new Object[]{manualSizeValue}, Integer.class);
 
             if (existingSizeIds.isEmpty()) {
-                // If the size doesn't exist, insert it into the productSize table
                 String insertSizeQuery = "INSERT INTO productSize(size, createdBy, modifiedBy) VALUES(?, ?, ?)";
                 KeyHolder sizeKeyHolder = new GeneratedKeyHolder();
 
@@ -55,23 +52,57 @@ public class ProductHandler {
                     return ps;
                 }, sizeKeyHolder);
 
-                // Retrieve the generated ID of the new size
                 sizeId = sizeKeyHolder.getKey().intValue();
             } else {
-                // If the size already exists, use the first existing size ID
+
                 sizeId = existingSizeIds.get(0);
             }
         } else {
-            // If no manual size is provided, use the selected sizeId from the request model
             sizeId = productRequestModel.getSizeId();
         }
+
+        //barcode section
+
+        if (productRequestModel.getBarcodeType() != 1 && productRequestModel.getBarcodeType() != 3) {
+            throw new RuntimeException("Barcode generation is only allowed for barcodeType 1 or 3.");
+        }
+
+        final String barcodeToInsert;
+
+        if (productRequestModel.getBarcodeType() == 1) {
+            String selectUnusedBarcodeQuery = "SELECT barcode FROM barcodes WHERE isUsed = 0 LIMIT 1";
+            List<String> unusedBarcodes = jdbcTemplate.queryForList(selectUnusedBarcodeQuery, String.class);
+
+            if (!unusedBarcodes.isEmpty()) {
+                barcodeToInsert = unusedBarcodes.get(0);
+
+                String updateBarcodeStatusQuery = "UPDATE barcodes SET isUsed = 1, usedBy = ? WHERE barcode = ?";
+                jdbcTemplate.update(updateBarcodeStatusQuery, createdBy, barcodeToInsert);
+            } else {
+                throw new RuntimeException("No unused barcodes available");
+            }
+        }
+        else if (productRequestModel.getBarcodeType() == 3) {
+            barcodeToInsert = productRequestModel.getBarcodeNo();
+
+
+            String checkBarcodeExistsQuery = "SELECT COUNT(*) FROM products WHERE barcodeNo = ?";
+            int existingBarcodeCount = jdbcTemplate.queryForObject(checkBarcodeExistsQuery, new Object[]{barcodeToInsert}, Integer.class);
+
+            if (existingBarcodeCount > 0) {
+                throw new RuntimeException("Barcode already exists in the system. Please enter a unique barcode.");
+            }
+        } else {
+            throw new RuntimeException("Barcode generation is only allowed for barcodeType 1 or 3.");
+        }
+
+
 
         String insertProductQuery = "insert into products(productName,HSNCode,statusType,category,subCategory,brand,unit,size,minPurchaseQuantity,barcodeType,barcodeNo,description,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
 
         String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
         String insertBillOfMaterialsQuery = "insert into billOfMaterials(productId,billOfMaterialProductId,quantity,cost,isActive,createdAt) values(?,?,?,?,true,current_timestamp())";
 
-        // Insert product and retrieve generated productId
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         int rowsAffected = jdbcTemplate.update(connection -> {
@@ -86,7 +117,7 @@ public class ProductHandler {
             ps.setInt(8,sizeId);
             ps.setInt(9, productRequestModel.getMinimumPurchaseQuantity());
             ps.setInt(10, productRequestModel.getBarcodeType());
-            ps.setString(11, productRequestModel.getBarcodeNo());
+            ps.setString(11, barcodeToInsert);
             ps.setString(12, productRequestModel.getDescription());
             ps.setBoolean(13, productRequestModel.getBillOfMaterials());
             ps.setBoolean(14, productRequestModel.getFreebie());
@@ -174,6 +205,9 @@ public class ProductHandler {
             // If no manual size is provided, use the selected sizeId from the request model
             sizeId = productRequestModel.getSizeId();
         }
+
+
+
 
         String updateProductQuery = "update products set productName = ?, HSNCode = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?,minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
 
@@ -874,6 +908,13 @@ public class ProductHandler {
         String unitExistByIdQuery = "select count(*) from unitTable where id = ? and isActive = true";
 
         int count = jdbcTemplate.queryForObject(unitExistByIdQuery, new Object[]{id}, Integer.class);
+
+        return count > 0;
+    }
+
+    public boolean barcodeExist(String barcodeNo) {
+        String query = "SELECT COUNT(*) FROM products WHERE barcodeNo = ?";
+        int count = jdbcTemplate.queryForObject(query, new Object[]{barcodeNo}, Integer.class);
 
         return count > 0;
     }

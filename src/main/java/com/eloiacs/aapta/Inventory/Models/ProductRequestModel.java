@@ -44,8 +44,6 @@ public class ProductRequestModel {
     private List<String> images = new ArrayList<>();
 
 
-
-
     public int getSizeId() {
         return sizeId;
     }
