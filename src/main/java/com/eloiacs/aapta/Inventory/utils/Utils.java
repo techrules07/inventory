@@ -6,15 +6,45 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
+import java.util.TimeZone;
 
 public class Utils {
+
+    public static String convertUTCDateTimeToISTString(Timestamp utcTimestamp) {
+        String converted_date = "";
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        String Date = dateFormat.format(utcTimestamp);;
+        try {
+
+            DateFormat utcFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+            Date date = utcFormat.parse(Date);
+
+            DateFormat currentTFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            currentTFormat.setTimeZone(TimeZone.getTimeZone(getCurrentTimeZone()));
+
+            converted_date =  currentTFormat.format(date);
+        }catch (Exception e){ e.printStackTrace();}
+
+        return converted_date;
+    }
+
+    public static String getCurrentTimeZone(){
+        TimeZone tz = Calendar.getInstance().getTimeZone();
+        return tz.getID();
+    }
 
     public static String convertDateToString(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
