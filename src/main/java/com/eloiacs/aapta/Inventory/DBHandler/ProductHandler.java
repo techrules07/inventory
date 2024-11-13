@@ -61,12 +61,6 @@ public class ProductHandler {
             sizeId = productRequestModel.getSizeId();
         }
 
-        //barcode section
-
-        if (productRequestModel.getBarcodeType() != 1 && productRequestModel.getBarcodeType() != 3) {
-            throw new RuntimeException("Barcode generation is only allowed for barcodeType 1 or 3.");
-        }
-
         final String barcodeToInsert;
 
         if (productRequestModel.getBarcodeType() == 1) {
@@ -85,18 +79,15 @@ public class ProductHandler {
         else if (productRequestModel.getBarcodeType() == 3) {
             barcodeToInsert = productRequestModel.getBarcodeNo();
 
-
             String checkBarcodeExistsQuery = "SELECT COUNT(*) FROM products WHERE barcodeNo = ?";
             int existingBarcodeCount = jdbcTemplate.queryForObject(checkBarcodeExistsQuery, new Object[]{barcodeToInsert}, Integer.class);
 
             if (existingBarcodeCount > 0) {
                 throw new RuntimeException("Barcode already exists in the system. Please enter a unique barcode.");
             }
-        } else {
-            throw new RuntimeException("Barcode generation is only allowed for barcodeType 1 or 3.");
         }
 
-
+        String barcode = productRequestModel.getBarcodeNo();
 
         String insertProductQuery = "insert into products(productName,HSNCode,statusType,category,subCategory,brand,unit,size,minPurchaseQuantity,barcodeType,barcodeNo,description,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
 
@@ -108,16 +99,16 @@ public class ProductHandler {
         int rowsAffected = jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(insertProductQuery, new String[]{"id"});
             ps.setString(1, productRequestModel.getProductName());
-            ps.setString(2,productRequestModel.getHSNCode());
+            ps.setString(2, productRequestModel.getHSNCode());
             ps.setInt(3, productRequestModel.getStatusTypeId());
             ps.setInt(4, productRequestModel.getCategoryId());
             ps.setInt(5, productRequestModel.getSubCategoryId());
             ps.setInt(6, productRequestModel.getBrandId());
             ps.setInt(7, productRequestModel.getUnitId());
-            ps.setInt(8,sizeId);
+            ps.setInt(8, sizeId);
             ps.setInt(9, productRequestModel.getMinimumPurchaseQuantity());
             ps.setInt(10, productRequestModel.getBarcodeType());
-            ps.setString(11, barcodeToInsert);
+            ps.setString(11, barcode);
             ps.setString(12, productRequestModel.getDescription());
             ps.setBoolean(13, productRequestModel.getBillOfMaterials());
             ps.setBoolean(14, productRequestModel.getFreebie());
@@ -125,8 +116,6 @@ public class ProductHandler {
             ps.setString(16, createdBy);
             return ps;
         }, keyHolder);
-
-
 
         if (rowsAffected > 0 && keyHolder.getKey() != null) {
             int productId = keyHolder.getKey().intValue();
@@ -163,8 +152,7 @@ public class ProductHandler {
             }
 
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
