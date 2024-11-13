@@ -35,7 +35,7 @@ public class PDFHandler {
     @Value("classpath:Assets/logo.png")
     Resource resource;
 
-    @Value("classpath:fonts/Kalaham.otf")
+    @Value("classpath:fonts/Catamaran-VariableFont_wght.ttf")
     Resource fontResource;
 
     BaseFont tamilBaseFont = null;
