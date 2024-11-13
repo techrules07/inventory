@@ -19,11 +19,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.nio.file.AccessDeniedException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Service
@@ -246,23 +250,208 @@ public class OrderHandler {
         return getOrderByOrderId(deleteOrderItemModelList.get(0).getOrderId());
     }
 
-    public List<OrderResponse> getOrders(String createdBy, String userRole) {
 
+//    public List<OrderResponse> getOrders(String createdBy, String userRole, String currentUserId, String startDate, String endDate) {
+//        String getAllOrdersQuery;
+//        String dateFilter = "";
+//
+//        if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
+//            try {
+//                DateTimeFormatter originalFormatter = DateTimeFormatter.ofPattern("d/M/yyyy");
+//
+//                LocalDate originalStartDate = LocalDate.parse(startDate.replace("/", "-"), originalFormatter);
+//                LocalDate originalEndDate = LocalDate.parse(endDate.replace("/", "-"), originalFormatter);
+//
+//                DateTimeFormatter desiredFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//
+//                String startDateConverted = originalStartDate.format(desiredFormatter);
+//                String endDateConverted = originalEndDate.format(desiredFormatter);
+//
+//                dateFilter = "AND o.createdAt BETWEEN '" + startDateConverted + "' AND '" + endDateConverted + "' ";
+//            } catch (DateTimeParseException e) {
+//                System.out.println("Error parsing dates: " + e.getMessage());
+//            }
+//        }
+//
+//
+//        if ("1".equals(userRole)) {  // Admin user
+//            if (createdBy != null && !createdBy.isEmpty()) {
+//                getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, " +
+//                        "oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt " +
+//                        "FROM orders o " +
+//                        "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
+//                        "LEFT JOIN orderStatus os ON os.id = o.status " +
+//                        "LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId " +
+//                        "LEFT JOIN products p ON p.id = oi.productId " +
+//                        "LEFT JOIN users usr ON usr.id = o.createdBy " +
+//                        "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
+//                        "WHERE o.createdBy = ? " +
+//                        dateFilter +
+//                        "ORDER BY o.orderId DESC";
+//                return jdbcTemplate.query(getAllOrdersQuery, new Object[]{createdBy}, new OrderResponseExtractor());
+//            } else {
+//                // Handle case where createdBy is null or empty (admins can see all orders)
+//                getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, " +
+//                        "oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt " +
+//                        "FROM orders o " +
+//                        "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
+//                        "LEFT JOIN orderStatus os ON os.id = o.status " +
+//                        "LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId " +
+//                        "LEFT JOIN products p ON p.id = oi.productId " +
+//                        "LEFT JOIN users usr ON usr.id = o.createdBy " +
+//                        "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
+//                        dateFilter +
+//                        "ORDER BY o.orderId DESC";
+//                return jdbcTemplate.query(getAllOrdersQuery, new OrderResponseExtractor());
+//            }
+//        } else {
+//            // Non-admin users only see their own orders
+//            getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, " +
+//                    "oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt " +
+//                    "FROM orders o " +
+//                    "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
+//                    "LEFT JOIN orderStatus os ON os.id = o.status " +
+//                    "LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId " +
+//                    "LEFT JOIN products p ON p.id = oi.productId " +
+//                    "LEFT JOIN users usr ON usr.id = o.createdBy " +
+//                    "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
+//                    "WHERE o.createdBy = ? " +
+//                    dateFilter +
+//                    "ORDER BY o.orderId DESC";
+//            return jdbcTemplate.query(getAllOrdersQuery, new Object[]{currentUserId}, new OrderResponseExtractor());
+//        }
+//
+//    }
+//
+//    public class OrderResponseExtractor implements ResultSetExtractor<List<OrderResponse>> {
+//        @Override
+//        public List<OrderResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
+//            Map<String, OrderResponse> orderMap = new LinkedHashMap<>();
+//
+//            while (rs.next()) {
+//                String orderId = rs.getString("oOrderId");
+//
+//                OrderResponse orderResponse = orderMap.get(orderId);
+//                if (orderResponse == null) {
+//                    orderResponse = new OrderResponse();
+//                    orderResponse.setId(rs.getInt("oId"));
+//                    orderResponse.setOrderId(orderId);
+//                    orderResponse.setCustomerId(rs.getString("customerId"));
+//                    orderResponse.setCustomerName(rs.getString("customerName"));
+//                    orderResponse.setInvoiceUrl(rs.getString("invoiceUrl"));
+//                    orderResponse.setStatusId(rs.getInt("status"));
+//                    orderResponse.setStatus(rs.getString("statusType"));
+//                    orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
+//                    orderResponse.setCreatedBy(rs.getString("orderUsername"));
+//                    orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
+//                    orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
+//
+//                    orderResponse.setTotalUnitPrice(0.0);
+//                    orderResponse.setTotalPrice(0.0);
+//                    orderResponse.setTotalAmount(0.0);
+//                    orderResponse.setTotalDiscount(0.0);
+//
+//                    orderMap.put(orderId, orderResponse);
+//                }
+//
+//                OrderItemsResponse orderItem = new OrderItemsResponse();
+//                orderItem.setOrderItemId(rs.getInt("id"));
+//                orderItem.setOrderItemOrderId(rs.getString("orderId"));
+//                orderItem.setProductId(rs.getInt("productId"));
+//                orderItem.setProductName(rs.getString("productName"));
+//                orderItem.setUnitPrice(Math.round(rs.getDouble("unitPrice")));
+//                orderItem.setQuantity(rs.getInt("quantity"));
+//                orderItem.setTotalAmount(Math.round(rs.getDouble("totalAmount")));
+//                orderItem.setDiscount(rs.getInt("discount"));
+//                orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
+//                orderItem.setOrderItemCreatedBy(rs.getString("username"));
+//                orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+//
+//                double unitPrice = rs.getDouble("unitPrice");
+//                int quantity = rs.getInt("quantity");
+//                double discount = Math.round(rs.getDouble("discount"));
+//
+//                double itemTotalPrice = Math.round(unitPrice * quantity);
+//                double itemDiscountAmount = Math.round(itemTotalPrice * (discount / 100));
+//                double itemTotalAmountAfterDiscount = Math.round(itemTotalPrice - itemDiscountAmount);
+//
+//                orderResponse.getOrderItems().add(orderItem);
+//
+//                orderResponse.setTotalUnitPrice(orderResponse.getTotalUnitPrice() + unitPrice);
+//                orderResponse.setTotalPrice(orderResponse.getTotalPrice() + itemTotalPrice);
+//                orderResponse.setTotalAmount(orderResponse.getTotalAmount() + itemTotalAmountAfterDiscount);
+//                orderResponse.setTotalDiscount(orderResponse.getTotalDiscount() + itemDiscountAmount);
+//            }
+//
+//            return new ArrayList<>(orderMap.values());
+//        }
+//    }
+
+
+
+    public List<OrderResponse> getOrders(String createdBy, String userRole, String currentUserId, String startDate, String endDate) {
         String getAllOrdersQuery;
+        String dateFilter = "";
+        List<Object> queryParams = new ArrayList<>();
 
-        if ("admin".equalsIgnoreCase(userRole)) {
+        // Check if both startDate and endDate are provided
+        if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
+            try {
+                // Ensure the date is properly parsed and formatted
+                DateTimeFormatter originalFormatter = DateTimeFormatter.ofPattern("d/M/yyyy");
+                LocalDate originalStartDate = LocalDate.parse(startDate.replace("-", "/"), originalFormatter);
+                LocalDate originalEndDate = LocalDate.parse(endDate.replace("-", "/"), originalFormatter);
 
-            getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt " +
-                    "FROM orders o " +
-                    "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
-                    "LEFT JOIN orderStatus os ON os.id = o.status " +
-                    "LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId " +
-                    "LEFT JOIN products p ON p.id = oi.productId " +
-                    "LEFT JOIN users usr ON usr.id = o.createdBy " +
-                    "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
-                    "ORDER BY o.orderId DESC";
+                DateTimeFormatter desiredFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+                String startDateConverted = originalStartDate.format(desiredFormatter);
+                String endDateConverted = originalEndDate.format(desiredFormatter);
+
+                // Build the date filter part of the query
+                dateFilter = "AND o.createdAt BETWEEN ? AND ? ";
+                queryParams.add(startDateConverted);
+                queryParams.add(endDateConverted);
+            } catch (DateTimeParseException e) {
+                System.out.println("Error parsing dates: " + e.getMessage());
+            }
+        }
+
+        if ("1".equals(userRole)) {  // Admin user
+            if (createdBy != null && !createdBy.isEmpty()) {
+                getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, " +
+                        "usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, " +
+                        "oi.createdBy, usrs.username, oi.createdAt " +
+                        "FROM orders o " +
+                        "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
+                        "LEFT JOIN orderStatus os ON os.id = o.status " +
+                        "LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId " +
+                        "LEFT JOIN products p ON p.id = oi.productId " +
+                        "LEFT JOIN users usr ON usr.id = o.createdBy " +
+                        "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
+                        "WHERE o.createdBy = ? " +
+                        dateFilter +
+                        "ORDER BY o.orderId DESC";
+                queryParams.add(createdBy);  // Add createdBy parameter for admins
+            } else {
+                getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, " +
+                        "usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, " +
+                        "oi.createdBy, usrs.username, oi.createdAt " +
+                        "FROM orders o " +
+                        "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
+                        "LEFT JOIN orderStatus os ON os.id = o.status " +
+                        "LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId " +
+                        "LEFT JOIN products p ON p.id = oi.productId " +
+                        "LEFT JOIN users usr ON usr.id = o.createdBy " +
+                        "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
+                        dateFilter +
+                        "ORDER BY o.orderId DESC";
+            }
+            return jdbcTemplate.query(getAllOrdersQuery, queryParams.toArray(), new OrderResponseExtractor());
         } else {
-            getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt " +
+            // Non-admin users only see their own orders
+            getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, " +
+                    "usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, " +
+                    "oi.createdBy, usrs.username, oi.createdAt " +
                     "FROM orders o " +
                     "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
                     "LEFT JOIN orderStatus os ON os.id = o.status " +
@@ -271,73 +460,76 @@ public class OrderHandler {
                     "LEFT JOIN users usr ON usr.id = o.createdBy " +
                     "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
                     "WHERE o.createdBy = ? " +
+                    dateFilter +
                     "ORDER BY o.orderId DESC";
+            queryParams.add(currentUserId);  // Add currentUserId parameter for non-admins
+            return jdbcTemplate.query(getAllOrdersQuery, queryParams.toArray(), new OrderResponseExtractor());
         }
+    }
+    public class OrderResponseExtractor implements ResultSetExtractor<List<OrderResponse>> {
+        @Override
+        public List<OrderResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
+            Map<String, OrderResponse> orderMap = new LinkedHashMap<>();
 
-        return jdbcTemplate.query(getAllOrdersQuery, new Object[]{createdBy}, new ResultSetExtractor<List<OrderResponse>>() {
-            @Override
-            public List<OrderResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
-                Map<String, OrderResponse> orderMap = new LinkedHashMap<>();
+            while (rs.next()) {
+                String orderId = rs.getString("oOrderId");
 
-                while (rs.next()) {
-                    String orderId = rs.getString("oOrderId");
+                OrderResponse orderResponse = orderMap.get(orderId);
+                if (orderResponse == null) {
+                    orderResponse = new OrderResponse();
+                    orderResponse.setId(rs.getInt("oId"));
+                    orderResponse.setOrderId(orderId);
+                    orderResponse.setCustomerId(rs.getString("customerId"));
+                    orderResponse.setCustomerName(rs.getString("customerName"));
+                    orderResponse.setInvoiceUrl(rs.getString("invoiceUrl"));
+                    orderResponse.setStatusId(rs.getInt("status"));
+                    orderResponse.setStatus(rs.getString("statusType"));
+                    orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
+                    orderResponse.setCreatedBy(rs.getString("orderUsername"));
+                    orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
+                    orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
 
-                    OrderResponse orderResponse = orderMap.get(orderId);
-                    if (orderResponse == null) {
-                        orderResponse = new OrderResponse();
-                        orderResponse.setId(rs.getInt("oId"));
-                        orderResponse.setOrderId(orderId);
-                        orderResponse.setCustomerId(rs.getString("customerId"));
-                        orderResponse.setCustomerName(rs.getString("customerName"));
-                        orderResponse.setInvoiceUrl(rs.getString("invoiceUrl"));
-                        orderResponse.setStatusId(rs.getInt("status"));
-                        orderResponse.setStatus(rs.getString("statusType"));
-                        orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
-                        orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                        orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
-                        orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
+                    orderResponse.setTotalUnitPrice(0.0);
+                    orderResponse.setTotalPrice(0.0);
+                    orderResponse.setTotalAmount(0.0);
+                    orderResponse.setTotalDiscount(0.0);
 
-                        orderResponse.setTotalUnitPrice(0.0);
-                        orderResponse.setTotalPrice(0.0);
-                        orderResponse.setTotalAmount(0.0);
-                        orderResponse.setTotalDiscount(0.0);
-
-                        orderMap.put(orderId, orderResponse);
-                    }
-
-                    OrderItemsResponse orderItem = new OrderItemsResponse();
-                    orderItem.setOrderItemId(rs.getInt("id"));
-                    orderItem.setOrderItemOrderId(rs.getString("orderId"));
-                    orderItem.setProductId(rs.getInt("productId"));
-                    orderItem.setProductName(rs.getString("productName"));
-                    orderItem.setUnitPrice(Math.round(rs.getDouble("unitPrice")));
-                    orderItem.setQuantity(rs.getInt("quantity"));
-                    orderItem.setTotalAmount(Math.round(rs.getDouble("totalAmount")));
-                    orderItem.setDiscount(rs.getInt("discount"));
-                    orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
-                    orderItem.setOrderItemCreatedBy(rs.getString("username"));
-                    orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
-
-                    double unitPrice = rs.getDouble("unitPrice");
-                    int quantity = rs.getInt("quantity");
-                    double discount = Math.round(rs.getDouble("discount"));
-
-                    double itemTotalPrice = Math.round(unitPrice * quantity);
-                    double itemDiscountAmount = Math.round(itemTotalPrice * (discount / 100));
-                    double itemTotalAmountAfterDiscount = Math.round(itemTotalPrice - itemDiscountAmount);
-
-                    orderResponse.getOrderItems().add(orderItem);
-
-                    orderResponse.setTotalUnitPrice(orderResponse.getTotalUnitPrice() + unitPrice);
-                    orderResponse.setTotalPrice(orderResponse.getTotalPrice() + itemTotalPrice);
-                    orderResponse.setTotalAmount(orderResponse.getTotalAmount() + itemTotalAmountAfterDiscount);
-                    orderResponse.setTotalDiscount(orderResponse.getTotalDiscount() + itemDiscountAmount);
+                    orderMap.put(orderId, orderResponse);
                 }
 
-                return new ArrayList<>(orderMap.values());
+                OrderItemsResponse orderItem = new OrderItemsResponse();
+                orderItem.setOrderItemId(rs.getInt("id"));
+                orderItem.setOrderItemOrderId(rs.getString("orderId"));
+                orderItem.setProductId(rs.getInt("productId"));
+                orderItem.setProductName(rs.getString("productName"));
+                orderItem.setUnitPrice(Math.round(rs.getDouble("unitPrice")));
+                orderItem.setQuantity(rs.getInt("quantity"));
+                orderItem.setTotalAmount(Math.round(rs.getDouble("totalAmount")));
+                orderItem.setDiscount(rs.getInt("discount"));
+                orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
+                orderItem.setOrderItemCreatedBy(rs.getString("username"));
+                orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+
+                double unitPrice = rs.getDouble("unitPrice");
+                int quantity = rs.getInt("quantity");
+                double discount = Math.round(rs.getDouble("discount"));
+
+                double itemTotalPrice = Math.round(unitPrice * quantity);
+                double itemDiscountAmount = Math.round(itemTotalPrice * (discount / 100));
+                double itemTotalAmountAfterDiscount = Math.round(itemTotalPrice - itemDiscountAmount);
+
+                orderResponse.getOrderItems().add(orderItem);
+
+                orderResponse.setTotalUnitPrice(orderResponse.getTotalUnitPrice() + unitPrice);
+                orderResponse.setTotalPrice(orderResponse.getTotalPrice() + itemTotalPrice);
+                orderResponse.setTotalAmount(orderResponse.getTotalAmount() + itemTotalAmountAfterDiscount);
+                orderResponse.setTotalDiscount(orderResponse.getTotalDiscount() + itemDiscountAmount);
             }
-        });
+
+            return new ArrayList<>(orderMap.values());
+        }
     }
+
 
     public List<OrderResponse> getHeldOrders(){
 
