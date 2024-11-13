@@ -4,17 +4,20 @@ import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.HeaderFooterPageEvent;
 import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.ColumnText;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.Image;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.*;
+import com.itextpdf.tool.xml.XMLWorkerFontProvider;
+import com.itextpdf.tool.xml.XMLWorkerHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.io.*;
-import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class PDFHandler {
@@ -32,6 +35,13 @@ public class PDFHandler {
     @Value("classpath:Assets/logo.png")
     Resource resource;
 
+    @Value("classpath:fonts/Kalaham.otf")
+    Resource fontResource;
+
+    BaseFont tamilBaseFont = null;
+    private Font tamilFont = null;
+
+
     public String generatePDFForOrders(OrderResponse orderResponse) {
 
         level1 = new Font(Font.FontFamily.COURIER, 13, Font.BOLD);
@@ -40,6 +50,7 @@ public class PDFHandler {
         level4Bold = new Font(Font.FontFamily.COURIER, 9, Font.BOLD);
         level3Bold = new Font(Font.FontFamily.COURIER, 10, Font.BOLD);
         level6 = new Font(Font.FontFamily.TIMES_ROMAN, 5);
+
 
         Document document = new Document();
         String fileName = orderResponse.getOrderId().replace("/", "").toLowerCase();
@@ -62,6 +73,7 @@ public class PDFHandler {
             addFooter(pdfPTable);
 
             document.add(pdfPTable);
+
 
             document.close();
 
@@ -360,13 +372,20 @@ public class PDFHandler {
             sectionDynamicValues.setLockedWidth(true);
             sectionDynamicValues.setTotalWidth(new float[]{35, 170, 70, 65, 60, 65, 85});
 
+            XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
+            File file = fontResource.getFile();
+            fontProvider.register(file.getAbsolutePath(), "TamilFont");
+            Font tamilFont = fontProvider.getFont("TamilFont", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+
             for (int i=0; i<response.getOrderItems().size(); i++) {
                 PdfPCell p1 = new PdfPCell(new Paragraph(String.valueOf(i + 1), level4));
                 p1.setBorder(0);
                 p1.setHorizontalAlignment(Element.ALIGN_CENTER);
                 p1.setPaddingTop(5);
                 p1.setPaddingBottom(5);
-                PdfPCell p2 = new PdfPCell(new Paragraph(response.getOrderItems().get(i).getProductName()  + response.getOrderItems().get(i).getSubCategory() + "-" + response.getOrderItems().get(i).getSize() + response.getOrderItems().get(i).getUnit(), level4));
+                String productName = "<p><u>" + response.getOrderItems().get(i).getProductName() + "</u></p>";
+                PdfPCell p2 = new PdfPCell(new Paragraph(response.getOrderItems().get(i).getProductName()  + response.getOrderItems().get(i).getSubCategory() + "-" + response.getOrderItems().get(i).getSize() + response.getOrderItems().get(i).getUnit(), tamilFont));
+//                PdfPCell p2 = htmlToPdfPCell(productName);
                 p2.setBorder(0);
                 p2.setHorizontalAlignment(Element.ALIGN_CENTER);
                 p2.setPaddingTop(5);
@@ -427,6 +446,8 @@ public class PDFHandler {
             table.addCell(pdfPCell);
 
         } catch (DocumentException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -627,5 +648,39 @@ public class PDFHandler {
         table.addCell(pdfPCell);
 
     }
+
+    private PdfPCell htmlToPdfPCell(String htmlData) throws DocumentException {
+        PdfPCell cell = new PdfPCell();
+//        cell.setPadding(10); // Set padding for cell
+
+        try {
+            // Use XMLWorkerHelper to parse HTML
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(htmlData.getBytes(StandardCharsets.UTF_8));
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Document tempDoc = new Document();
+
+            // Create a temporary writer to parse HTML to Elements
+            PdfWriter tempWriter = PdfWriter.getInstance(tempDoc, outputStream);
+            tempDoc.open();
+
+            XMLWorkerHelper.getInstance().parseXHtml(tempWriter, tempDoc, inputStream);
+
+
+            // Close the temporary document
+            tempDoc.close();
+
+            // Retrieve parsed elements and add them to the PdfPCell
+            java.util.List<Element>  elements = XMLWorkerHelper.parseToElementList(htmlData, null);
+            for (Element element : elements) {
+                cell.addElement(element);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return cell;
+    }
+
 
 }
