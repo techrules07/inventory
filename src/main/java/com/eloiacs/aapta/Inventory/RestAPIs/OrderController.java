@@ -3,6 +3,7 @@ package com.eloiacs.aapta.Inventory.RestAPIs;
 import com.eloiacs.aapta.Inventory.DBHandler.*;
 import com.eloiacs.aapta.Inventory.Models.*;
 import com.eloiacs.aapta.Inventory.Responses.BaseResponse;
+import com.eloiacs.aapta.Inventory.Responses.OrderItemsResponse;
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.utils.Utils;
@@ -473,7 +474,6 @@ public class OrderController {
                 }
             }
 
-
             List<OrderResponse> orderResponses = orderHandler.getOrders(createdBy, userRole);
 
             if (orderResponses != null && !orderResponses.isEmpty()) {
@@ -716,7 +716,21 @@ public class OrderController {
                 }
             }
 
+            OrderResponse orderResponse = orderHandler.getOrderByOrderId(orderId);
+            for(OrderItemsResponse orderItemsResponse : orderResponse.getOrderItems()){
+                if (orderItemsResponse.getProductId() != 0){
+                    Boolean inventoryStockExist = orderHandler.inventoryStockExistByProductId(orderItemsResponse.getProductId());
+                    if (!inventoryStockExist){
+                        baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+                        baseResponse.setStatus("Failed");
+                        baseResponse.setMessage("No Stock in Inventory");
+                        return baseResponse;
+                    }
+                }
+            }
+
             String totalAmount = orderHandler.initializePayments(orderId);
+
             if (totalAmount != null){
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");

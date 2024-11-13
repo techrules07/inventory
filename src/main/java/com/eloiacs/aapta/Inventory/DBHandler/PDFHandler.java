@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
@@ -35,13 +34,6 @@ public class PDFHandler {
     @Value("classpath:Assets/logo.png")
     Resource resource;
 
-//    @Value("classpath:fonts/NotoSansTamil-VariableFont_wdth,wght.ttf")
-//    @Value("classpath:fonts/NotoSerifTamil-VariableFont_wdth,wght.ttf")
-//    @Value("classpath:fonts/Kavivanar-Regular.ttf")
-//    @Value("classpath:fonts/AnekTamil-VariableFont_wdth,wght.ttf")
-//    @Value("classpath:fonts/Uni Ila.Sundaram-01.ttf")
-//    @Value("classpath:fonts/MeeraInimai-Regular.ttf")
-//    @Value("classpath:fonts/Arima-VariableFont_wght.ttf")
     @Value("classpath:fonts/Catamaran-VariableFont_wght.ttf")
     Resource fontResource;
 

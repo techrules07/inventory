@@ -583,6 +583,15 @@ public class OrderHandler {
         return count > 0;
     }
 
+    public Boolean inventoryStockExistByProductId(int productId) {
+
+        String orderExistByOrderIdQuery = "select count from inventory where productId = ?";
+
+        int count = jdbcTemplate.queryForObject(orderExistByOrderIdQuery, new Object[]{productId}, Integer.class);
+
+        return count > 0;
+    }
+
     public OrderResponse createOrderByCustomerId(String createdBy) {
 
         String query = "SELECT * FROM orders WHERE status=6 and createdBy='" + createdBy+ "'";
