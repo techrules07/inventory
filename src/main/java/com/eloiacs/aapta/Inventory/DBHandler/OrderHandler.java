@@ -8,7 +8,6 @@ import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
 import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.Utils;
-import com.itextpdf.text.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,7 +17,6 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -294,7 +292,7 @@ public class OrderHandler {
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                        orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
 
                         orderResponse.setTotalUnitPrice(0.0);
@@ -316,7 +314,7 @@ public class OrderHandler {
                     orderItem.setDiscount(rs.getInt("discount"));
                     orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
-                    orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                    orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                     double unitPrice = rs.getDouble("unitPrice");
                     int quantity = rs.getInt("quantity");
@@ -364,7 +362,7 @@ public class OrderHandler {
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                        orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
 
                         orderResponse.setTotalUnitPrice(0.0);
@@ -387,7 +385,7 @@ public class OrderHandler {
                     orderItem.setDiscount(rs.getInt("discount"));
                     orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
-                    orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                    orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                     double unitPrice = rs.getDouble("unitPrice");
                     int quantity = rs.getInt("quantity");
@@ -437,8 +435,8 @@ public class OrderHandler {
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                        orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
-                        orderResponse.setOrderItems(new ArrayList<>()); // Initialize the list for order items
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setOrderItems(new ArrayList<>());
                     }
 
                     if (rs.getString("orderId") != null) {
@@ -458,7 +456,7 @@ public class OrderHandler {
                         orderItem.setSubCategory(rs.getString("subCategoryName"));
                         orderItem.setUnit(rs.getString("unitName"));
                         orderItem.setSize(rs.getString("size"));
-                        orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                        orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                         double unitPrice = rs.getDouble("unitPrice");
                         int quantity = rs.getInt("quantity");
@@ -513,7 +511,7 @@ public class OrderHandler {
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                        orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize the list for order items
                     }
 
@@ -534,7 +532,7 @@ public class OrderHandler {
                         orderItem.setSubCategory(rs.getString("subCategoryName"));
                         orderItem.setUnit(rs.getString("unitName"));
                         orderItem.setSize(rs.getString("size"));
-                        orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                        orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                         double unitPrice = rs.getDouble("unitPrice");
                         int quantity = rs.getInt("quantity");
