@@ -246,11 +246,35 @@ public class OrderHandler {
         return getOrderByOrderId(deleteOrderItemModelList.get(0).getOrderId());
     }
 
-    public List<OrderResponse> getOrders(){
+    public List<OrderResponse> getOrders(String createdBy, String userRole) {
 
-        String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join apptaCustomers ac on ac.customerId = o.customerId left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy order by o.orderId desc";
+        String getAllOrdersQuery;
 
-        return jdbcTemplate.query(getAllOrdersQuery, new ResultSetExtractor<List<OrderResponse>>() {
+        if ("admin".equalsIgnoreCase(userRole)) {
+
+            getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt " +
+                    "FROM orders o " +
+                    "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
+                    "LEFT JOIN orderStatus os ON os.id = o.status " +
+                    "LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId " +
+                    "LEFT JOIN products p ON p.id = oi.productId " +
+                    "LEFT JOIN users usr ON usr.id = o.createdBy " +
+                    "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
+                    "ORDER BY o.orderId DESC";
+        } else {
+            getAllOrdersQuery = "SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt " +
+                    "FROM orders o " +
+                    "LEFT JOIN orderItems oi ON oi.orderId = o.orderId " +
+                    "LEFT JOIN orderStatus os ON os.id = o.status " +
+                    "LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId " +
+                    "LEFT JOIN products p ON p.id = oi.productId " +
+                    "LEFT JOIN users usr ON usr.id = o.createdBy " +
+                    "LEFT JOIN users usrs ON usrs.id = oi.createdBy " +
+                    "WHERE o.createdBy = ? " +
+                    "ORDER BY o.orderId DESC";
+        }
+
+        return jdbcTemplate.query(getAllOrdersQuery, new Object[]{createdBy}, new ResultSetExtractor<List<OrderResponse>>() {
             @Override
             public List<OrderResponse> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 Map<String, OrderResponse> orderMap = new LinkedHashMap<>();
@@ -258,7 +282,6 @@ public class OrderHandler {
                 while (rs.next()) {
                     String orderId = rs.getString("oOrderId");
 
-                    // Check if the order is already in the map
                     OrderResponse orderResponse = orderMap.get(orderId);
                     if (orderResponse == null) {
                         orderResponse = new OrderResponse();
@@ -282,7 +305,6 @@ public class OrderHandler {
                         orderMap.put(orderId, orderResponse);
                     }
 
-                    // Create an OrderItemResponse for the current row and add it to the order's item list
                     OrderItemsResponse orderItem = new OrderItemsResponse();
                     orderItem.setOrderItemId(rs.getInt("id"));
                     orderItem.setOrderItemOrderId(rs.getString("orderId"));
@@ -302,9 +324,8 @@ public class OrderHandler {
 
                     double itemTotalPrice = Math.round(unitPrice * quantity);
                     double itemDiscountAmount = Math.round(itemTotalPrice * (discount / 100));
-                    double itemTotalAmountAfterDiscount =Math.round(itemTotalPrice - itemDiscountAmount);
+                    double itemTotalAmountAfterDiscount = Math.round(itemTotalPrice - itemDiscountAmount);
 
-                    // Add the item to the list in the corresponding order
                     orderResponse.getOrderItems().add(orderItem);
 
                     orderResponse.setTotalUnitPrice(orderResponse.getTotalUnitPrice() + unitPrice);
@@ -313,7 +334,6 @@ public class OrderHandler {
                     orderResponse.setTotalDiscount(orderResponse.getTotalDiscount() + itemDiscountAmount);
                 }
 
-                // Convert map values to a list and return
                 return new ArrayList<>(orderMap.values());
             }
         });

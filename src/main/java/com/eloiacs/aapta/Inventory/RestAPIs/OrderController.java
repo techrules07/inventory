@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -446,8 +447,9 @@ public class OrderController {
         return baseResponse;
     }
 
+
     @RequestMapping(value = "/getOrders", method = RequestMethod.POST)
-    public BaseResponse getOrders(HttpServletRequest httpServletRequest){
+    public BaseResponse getOrders(HttpServletRequest httpServletRequest) {
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -457,31 +459,34 @@ public class OrderController {
 
             String createdBy = claims.get("id").toString();
             String expireDate = claims.get("exp").toString();
+            String userRole = claims.get("role") != null ? claims.get("role").toString() : "UNKNOWN";
 
-            if (Utils.checkExpired(expireDate)){
+            System.out.println("User Role: " + userRole);
+
+            if (Utils.checkExpired(expireDate)) {
                 LoginModel loginModel = authHandler.getUserDetails(createdBy);
                 AuthModel model1 = authHandler.accountDetails(loginModel);
                 if (model1 != null) {
                     baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
-                }
-                else {
+                } else {
                     baseResponse.setAccessToken("");
                 }
             }
 
-            List<OrderResponse> orderResponses = orderHandler.getOrders();
 
-            if (orderResponses!=null && !orderResponses.isEmpty()){
+            List<OrderResponse> orderResponses = orderHandler.getOrders(createdBy, userRole);
+
+            if (orderResponses != null && !orderResponses.isEmpty()) {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
-                baseResponse.setMessage("Orders got successfully");
+                baseResponse.setMessage("Orders retrieved successfully");
                 baseResponse.setData(orderResponses);
-            }else {
+            } else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
-                baseResponse.setMessage("No Order found");
+                baseResponse.setMessage("No orders found");
             }
-        }else {
+        } else {
             baseResponse.setCode(HttpStatus.FORBIDDEN.value());
             baseResponse.setStatus("Failed");
             baseResponse.setMessage("Please login again");
