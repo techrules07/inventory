@@ -35,7 +35,14 @@ public class PDFHandler {
     @Value("classpath:Assets/logo.png")
     Resource resource;
 
-    @Value("classpath:fonts/Kalaham.otf")
+//    @Value("classpath:fonts/NotoSansTamil-VariableFont_wdth,wght.ttf")
+//    @Value("classpath:fonts/NotoSerifTamil-VariableFont_wdth,wght.ttf")
+//    @Value("classpath:fonts/Kavivanar-Regular.ttf")
+//    @Value("classpath:fonts/AnekTamil-VariableFont_wdth,wght.ttf")
+//    @Value("classpath:fonts/Uni Ila.Sundaram-01.ttf")
+//    @Value("classpath:fonts/MeeraInimai-Regular.ttf")
+//    @Value("classpath:fonts/Arima-VariableFont_wght.ttf")
+    @Value("classpath:fonts/Catamaran-VariableFont_wght.ttf")
     Resource fontResource;
 
     BaseFont tamilBaseFont = null;
