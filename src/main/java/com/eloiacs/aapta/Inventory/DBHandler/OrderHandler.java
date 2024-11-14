@@ -8,7 +8,6 @@ import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
 import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.Utils;
-import com.itextpdf.text.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -488,6 +487,20 @@ public class OrderHandler {
                     orderResponse.setCreatedBy(rs.getString("orderUsername"));
                     orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
                     orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
+                    OrderResponse orderResponse = orderMap.get(orderId);
+                    if (orderResponse == null) {
+                        orderResponse = new OrderResponse();
+                        orderResponse.setId(rs.getInt("oId"));
+                        orderResponse.setOrderId(orderId);
+                        orderResponse.setCustomerId(rs.getString("customerId"));
+                        orderResponse.setCustomerName(rs.getString("customerName"));
+                        orderResponse.setInvoiceUrl(rs.getString("invoiceUrl"));
+                        orderResponse.setStatusId(rs.getInt("status"));
+                        orderResponse.setStatus(rs.getString("statusType"));
+                        orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
+                        orderResponse.setCreatedBy(rs.getString("orderUsername"));
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
 
                     orderResponse.setTotalUnitPrice(0.0);
                     orderResponse.setTotalPrice(0.0);
@@ -509,6 +522,18 @@ public class OrderHandler {
                 orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                 orderItem.setOrderItemCreatedBy(rs.getString("username"));
                 orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                    OrderItemsResponse orderItem = new OrderItemsResponse();
+                    orderItem.setOrderItemId(rs.getInt("id"));
+                    orderItem.setOrderItemOrderId(rs.getString("orderId"));
+                    orderItem.setProductId(rs.getInt("productId"));
+                    orderItem.setProductName(rs.getString("productName"));
+                    orderItem.setUnitPrice(Math.round(rs.getDouble("unitPrice")));
+                    orderItem.setQuantity(rs.getInt("quantity"));
+                    orderItem.setTotalAmount(Math.round(rs.getDouble("totalAmount")));
+                    orderItem.setDiscount(rs.getInt("discount"));
+                    orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
+                    orderItem.setOrderItemCreatedBy(rs.getString("username"));
+                    orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                 double unitPrice = rs.getDouble("unitPrice");
                 int quantity = rs.getInt("quantity");
@@ -556,7 +581,7 @@ public class OrderHandler {
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                        orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize order items list
 
                         orderResponse.setTotalUnitPrice(0.0);
@@ -579,7 +604,7 @@ public class OrderHandler {
                     orderItem.setDiscount(rs.getInt("discount"));
                     orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
-                    orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                    orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                     double unitPrice = rs.getDouble("unitPrice");
                     int quantity = rs.getInt("quantity");
@@ -629,8 +654,8 @@ public class OrderHandler {
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                        orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
-                        orderResponse.setOrderItems(new ArrayList<>()); // Initialize the list for order items
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setOrderItems(new ArrayList<>());
                     }
 
                     if (rs.getString("orderId") != null) {
@@ -650,7 +675,7 @@ public class OrderHandler {
                         orderItem.setSubCategory(rs.getString("subCategoryName"));
                         orderItem.setUnit(rs.getString("unitName"));
                         orderItem.setSize(rs.getString("size"));
-                        orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                        orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                         double unitPrice = rs.getDouble("unitPrice");
                         int quantity = rs.getInt("quantity");
@@ -705,7 +730,7 @@ public class OrderHandler {
                         orderResponse.setStatus(rs.getString("statusType"));
                         orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
                         orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                        orderResponse.setCreatedAt(Utils.convertDateToString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
                         orderResponse.setOrderItems(new ArrayList<>()); // Initialize the list for order items
                     }
 
@@ -726,7 +751,7 @@ public class OrderHandler {
                         orderItem.setSubCategory(rs.getString("subCategoryName"));
                         orderItem.setUnit(rs.getString("unitName"));
                         orderItem.setSize(rs.getString("size"));
-                        orderItem.setOrderItemCreatedAt(Utils.convertDateToString(rs.getTimestamp("createdAt")));
+                        orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                         double unitPrice = rs.getDouble("unitPrice");
                         int quantity = rs.getInt("quantity");
@@ -771,6 +796,15 @@ public class OrderHandler {
     public Boolean inventoryExistByProductId(int productId) {
 
         String orderExistByOrderIdQuery = "select count(*) from inventory where productId = ?";
+
+        int count = jdbcTemplate.queryForObject(orderExistByOrderIdQuery, new Object[]{productId}, Integer.class);
+
+        return count > 0;
+    }
+
+    public Boolean inventoryStockExistByProductId(int productId) {
+
+        String orderExistByOrderIdQuery = "select count from inventory where productId = ?";
 
         int count = jdbcTemplate.queryForObject(orderExistByOrderIdQuery, new Object[]{productId}, Integer.class);
 
