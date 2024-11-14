@@ -7,6 +7,9 @@ import com.eloiacs.aapta.Inventory.Responses.OrderItemsResponse;
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.utils.Utils;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
@@ -451,14 +454,15 @@ public class OrderController {
         return baseResponse;
     }
 
-
-
     @RequestMapping(value = "/getOrders", method = RequestMethod.POST)
-    public BaseResponse fetchOrders(HttpServletRequest httpServletRequest,
-                                    @RequestParam(required = false) String createdBy,
-                                    @RequestParam(required = false) String startDate,
-                                    @RequestParam(required = false) String endDate) {
+    public BaseResponse getOrders(HttpServletRequest httpServletRequest,
+                                  @RequestParam(value = "createdBy",required = false)String createdBy,
+                                  @RequestParam(value = "startDate", required = false) String startDate,
+                                  @RequestParam(value = "endDate", required = false) String endDate) {
+
         BaseResponse baseResponse = new BaseResponse();
+
+
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
 
         if (claims != null) {
@@ -466,39 +470,26 @@ public class OrderController {
             String expireDate = claims.get("exp").toString();
             String userRole = claims.get("role") != null ? claims.get("role").toString() : "UNKNOWN";
 
-            // Check if the token has expired
             if (Utils.checkExpired(expireDate)) {
-                LoginModel loginModel = authHandler.getUserDetails(currentUserId);
+                LoginModel loginModel = authHandler.getUserDetails(createdBy);
                 AuthModel model1 = authHandler.accountDetails(loginModel);
-                baseResponse.setAccessToken(model1 != null ? jwtService.generateJWToken(model1.getEmail(), model1) : "");
+                if (model1 != null) {
+                    baseResponse.setAccessToken(jwtService.generateJWToken(model1.getEmail(), model1));
+                } else {
+                    baseResponse.setAccessToken("");
+                }
             }
+            List<OrderResponse> orderResponses = orderHandler.getOrders(currentUserId,createdBy, userRole, startDate, endDate);
 
-            List<OrderResponse> orderResponses = orderHandler.getOrders(createdBy, userRole);
-            // Define the date formats to handle both `yyyy/MM/dd` and `dd/MM/yyyy`
-            DateTimeFormatter[] dateFormats = {
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd"), // Standard format
-                    DateTimeFormatter.ofPattern("yyyy/MM/dd"), // With slashes
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy"), // Day first format
-                    DateTimeFormatter.ofPattern("d-M-yyyy"), // Alternative format (day-month-year)
-                    DateTimeFormatter.ofPattern("d/M/yyyy")  // Day/month/year with slashes
-            };
-
-            LocalDate parsedStartDate = parseDate(startDate, dateFormats);
-            LocalDate parsedEndDate = parseDate(endDate, dateFormats);
-
-            String startDateString = parsedStartDate != null ? parsedStartDate.toString() : null;
-            String endDateString = parsedEndDate != null ? parsedEndDate.toString() : null;
-
-            if ("1".equals(userRole)) {  // Admin role (assuming role "1" corresponds to admin)
-                List<OrderResponse> orderResponses = orderHandler.getOrders(createdBy, userRole, currentUserId, startDateString, endDateString);
+            if (orderResponses != null && !orderResponses.isEmpty()) {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
                 baseResponse.setMessage("Orders retrieved successfully");
                 baseResponse.setData(orderResponses);
             } else {
-                baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+                baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
-                baseResponse.setMessage("You do not have permission to filter orders.");
+                baseResponse.setMessage("No orders found");
             }
         } else {
             baseResponse.setCode(HttpStatus.FORBIDDEN.value());
@@ -508,28 +499,6 @@ public class OrderController {
 
         return baseResponse;
     }
-
-    private LocalDate parseDate(String date, DateTimeFormatter[] dateFormats) {
-        if (date == null || date.isEmpty()) {
-            return null;
-        }
-
-        System.out.println("Attempting to parse date: " + date); // Debug log
-
-        for (DateTimeFormatter format : dateFormats) {
-            try {
-                // Normalize date to replace '/' with '-' for uniformity
-                String sanitizedDate = date.replace("/", "-");
-                return LocalDate.parse(sanitizedDate, format);
-            } catch (DateTimeParseException e) {
-                // Log the error for better debugging
-                System.err.println("Error parsing date: " + date + " with format " + format.toString());
-            }
-        }
-
-        return null; // Return null if no formats matched
-    }
-
 
     @RequestMapping(value = "/getHoldOrders", method = RequestMethod.POST)
     public BaseResponse getHeldOrders(HttpServletRequest httpServletRequest){
