@@ -696,15 +696,18 @@ public class OrderHandler {
         return orderResponse;
     }
 
-    public String initializePayments(String orderId){
+    public Map<String,Object> initializePayments(String orderId, String customerId){
 
-        String getTotalAmountByOrderIdQuery = "select sum(totalAmount) as totalAmount from orderItems where orderId = ?";
+        String getTotalAmountByOrderIdQuery = "select sum(totalAmount) as totalAmount, count(oi.id) as noOfOrderItems from orderItems oi left join orders o on o.orderId = oi.orderId where oi.orderId = ? and o.customerId = ?";
 
-        return jdbcTemplate.query(getTotalAmountByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<String>() {
+        return jdbcTemplate.query(getTotalAmountByOrderIdQuery, new Object[]{orderId,customerId}, new ResultSetExtractor<Map<String,Object>>() {
             @Override
-            public String extractData(ResultSet rs) throws SQLException, DataAccessException {
+            public Map<String,Object> extractData(ResultSet rs) throws SQLException, DataAccessException {
                 if (rs.next()){
-                    return rs.getString("totalAmount");
+                    HashMap<String,Object> map = new LinkedHashMap<>();
+                    map.put("totalAmount", rs.getDouble("totalAmount"));
+                    map.put("noOfOrderItems", rs.getInt("noOfOrderItems"));
+                    return map;
                 }
 
                 return null;

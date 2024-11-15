@@ -15,9 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/order")
@@ -693,7 +693,8 @@ public class OrderController {
 
     @RequestMapping(value = "/initializePayments", method = RequestMethod.POST)
     public BaseResponse initializePayments(HttpServletRequest httpServletRequest,
-                                           @RequestParam("orderId") String orderId){
+                                           @RequestParam("orderId") String orderId,
+                                           @RequestParam("customerId") String customerId){
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -729,13 +730,13 @@ public class OrderController {
                 }
             }
 
-            String totalAmount = orderHandler.initializePayments(orderId);
+            Map<String,Object> map = orderHandler.initializePayments(orderId, customerId);
 
-            if (totalAmount != null){
+            if (map != null){
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
                 baseResponse.setMessage("Payment Initialized");
-                baseResponse.setData(totalAmount);
+                baseResponse.setData(map);
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
