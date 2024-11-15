@@ -46,7 +46,7 @@ public class OrderHandler {
     @Autowired
     AWSConfig awsConfig;
 
-    public String generateOrderId(int previousId) {
+        public String generateOrderId(int previousId) {
         Date date = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         String dt = sdf.format(date);
@@ -59,7 +59,7 @@ public class OrderHandler {
         return "APTAOD-" + (9999 + nextId) + dt;
     }
 
-    public int findLastOrderId() {
+        public int findLastOrderId() {
         String query = "SELECT id FROM orders order BY id DESC LIMIT 1";
 
         return jdbcTemplate.query(query, new ResultSetExtractor<Integer>() {
@@ -73,7 +73,7 @@ public class OrderHandler {
         });
     }
 
-    public String addOrder(OrderRequestModel orderRequestModel, String createdBy) {
+        public String addOrder(OrderRequestModel orderRequestModel, String createdBy) {
 
         String orderId = generateOrderId(findLastOrderId());
 
@@ -103,7 +103,7 @@ public class OrderHandler {
         return null;
     }
 
-    public Boolean updateOrder(OrderRequestModel orderRequestModel) {
+        public Boolean updateOrder(OrderRequestModel orderRequestModel) {
 
         String orderUpdateQuery = "update orders set customerId = ? where orderId = ?";
 
@@ -114,8 +114,8 @@ public class OrderHandler {
         return true;
     }
 
-    @Transactional
-    public OrderResponse addOrderItem(OrderItemsRequestModel orderItemsRequestModel, String createdBy) {
+        @Transactional
+        public OrderResponse addOrderItem(OrderItemsRequestModel orderItemsRequestModel, String createdBy) {
 
         ProductResponse response = productHandler.getProductById(orderItemsRequestModel.getProductId());
 
@@ -198,7 +198,7 @@ public class OrderHandler {
         return getOrderByOrderId(orderItemsRequestModel.getOrderId());
     }
 
-    public Boolean holdOrder(String orderId) {
+        public Boolean holdOrder(String orderId) {
 
         String updateOrderStatusQuery = "update orders set status = 2 where orderId = ?";
 
@@ -208,7 +208,7 @@ public class OrderHandler {
         return true;
     }
 
-    public Boolean cancelOrder(String orderId) {
+        public Boolean cancelOrder(String orderId) {
 
         String updateOrderStatusQuery = "update orders set status = 4 where orderId = ?";
 
@@ -218,7 +218,7 @@ public class OrderHandler {
         return true;
     }
 
-    public OrderResponse deleteOrderItems(List<DeleteOrderItemModel> deleteOrderItemModelList) {
+        public OrderResponse deleteOrderItems(List<DeleteOrderItemModel> deleteOrderItemModelList) {
 
         String checkOrderCompletedQuery = "select count(*) from orders where orderId = ? and status != 7";
         String deleteOrderItemQuery = "delete from orderItems where orderId = ? and productId = ?";
@@ -250,22 +250,22 @@ public class OrderHandler {
         return getOrderByOrderId(deleteOrderItemModelList.get(0).getOrderId());
     }
 
-
-    public List<OrderResponse> getOrders(String currentUserId, String createdBy, String userRole, String startDate, String endDate) {
+        public List<OrderResponse> getOrders(String currentUserId, String createdBy, String userRole, String startDate, String endDate) {
         StringBuilder getAllOrdersQuery = new StringBuilder();
         List<Object> queryParams = new ArrayList<>();
 
 
         getAllOrdersQuery.append("SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, ")
                 .append("o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, ")
-                .append("p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt ")
+                .append("p.productName, oi.unitPrice, pp.mrp,pp.salesPrice,pp.salesPercentage,pp.wholesalePrice,pp.wholesalePercentage,oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt ")
                 .append("FROM orders o ")
                 .append("LEFT JOIN orderItems oi ON oi.orderId = o.orderId ")
                 .append("LEFT JOIN orderStatus os ON os.id = o.status ")
                 .append("LEFT JOIN apptaCustomers ac ON ac.customerId = o.customerId ")
                 .append("LEFT JOIN products p ON p.id = oi.productId ")
                 .append("LEFT JOIN users usr ON usr.id = o.createdBy ")
-                .append("LEFT JOIN users usrs ON usrs.id = oi.createdBy ");
+                .append("LEFT JOIN users usrs ON usrs.id = oi.createdBy ")
+                .append("left join productPrice pp on pp.productId=oi.productId ");
 
 
         if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
@@ -362,6 +362,11 @@ public class OrderHandler {
                     orderItem.setProductId(rs.getInt("productId"));
                     orderItem.setProductName(rs.getString("productName"));
                     orderItem.setUnitPrice(Math.round(rs.getDouble("unitPrice")));
+                    orderItem.setMrp(rs.getDouble("mrp"));
+                    orderItem.setSalesPrice(rs.getDouble("salesPrice"));
+                    orderItem.setSalesPercentage(rs.getInt("salesPercentage"));
+                    orderItem.setWholesalePrice(rs.getDouble("wholesalePrice"));
+                    orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
                     orderItem.setQuantity(rs.getInt("quantity"));
                     orderItem.setTotalAmount(Math.round(rs.getDouble("totalAmount")));
                     orderItem.setDiscount(rs.getInt("discount"));
@@ -390,10 +395,9 @@ public class OrderHandler {
         });
     }
 
-
         public List<OrderResponse> getHeldOrders() {
 
-            String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join apptaCustomers ac on ac.customerId = o.customerId left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.status = 2 order by o.orderId desc";
+            String getAllOrdersQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice,pp.mrp,pp.salesPrice,pp.salesPercentage,pp.wholesalePrice,pp.wholesalePercentage, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status  left join productPrice pp on pp.productId=oi.productId left join apptaCustomers ac on ac.customerId = o.customerId left join products p on p.id = oi.productId left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.status = 2 order by o.orderId desc";
 
             return jdbcTemplate.query(getAllOrdersQuery, new ResultSetExtractor<List<OrderResponse>>() {
                 @Override
@@ -434,6 +438,11 @@ public class OrderHandler {
                         orderItem.setProductId(rs.getInt("productId"));
                         orderItem.setProductName(rs.getString("productName"));
                         orderItem.setUnitPrice(rs.getDouble("unitPrice"));
+                        orderItem.setMrp(rs.getDouble("mrp"));
+                        orderItem.setSalesPrice(rs.getDouble("salesPrice"));
+                        orderItem.setSalesPercentage(rs.getInt("salesPercentage"));
+                        orderItem.setWholesalePrice(rs.getDouble("wholesalePrice"));
+                        orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
                         orderItem.setQuantity(rs.getInt("quantity"));
                         orderItem.setTotalAmount(rs.getDouble("totalAmount"));
                         orderItem.setDiscount(rs.getInt("discount"));
@@ -466,7 +475,7 @@ public class OrderHandler {
 
         public OrderResponse getOrderByOrderId(String orderId) {
 
-            String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join apptaCustomers ac on ac.customerId = o.customerId  left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
+            String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice,pp.mrp,pp.salesPrice,pp.salesPercentage,pp.wholesalePrice,pp.wholesalePercentage, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join apptaCustomers ac on ac.customerId = o.customerId  left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join users usr on usr.id = o.createdBy left join productPrice pp on pp.productId=oi.productId  left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
 
             return jdbcTemplate.query(getOrderByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<OrderResponse>() {
                 @Override
@@ -501,6 +510,11 @@ public class OrderHandler {
                             orderItem.setProductId(rs.getInt("productId"));
                             orderItem.setProductName(rs.getString("productName"));
                             orderItem.setUnitPrice(rs.getDouble("unitPrice"));
+                            orderItem.setMrp(rs.getDouble("mrp"));
+                            orderItem.setSalesPrice(rs.getDouble("salesPrice"));
+                            orderItem.setSalesPercentage(rs.getInt("salesPercentage"));
+                            orderItem.setWholesalePrice(rs.getDouble("wholesalePrice"));
+                            orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
                             orderItem.setQuantity(rs.getInt("quantity"));
                             orderItem.setTotalAmount(rs.getDouble("totalAmount"));
                             orderItem.setDiscount(rs.getInt("discount"));
@@ -544,7 +558,7 @@ public class OrderHandler {
 
         public OrderResponse getOrderOnlyByOrderId(String orderId) {
 
-            String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
+            String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice,pp.mrp,pp.salesPrice,pp.salesPercentage,pp.wholesalePrice,pp.wholesalePercentage, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join productPrice pp on pp.productId=oi.productId  left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
 
             return jdbcTemplate.query(getOrderByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<OrderResponse>() {
                 @Override
@@ -577,6 +591,11 @@ public class OrderHandler {
                             orderItem.setProductId(rs.getInt("productId"));
                             orderItem.setProductName(rs.getString("productName"));
                             orderItem.setUnitPrice(rs.getDouble("unitPrice"));
+                            orderItem.setMrp(rs.getDouble("mrp"));
+                            orderItem.setSalesPrice(rs.getDouble("salesPrice"));
+                            orderItem.setSalesPercentage(rs.getInt("salesPercentage"));
+                            orderItem.setWholesalePrice(rs.getDouble("wholesalePrice"));
+                            orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
                             orderItem.setQuantity(rs.getInt("quantity"));
                             orderItem.setTotalAmount(rs.getDouble("totalAmount"));
                             orderItem.setDiscount(rs.getInt("discount"));
