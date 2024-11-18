@@ -23,6 +23,8 @@ public class ProductRequestModel {
 
     private int sizeId = 0;
 
+    private int noOfItemsPerunit = 0;
+
     private boolean manualSize = false;
 
     private int minimumPurchaseQuantity = 0;
@@ -194,5 +196,13 @@ public class ProductRequestModel {
 
     public void setImages(List<String> images) {
         this.images = images;
+    }
+
+    public int getNoOfItemsPerunit() {
+        return noOfItemsPerunit;
+    }
+
+    public void setNoOfItemsPerunit(int noOfItemsPerunit) {
+        this.noOfItemsPerunit = noOfItemsPerunit;
     }
 }

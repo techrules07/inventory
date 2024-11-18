@@ -6,7 +6,6 @@ import com.eloiacs.aapta.Inventory.Models.OrderRequestModel;
 import com.eloiacs.aapta.Inventory.Responses.OrderItemsResponse;
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.Responses.ProductResponse;
-import com.eloiacs.aapta.Inventory.config.AWSConfig;
 import com.eloiacs.aapta.Inventory.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -37,9 +36,6 @@ public class OrderHandler {
 
     @Autowired
     PDFHandler pdfHandler;
-
-    @Autowired
-    AWSConfig awsConfig;
 
     public String generateOrderId(int previousId) {
         Date date = new Date();
@@ -249,7 +245,6 @@ public class OrderHandler {
         StringBuilder getAllOrdersQuery = new StringBuilder();
         List<Object> queryParams = new ArrayList<>();
 
-
         getAllOrdersQuery.append("SELECT o.id AS oId, o.orderId AS oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, ")
                 .append("o.createdBy AS orderCreatedBy, usr.username AS orderUsername, o.createdAt AS orderCreatedAt, oi.id, oi.orderId, oi.productId, ")
                 .append("p.productName, oi.unitPrice, pp.mrp,pp.salesPrice,pp.salesPercentage,pp.wholesalePrice,pp.wholesalePercentage,oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt ")
@@ -261,7 +256,6 @@ public class OrderHandler {
                 .append("LEFT JOIN users usr ON usr.id = o.createdBy ")
                 .append("LEFT JOIN users usrs ON usrs.id = oi.createdBy ")
                 .append("left join productPrice pp on pp.productId=oi.productId ");
-
 
         if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
             try {
