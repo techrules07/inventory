@@ -12,6 +12,16 @@ public class OrderItemsResponse {
 
     private double unitPrice = 0;
 
+    private double mrp = 0;
+
+    private double salesPrice = 0;
+
+    private int salesPercentage = 0;
+
+    private double wholesalePrice = 0;
+
+    private int wholesalePercentage = 0;
+
     private int quantity = 0;
 
     private double totalAmount = 0;
@@ -29,6 +39,46 @@ public class OrderItemsResponse {
     private String size = null;
     private String unit = null;
 
+
+    public double getMrp() {
+        return mrp;
+    }
+
+    public void setMrp(double mrp) {
+        this.mrp = mrp;
+    }
+
+    public double getSalesPrice() {
+        return salesPrice;
+    }
+
+    public void setSalesPrice(double salesPrice) {
+        this.salesPrice = salesPrice;
+    }
+
+    public int getSalesPercentage() {
+        return salesPercentage;
+    }
+
+    public void setSalesPercentage(int salesPercentage) {
+        this.salesPercentage = salesPercentage;
+    }
+
+    public double getWholesalePrice() {
+        return wholesalePrice;
+    }
+
+    public void setWholesalePrice(double wholesalePrice) {
+        this.wholesalePrice = wholesalePrice;
+    }
+
+    public int getWholesalePercentage() {
+        return wholesalePercentage;
+    }
+
+    public void setWholesalePercentage(int wholesalePercentage) {
+        this.wholesalePercentage = wholesalePercentage;
+    }
 
     public int getOrderItemId() {
         return orderItemId;

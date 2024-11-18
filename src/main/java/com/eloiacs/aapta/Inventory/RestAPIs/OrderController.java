@@ -7,6 +7,9 @@ import com.eloiacs.aapta.Inventory.Responses.OrderItemsResponse;
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.utils.Utils;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
@@ -15,6 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -448,21 +454,21 @@ public class OrderController {
         return baseResponse;
     }
 
-
     @RequestMapping(value = "/getOrders", method = RequestMethod.POST)
-    public BaseResponse getOrders(HttpServletRequest httpServletRequest) {
+    public BaseResponse getOrders(HttpServletRequest httpServletRequest,
+                                  @RequestParam(value = "createdBy",required = false)String createdBy,
+                                  @RequestParam(value = "startDate", required = false) String startDate,
+                                  @RequestParam(value = "endDate", required = false) String endDate) {
 
         BaseResponse baseResponse = new BaseResponse();
+
 
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
 
         if (claims != null) {
-
-            String createdBy = claims.get("id").toString();
+            String currentUserId = claims.get("id").toString();
             String expireDate = claims.get("exp").toString();
             String userRole = claims.get("role") != null ? claims.get("role").toString() : "UNKNOWN";
-
-            System.out.println("User Role: " + userRole);
 
             if (Utils.checkExpired(expireDate)) {
                 LoginModel loginModel = authHandler.getUserDetails(createdBy);
@@ -473,8 +479,7 @@ public class OrderController {
                     baseResponse.setAccessToken("");
                 }
             }
-
-            List<OrderResponse> orderResponses = orderHandler.getOrders(createdBy, userRole);
+            List<OrderResponse> orderResponses = orderHandler.getOrders(currentUserId,createdBy, userRole, startDate, endDate);
 
             if (orderResponses != null && !orderResponses.isEmpty()) {
                 baseResponse.setCode(HttpStatus.OK.value());
