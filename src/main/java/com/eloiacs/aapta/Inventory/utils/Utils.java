@@ -21,6 +21,10 @@ import java.util.TimeZone;
 public class Utils {
 
     public static String convertUTCDateTimeToISTString(Timestamp utcTimestamp) {
+
+        if (utcTimestamp == null) {
+            return "N/A"; // Or other default value
+        }
         String converted_date = "";
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
