@@ -43,6 +43,8 @@ public class ProductResponse {
 
     private String description = null;
 
+    private int noOfItemsPerunit = 0;
+
     private Boolean billOfMaterials = false;
 
     private List<BillOfMaterialsResponse> billOfMaterialsList = new ArrayList<>();
@@ -344,5 +346,13 @@ public class ProductResponse {
 
     public void setRetailPercentage(double retailPercentage) {
         this.retailPercentage = retailPercentage;
+    }
+
+    public int getNoOfItemsPerunit() {
+        return noOfItemsPerunit;
+    }
+
+    public void setNoOfItemsPerunit(int noOfItemsPerunit) {
+        this.noOfItemsPerunit = noOfItemsPerunit;
     }
 }

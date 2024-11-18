@@ -89,7 +89,7 @@ public class ProductHandler {
 
         String barcode = productRequestModel.getBarcodeNo();
 
-        String insertProductQuery = "insert into products(productName,HSNCode,statusType,category,subCategory,brand,unit,size,minPurchaseQuantity,barcodeType,barcodeNo,description,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
+        String insertProductQuery = "insert into products(productName,HSNCode,statusType,category,subCategory,brand,unit,size,minPurchaseQuantity,barcodeType,barcodeNo,description,noOfItemsPerunit,billOfMaterials,freebie,freebieProduct,isActive,createdAt,createdBy) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,current_timestamp(),?)";
 
         String insertProductImagesQuery = "insert into productImages(productId,category,subCategory,brandId,imageUrl,isActive,createdBy,createdAt) values(?,?,?,?,?,true,?,current_timestamp())";
         String insertBillOfMaterialsQuery = "insert into billOfMaterials(productId,billOfMaterialProductId,quantity,cost,isActive,createdAt) values(?,?,?,?,true,current_timestamp())";
@@ -110,10 +110,11 @@ public class ProductHandler {
             ps.setInt(10, productRequestModel.getBarcodeType());
             ps.setString(11, barcode);
             ps.setString(12, productRequestModel.getDescription());
-            ps.setBoolean(13, productRequestModel.getBillOfMaterials());
-            ps.setBoolean(14, productRequestModel.getFreebie());
-            ps.setInt(15, productRequestModel.getFreebieProductId());
-            ps.setString(16, createdBy);
+            ps.setInt(13,productRequestModel.getNoOfItemsPerunit());
+            ps.setBoolean(14, productRequestModel.getBillOfMaterials());
+            ps.setBoolean(15, productRequestModel.getFreebie());
+            ps.setInt(16, productRequestModel.getFreebieProductId());
+            ps.setString(17, createdBy);
             return ps;
         }, keyHolder);
 
@@ -194,10 +195,7 @@ public class ProductHandler {
             sizeId = productRequestModel.getSizeId();
         }
 
-
-
-
-        String updateProductQuery = "update products set productName = ?, HSNCode = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?,minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
+        String updateProductQuery = "update products set productName = ?, HSNCode = ?, statusType = ?, category = ?, subCategory = ?, brand = ?, unit = ?,size = ?,minPurchaseQuantity = ?, barcodeType = ?, barcodeNo = ?, description = ?, noOfItemsPerunit = ?, billOfMaterials = ?, freebie = ?, freebieProduct = ?, isActive = true where id = ?";
 
         int productId = productRequestModel.getProductId();
 
@@ -214,6 +212,7 @@ public class ProductHandler {
                 productRequestModel.getBarcodeType(),
                 productRequestModel.getBarcodeNo(),
                 productRequestModel.getDescription(),
+                productRequestModel.getNoOfItemsPerunit(),
                 productRequestModel.getBillOfMaterials(),
                 productRequestModel.getFreebie(),
                 productRequestModel.getFreebieProductId(),
@@ -312,8 +311,6 @@ public class ProductHandler {
 
         getProductsQuery.append("group by pd.id,pp.mrp, pp.salesPrice, pp.salesPercentage, pp.wholesalePrice, pp.wholesalePercentage order by pd.id desc");
 
-        System.out.println(getProductsQuery.toString());
-
         return jdbcTemplate.query(getProductsQuery.toString(), new PreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps) throws SQLException {
@@ -350,6 +347,7 @@ public class ProductHandler {
                         productResponse.setBarcodeType(rs.getInt("barcodeType"));
                         productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                         productResponse.setDescription(rs.getString("description"));
+                        productResponse.setNoOfItemsPerunit(rs.getInt("noOfItemsPerunit"));
                         productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                         // Concatenated strings for bill of materials
@@ -469,6 +467,7 @@ public class ProductHandler {
                         productResponse.setBarcodeType(rs.getInt("barcodeType"));
                         productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                         productResponse.setDescription(rs.getString("description"));
+                        productResponse.setNoOfItemsPerunit(rs.getInt("noOfItemsPerunit"));
                         productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                         // Concatenated strings for bill of materials
@@ -571,6 +570,7 @@ public class ProductHandler {
                     productResponse.setBarcodeType(rs.getInt("barcodeType"));
                     productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                     productResponse.setDescription(rs.getString("description"));
+                    productResponse.setNoOfItemsPerunit(rs.getInt("noOfItemsPerunit"));
                     productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                     // Concatenated strings for bill of materials
@@ -667,6 +667,7 @@ public class ProductHandler {
                     productResponse.setBarcodeType(rs.getInt("barcodeType"));
                     productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                     productResponse.setDescription(rs.getString("description"));
+                    productResponse.setNoOfItemsPerunit(rs.getInt("noOfItemsPerunit"));
                     productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                     // Concatenated strings for bill of materials
@@ -765,6 +766,7 @@ public class ProductHandler {
                         productResponse.setBarcodeType(rs.getInt("barcodeType"));
                         productResponse.setBarcodeNo(rs.getString("barcodeNo"));
                         productResponse.setDescription(rs.getString("description"));
+                        productResponse.setNoOfItemsPerunit(rs.getInt("noOfItemsPerunit"));
                         productResponse.setBillOfMaterials(rs.getBoolean("billOfMaterials"));
 
                         // Concatenated strings for bill of materials
