@@ -7,9 +7,6 @@ import com.eloiacs.aapta.Inventory.Responses.OrderItemsResponse;
 import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.utils.Utils;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.MalformedJwtException;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
@@ -18,12 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/order")
@@ -51,9 +45,6 @@ public class OrderController {
 
     @Autowired
     PaymentsHandler paymentsHandler;
-
-    @Autowired
-    PDFHandler pdfHanlder;
 
     @RequestMapping(value = "/addOrder", method = RequestMethod.POST)
     public BaseResponse addOrder(@RequestBody OrderRequestModel orderRequestModel,
@@ -606,6 +597,7 @@ public class OrderController {
 
     @RequestMapping(value = "/createOrder", method = RequestMethod.POST)
     public BaseResponse createOrder(HttpServletRequest httpServletRequest) {
+
         BaseResponse baseResponse = new BaseResponse();
 
         HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(httpServletRequest.getHeader("Authorization"));
@@ -698,7 +690,8 @@ public class OrderController {
 
     @RequestMapping(value = "/initializePayments", method = RequestMethod.POST)
     public BaseResponse initializePayments(HttpServletRequest httpServletRequest,
-                                           @RequestParam("orderId") String orderId){
+                                           @RequestParam("orderId") String orderId,
+                                           @RequestParam("customerId") String customerId){
 
         BaseResponse baseResponse = new BaseResponse();
 
@@ -734,13 +727,13 @@ public class OrderController {
                 }
             }
 
-            String totalAmount = orderHandler.initializePayments(orderId);
+            Map<String,Object> map = orderHandler.initializePayments(orderId, customerId);
 
-            if (totalAmount != null){
+            if (map != null){
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
                 baseResponse.setMessage("Payment Initialized");
-                baseResponse.setData(totalAmount);
+                baseResponse.setData(map);
             }
             else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
