@@ -4,6 +4,9 @@ import com.eloiacs.aapta.Inventory.DBHandler.AuthHandler;
 import com.eloiacs.aapta.Inventory.Models.AuthModel;
 import com.eloiacs.aapta.Inventory.Models.LoginModel;
 import com.eloiacs.aapta.Inventory.Responses.BaseResponse;
+import com.eloiacs.aapta.Inventory.Responses.InventoryResponseModel;
+import com.eloiacs.aapta.Inventory.Responses.OrderResponse;
+import com.eloiacs.aapta.Inventory.Responses.UserInfoResponse;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import com.eloiacs.aapta.Inventory.utils.Utils;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
@@ -45,8 +49,7 @@ public class AuthController {
 
         if (authModel != null) {
             return jwtService.generateJWToken(authModel.getEmail(), authModel);
-        }
-        else {
+        } else {
             throw new UsernameNotFoundException("Invalid credential provided");
         }
     }
@@ -100,14 +103,12 @@ public class AuthController {
                 baseResponse.setCode(HttpStatus.OK.value());
                 baseResponse.setStatus("Success");
                 baseResponse.setMessage("Registered Successfully");
-            }
-            else {
+            } else {
                 baseResponse.setCode(HttpStatus.NO_CONTENT.value());
                 baseResponse.setStatus("Failed");
                 baseResponse.setMessage("Failed to register");
             }
-        }
-        else {
+        } else {
             baseResponse.setCode(HttpStatus.FORBIDDEN.value());
             baseResponse.setMessage("Please Login again");
             baseResponse.setStatus("Failed");
@@ -116,4 +117,62 @@ public class AuthController {
         return baseResponse;
     }
 
+
+    @RequestMapping(value = "/getUserInfo", method = RequestMethod.POST)
+    public BaseResponse getUserInfo(HttpServletRequest httpServletRequest) {
+        BaseResponse baseResponse = new BaseResponse();
+
+
+        HashMap<String, Object> claims = jwtService.extractUserInformationFromToken(
+                httpServletRequest.getHeader("Authorization")
+        );
+
+        if (claims == null) {
+            baseResponse.setCode(HttpStatus.UNAUTHORIZED.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("Invalid token or session expired");
+            return baseResponse;
+        }
+
+        String createdBy = claims.get("id") != null ? claims.get("id").toString() : null;
+        String expireDate = claims.get("exp") != null ? claims.get("exp").toString() : null;
+
+        if (createdBy == null) {
+            baseResponse.setCode(HttpStatus.UNAUTHORIZED.value());
+            baseResponse.setStatus("Failed");
+            baseResponse.setMessage("User ID missing in token");
+            return baseResponse;
+        }
+
+        if (Utils.checkExpired(expireDate)) {
+            LoginModel loginModel = authHandler.getUserDetails(createdBy);
+
+
+            AuthModel authModel = authHandler.accountDetails(loginModel);
+
+            if (authModel != null) {
+                baseResponse.setAccessToken(jwtService.generateJWToken(authModel.getEmail(), authModel));
+            } else {
+                baseResponse.setAccessToken("");
+                baseResponse.setCode(HttpStatus.FORBIDDEN.value());
+                baseResponse.setMessage("Please login again");
+                baseResponse.setStatus("Failed");
+                return baseResponse;
+            }
+        }
+
+        UserInfoResponse userInfoResponse = authHandler.getUserInfo(createdBy);
+
+        if (userInfoResponse == null) {
+            baseResponse.setCode(HttpStatus.NO_CONTENT.value());
+            baseResponse.setMessage("No User Info available ");
+            baseResponse.setStatus("Failed");
+        } else {
+            baseResponse.setCode(HttpStatus.OK.value());
+            baseResponse.setStatus("Success");
+            baseResponse.setData(userInfoResponse);
+        }
+
+        return baseResponse;
+    }
 }
