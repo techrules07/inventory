@@ -109,7 +109,7 @@ public class PDFHandler {
         try {
             file = resource.getFile();
             Image img = Image.getInstance(file.getAbsolutePath());
-            img.setWidthPercentage(10);
+            img.setWidthPercentage(30);
 
             imageCell.addElement(img);
             imageCell.setBorder(0);
