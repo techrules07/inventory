@@ -115,7 +115,7 @@ public class OrderHandler {
         }
 
         String insertOrderItemQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
-        String updateOrderItemQuery = "update orderItems set unitPrice = ?, quantity = ?, totalAmount = ? where orderId = ? and productId = ?";
+        String updateOrderItemQuery = "update orderItems set unitPrice = ?, quantity = ?, totalAmount = ?, discount = ? where orderId = ? and productId = ?";
         String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -134,14 +134,20 @@ public class OrderHandler {
             }
 
             double totalAmount = Math.round(response.getWholesalePrice() * quantity);
-            if (orderItemsRequestModel.getDiscount() != 0) {
+            int discount = 0;
+            if (orderItemsRequestModel.getTypeOfDiscount() == 1) {
                 totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
+                discount = orderItemsRequestModel.getDiscount();
+            } else if (orderItemsRequestModel.getTypeOfDiscount() == 2) {
+                totalAmount = totalAmount - orderItemsRequestModel.getDiscountAmount();
+                discount = (int) ((orderItemsRequestModel.getDiscountAmount() / (response.getWholesalePrice() * quantity)) * 100);
             }
 
             int updateOrderItem = jdbcTemplate.update(updateOrderItemQuery,
                     response.getWholesalePrice(),
                     quantity,
                     totalAmount,
+                    discount,
                     orderItemsRequestModel.getOrderId(),
                     orderItemsRequestModel.getProductId());
 
@@ -154,12 +160,18 @@ public class OrderHandler {
                 quantity = orderItemsRequestModel.getQuantity();
             }
             double totalAmount = Math.round(response.getWholesalePrice() * quantity);
-            if (orderItemsRequestModel.getDiscount() != 0) {
+            int discount = 0;
+            if (orderItemsRequestModel.getTypeOfDiscount() == 1) {
                 totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
+                discount = orderItemsRequestModel.getDiscount();
+            } else if (orderItemsRequestModel.getTypeOfDiscount() == 2) {
+                totalAmount = totalAmount - orderItemsRequestModel.getDiscountAmount();
+                discount = (int) ((orderItemsRequestModel.getDiscountAmount() / (response.getWholesalePrice() * quantity)) * 100);
             }
 
             final double amount = totalAmount;
             final int finalQuantity = quantity;
+            final int finalDiscount = discount;
 
             int insertOrderItem = jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(insertOrderItemQuery, new String[]{"id"});
@@ -168,7 +180,7 @@ public class OrderHandler {
                 ps.setDouble(3, response.getWholesalePrice());
                 ps.setInt(4, finalQuantity);
                 ps.setDouble(5, amount);
-                ps.setInt(6, orderItemsRequestModel.getDiscount());
+                ps.setInt(6, finalDiscount);
                 ps.setString(7, createdBy);
                 return ps;
             }, keyHolder);
@@ -242,6 +254,7 @@ public class OrderHandler {
     }
 
     public List<OrderResponse> getOrders(String currentUserId, String createdBy, String userRole, String startDate, String endDate) {
+
         StringBuilder getAllOrdersQuery = new StringBuilder();
         List<Object> queryParams = new ArrayList<>();
 
@@ -276,9 +289,6 @@ public class OrderHandler {
                 }
 
                 if (targettedStartDate != null && targettedEndDate != null) {
-
-                    System.out.println("Start Date: " + targettedStartDate);
-                    System.out.println("End Date: " + targettedEndDate);
 
                     getAllOrdersQuery.append("WHERE DATE(o.createdAt) >= ? AND DATE(o.createdAt) <= ? ");
                     queryParams.add(targettedStartDate);
@@ -346,8 +356,8 @@ public class OrderHandler {
 
                     OrderItemsResponse orderItem = new OrderItemsResponse();
 
-                    orderItem.setOrderItemId(rs.getInt("oId"));orderItem.setOrderItemOrderId(rs.getString("orderId"));
-
+                    orderItem.setOrderItemId(rs.getInt("oId"));
+                    orderItem.setOrderItemOrderId(rs.getString("orderId"));
                     orderItem.setProductId(rs.getInt("productId"));
                     orderItem.setProductName(rs.getString("productName"));
                     orderItem.setUnitPrice(Math.round(rs.getDouble("unitPrice")));
@@ -363,22 +373,19 @@ public class OrderHandler {
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
                     orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
-
                     double unitPrice = rs.getDouble("unitPrice");
                     int quantity = rs.getInt("quantity");
                     double discount = Math.round(rs.getDouble("discount"));
 
                     double itemTotalPrice = Math.round(unitPrice * quantity);
                     double itemDiscountAmount = Math.round(itemTotalPrice * (discount / 100));
+                    orderItem.setDiscountAmount(itemDiscountAmount);
                     double itemTotalAmountAfterDiscount = Math.round(itemTotalPrice - itemDiscountAmount);
-
-                    orderResponse.getOrderItems().add(orderItem);
 
                     orderResponse.setTotalUnitPrice(orderResponse.getTotalUnitPrice() + unitPrice);
                     orderResponse.setTotalPrice(orderResponse.getTotalPrice() + itemTotalPrice);
                     orderResponse.setTotalAmount(orderResponse.getTotalAmount() + itemTotalAmountAfterDiscount);
                     orderResponse.setTotalDiscount(orderResponse.getTotalDiscount() + itemDiscountAmount);
-
 
                     orderResponse.getOrderItems().add(orderItem);
                 }
@@ -449,9 +456,9 @@ public class OrderHandler {
 
                         double itemTotalPrice = unitPrice * quantity;
                         double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                        orderItem.setDiscountAmount(itemDiscountAmount);
                         double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
 
-                        orderResponse.getOrderItems().add(orderItem);
                         // Add the item to the list in the corresponding order
                         orderResponse.getOrderItems().add(orderItem);
 
@@ -459,7 +466,6 @@ public class OrderHandler {
                         orderResponse.setTotalPrice(orderResponse.getTotalPrice() + itemTotalPrice);
                         orderResponse.setTotalAmount(orderResponse.getTotalAmount() + itemTotalAmountAfterDiscount);
                         orderResponse.setTotalDiscount(orderResponse.getTotalDiscount() + itemDiscountAmount);
-
 
                     }
                 return new ArrayList<>(orderMap.values());
@@ -524,11 +530,11 @@ public class OrderHandler {
 
                         double itemTotalPrice = unitPrice * quantity;
                         double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                        orderItem.setDiscountAmount(itemDiscountAmount);
                         double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
 
                         // Add the item to the list in the corresponding order
                         orderResponse.getOrderItems().add(orderItem);
-                            orderResponse.getOrderItems().add(orderItem);
 
                         totalUnitPrice += unitPrice;
                         totalPrice += itemTotalPrice;
@@ -553,57 +559,56 @@ public class OrderHandler {
 
         String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice,pp.mrp,pp.salesPrice,pp.salesPercentage,pp.wholesalePrice,pp.wholesalePercentage, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join productPrice pp on pp.productId=oi.productId  left join users usr on usr.id = o.createdBy left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
 
+        return jdbcTemplate.query(getOrderByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<OrderResponse>() {
 
-            return jdbcTemplate.query(getOrderByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<OrderResponse>() {
+            @Override
+            public OrderResponse extractData(ResultSet rs) throws SQLException, DataAccessException {
+                OrderResponse orderResponse = null;
+                double totalUnitPrice = 0.0;
+                double totalPrice = 0.0;
+                double totalAmount = 0.0;
+                double totalDiscount = 0.0;
 
-                @Override
-                public OrderResponse extractData(ResultSet rs) throws SQLException, DataAccessException {
-                    OrderResponse orderResponse = null;
-                    double totalUnitPrice = 0.0;
-                    double totalPrice = 0.0;
-                    double totalAmount = 0.0;
-                    double totalDiscount = 0.0;
+                // HashMap to avoid duplicate items
+                HashMap<Integer, OrderItemsResponse> orderItemsMap = new HashMap<>();
 
-                    // HashMap to avoid duplicate items
-                    HashMap<Integer, OrderItemsResponse> orderItemsMap = new HashMap<>();
+                while (rs.next()) {
+                    if (orderResponse == null) {
+                        orderResponse = new OrderResponse();
+                        orderResponse.setId(rs.getInt("oId"));
+                        orderResponse.setOrderId(rs.getString("oOrderId"));
+                        orderResponse.setCustomerId(rs.getString("customerId"));
+                        orderResponse.setStatusId(rs.getInt("status"));
+                        orderResponse.setStatus(rs.getString("statusType"));
+                        orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
+                        orderResponse.setCreatedBy(rs.getString("orderUsername"));
+                        orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
+                        orderResponse.setOrderItems(new ArrayList<>()); // Initialize the list for order items
+                    }
 
-                    while (rs.next()) {
-                        if (orderResponse == null) {
-                            orderResponse = new OrderResponse();
-                            orderResponse.setId(rs.getInt("oId"));
-                            orderResponse.setOrderId(rs.getString("oOrderId"));
-                            orderResponse.setCustomerId(rs.getString("customerId"));
-                            orderResponse.setStatusId(rs.getInt("status"));
-                            orderResponse.setStatus(rs.getString("statusType"));
-                            orderResponse.setCreatedById(rs.getInt("orderCreatedBy"));
-                            orderResponse.setCreatedBy(rs.getString("orderUsername"));
-                            orderResponse.setCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("orderCreatedAt")));
-                            orderResponse.setOrderItems(new ArrayList<>()); // Initialize the list for order items
-                        }
-
-                        if (rs.getString("orderId") != null) {
-                            // Create an OrderItemResponse for the current row and add it to the order's item list
-                            OrderItemsResponse orderItem = new OrderItemsResponse();
-                            orderItem.setOrderItemId(rs.getInt("id"));
-                            orderItem.setOrderItemOrderId(rs.getString("orderId"));
-                            orderItem.setProductId(rs.getInt("productId"));
-                            orderItem.setProductName(rs.getString("productName"));
-                            orderItem.setUnitPrice(rs.getDouble("unitPrice"));
-                            orderItem.setMrp(rs.getDouble("mrp"));
-                            orderItem.setSalesPrice(rs.getDouble("salesPrice"));
-                            orderItem.setSalesPercentage(rs.getInt("salesPercentage"));
-                            orderItem.setWholesalePrice(rs.getDouble("wholesalePrice"));
-                            orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
-                            orderItem.setQuantity(rs.getInt("quantity"));
-                            orderItem.setTotalAmount(rs.getDouble("totalAmount"));
-                            orderItem.setDiscount(rs.getInt("discount"));
-                            orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
-                            orderItem.setOrderItemCreatedBy(rs.getString("username"));
-                            orderItem.setCategory(rs.getString("categoryName"));
-                            orderItem.setSubCategory(rs.getString("subCategoryName"));
-                            orderItem.setUnit(rs.getString("unitName"));
-                            orderItem.setSize(rs.getString("size"));
-                            orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
+                    if (rs.getString("orderId") != null) {
+                        // Create an OrderItemResponse for the current row and add it to the order's item list
+                        OrderItemsResponse orderItem = new OrderItemsResponse();
+                        orderItem.setOrderItemId(rs.getInt("id"));
+                        orderItem.setOrderItemOrderId(rs.getString("orderId"));
+                        orderItem.setProductId(rs.getInt("productId"));
+                        orderItem.setProductName(rs.getString("productName"));
+                        orderItem.setUnitPrice(rs.getDouble("unitPrice"));
+                        orderItem.setMrp(rs.getDouble("mrp"));
+                        orderItem.setSalesPrice(rs.getDouble("salesPrice"));
+                        orderItem.setSalesPercentage(rs.getInt("salesPercentage"));
+                        orderItem.setWholesalePrice(rs.getDouble("wholesalePrice"));
+                        orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
+                        orderItem.setQuantity(rs.getInt("quantity"));
+                        orderItem.setTotalAmount(rs.getDouble("totalAmount"));
+                        orderItem.setDiscount(rs.getInt("discount"));
+                        orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
+                        orderItem.setOrderItemCreatedBy(rs.getString("username"));
+                        orderItem.setCategory(rs.getString("categoryName"));
+                        orderItem.setSubCategory(rs.getString("subCategoryName"));
+                        orderItem.setUnit(rs.getString("unitName"));
+                        orderItem.setSize(rs.getString("size"));
+                        orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
 
                         double unitPrice = rs.getDouble("unitPrice");
                         int quantity = rs.getInt("quantity");
@@ -611,6 +616,7 @@ public class OrderHandler {
 
                         double itemTotalPrice = unitPrice * quantity;
                         double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                        orderItem.setDiscountAmount(itemDiscountAmount);
                         double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
 
                         // Add the item to the list in the corresponding order
@@ -621,17 +627,16 @@ public class OrderHandler {
                         totalAmount += itemTotalAmountAfterDiscount;
                         totalDiscount += itemDiscountAmount;
                     }
-
                 }
 
-                    if (orderResponse != null) {
-                        // Add all items from the map to the order
-                        orderResponse.getOrderItems().addAll(orderItemsMap.values());
-                        orderResponse.setTotalUnitPrice(totalUnitPrice);
-                        orderResponse.setTotalPrice(totalPrice);
-                        orderResponse.setTotalAmount(totalAmount);
-                        orderResponse.setTotalDiscount(Double.parseDouble(new DecimalFormat("##.##").format(totalDiscount)));
-                    }
+                if (orderResponse != null) {
+                    // Add all items from the map to the order
+                    orderResponse.getOrderItems().addAll(orderItemsMap.values());
+                    orderResponse.setTotalUnitPrice(totalUnitPrice);
+                    orderResponse.setTotalPrice(totalPrice);
+                    orderResponse.setTotalAmount(totalAmount);
+                    orderResponse.setTotalDiscount(Double.parseDouble(new DecimalFormat("##.##").format(totalDiscount)));
+                }
 
                 return orderResponse;
             }

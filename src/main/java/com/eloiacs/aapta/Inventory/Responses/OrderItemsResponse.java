@@ -28,6 +28,8 @@ public class OrderItemsResponse {
 
     private int discount = 0;
 
+    private double discountAmount = 0;
+
     private int orderItemCreatedById = 0;
 
     private String orderItemCreatedBy = null;
@@ -142,6 +144,14 @@ public class OrderItemsResponse {
 
     public void setDiscount(int discount) {
         this.discount = discount;
+    }
+
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
     }
 
     public int getOrderItemCreatedById() {
