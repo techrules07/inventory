@@ -2,19 +2,26 @@ package com.eloiacs.aapta.Inventory.DBHandler;
 
 import com.eloiacs.aapta.Inventory.Models.AuthModel;
 import com.eloiacs.aapta.Inventory.Models.LoginModel;
+import com.eloiacs.aapta.Inventory.Responses.UserInfoResponse;
 import com.eloiacs.aapta.Inventory.Service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 @Service
 public class AuthHandler {
@@ -73,6 +80,25 @@ public class AuthHandler {
             }
         });
     }
+
+    public UserInfoResponse getUserInfo(String userId) {
+        String query = "SELECT u.id, u.userName, u.email, u.roleId, u.mobileNumber, ur.role " +
+                "FROM userRole ur " +
+                "INNER JOIN users u ON ur.id = u.roleId " +
+                "WHERE u.id = '" + userId + "'";
+
+            return jdbcTemplate.queryForObject(query, (ResultSet rs, int rowNum) -> {
+                UserInfoResponse response = new UserInfoResponse();
+                response.setId(rs.getInt("id"));
+                response.setRoleId(rs.getInt("roleId"));
+                response.setRoleName(rs.getString("role"));
+                response.setName(rs.getString("userName"));
+                response.setEmail(rs.getString("email"));
+                response.setPhone(rs.getString("mobileNumber"));
+                return response;
+            });
+        }
+
 
     public AuthModel getUserbyEmail(String email) {
 
