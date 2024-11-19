@@ -13,6 +13,10 @@ public class OrderItemsRequestModel {
 
     private Boolean manuallyEntered = false;
 
+    private Integer typeOfDiscount = 0;
+
+    private Integer discountAmount = 0;
+
 
     public String getOrderId() {
         return orderId;
@@ -52,5 +56,29 @@ public class OrderItemsRequestModel {
 
     public void setManuallyEntered(boolean manuallyEntered) {
         this.manuallyEntered = manuallyEntered;
+    }
+
+    public Boolean getManuallyEntered() {
+        return manuallyEntered;
+    }
+
+    public void setManuallyEntered(Boolean manuallyEntered) {
+        this.manuallyEntered = manuallyEntered;
+    }
+
+    public Integer getTypeOfDiscount() {
+        return typeOfDiscount;
+    }
+
+    public void setTypeOfDiscount(Integer typeOfDiscount) {
+        this.typeOfDiscount = typeOfDiscount;
+    }
+
+    public Integer getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(Integer discountAmount) {
+        this.discountAmount = discountAmount;
     }
 }
