@@ -23,7 +23,7 @@ public class PDFHandler {
     @Autowired
     AWSConfig awsConfig;
 
-    private int TABLE_WIDTH = 550;
+    private int TABLE_WIDTH = 400;
     private Font level1 = null;
     private Font level3 = null;
     private Font level3Bold = null;
@@ -51,7 +51,7 @@ public class PDFHandler {
         level6 = new Font(Font.FontFamily.TIMES_ROMAN, 5);
 
 
-        Document document = new Document();
+        Document document = new Document(PageSize.A5, 10, 10, 10, 10);
         String fileName = orderResponse.getOrderId().replace("/", "").toLowerCase();
 
         try {
@@ -69,7 +69,6 @@ public class PDFHandler {
 
             addProductTable(pdfPTable, orderResponse);
             addDiscounts(pdfPTable, orderResponse);
-            addFooter(pdfPTable);
 
             document.add(pdfPTable);
 
@@ -123,6 +122,8 @@ public class PDFHandler {
         }
 
         PdfPTable addressTable = new PdfPTable(1);
+        addressTable.setTotalWidth(200);
+        addressTable.setLockedWidth(true);
         addressTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
         PdfPCell line1 = new PdfPCell(new Paragraph("#05, Appta Market Campus", level3));
         line1.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -157,7 +158,6 @@ public class PDFHandler {
         PdfPCell cell = new PdfPCell();
         cell.setBorder(Rectangle.BOTTOM);
         cell.setPaddingTop(10);
-        cell.setPaddingBottom(20);
 
         PdfPTable billHeader = new PdfPTable(1);
         billHeader.setTotalWidth(TABLE_WIDTH);
@@ -183,8 +183,14 @@ public class PDFHandler {
         invoiceCell.setHorizontalAlignment(Element.ALIGN_LEFT);
 
         PdfPTable invoiceDetailsTable = new PdfPTable(2);
+        invoiceDetailsTable.setLockedWidth(true);
+        try {
+            invoiceDetailsTable.setTotalWidth(new float[]{70, 160});
+        } catch (DocumentException e) {
+            throw new RuntimeException(e);
+        }
         invoiceDetailsTable.setHorizontalAlignment(Element.ALIGN_LEFT);
-        PdfPCell staticCell = new PdfPCell(new Paragraph("Invoice No", level4));
+        PdfPCell staticCell = new PdfPCell(new Paragraph("Invoice No:", level4));
         staticCell.setBorder(0);
         staticCell.setHorizontalAlignment(Element.ALIGN_LEFT);
         PdfPCell dynamicValue = new PdfPCell(new Paragraph(orderResponse.getOrderId(), level4));
@@ -203,6 +209,12 @@ public class PDFHandler {
         customerDetailsCell.setBorder(0);
         customerDetailsCell.setHorizontalAlignment(Element.ALIGN_LEFT);
         PdfPTable customerDataTable = new PdfPTable(2);
+        try {
+            customerDataTable.setTotalWidth(new float[]{70, 160});
+            customerDataTable.setLockedWidth(true);
+        } catch (DocumentException e) {
+            throw new RuntimeException(e);
+        }
         customerDataTable.setHorizontalAlignment(Element.ALIGN_LEFT);
 
         PdfPCell staticDataCell = new PdfPCell(new Paragraph("Customer:", level4));
@@ -294,7 +306,6 @@ public class PDFHandler {
     public void addProductTable(PdfPTable table, OrderResponse response) {
         PdfPCell pdfPCell = new PdfPCell();
         pdfPCell.setBorder(Rectangle.BOTTOM);
-        pdfPCell.setPaddingTop(30);
         try {
 
             PdfPTable mainTable = new PdfPTable(1);
@@ -307,10 +318,10 @@ public class PDFHandler {
             mainTableCell1.setPaddingBottom(6);
 
 
-            PdfPTable sectionTable = new PdfPTable(7);
+            PdfPTable sectionTable = new PdfPTable(5);
             sectionTable.setLockedWidth(true);
 
-            sectionTable.setTotalWidth(new float[]{35, 170, 70, 65, 60, 65, 85});
+            sectionTable.setTotalWidth(new float[]{15, 190, 70, 65, 60});
             PdfPCell cell1 = new PdfPCell(new Paragraph("Sl", level4Bold));
             cell1.setBorder(0);
             cell1.setPaddingBottom(5);
@@ -323,12 +334,12 @@ public class PDFHandler {
             cell2.setPaddingBottom(5);
             cell2.setPaddingTop(5);
             cell2.setHorizontalAlignment(Element.ALIGN_CENTER);
-            PdfPCell cell3 = new PdfPCell(new Paragraph("Unit Price", level4Bold));
-            cell3.setBackgroundColor(new BaseColor(193, 211, 197));
-            cell3.setBorder(0);
-            cell3.setPaddingBottom(5);
-            cell3.setPaddingTop(5);
-            cell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+//            PdfPCell cell3 = new PdfPCell(new Paragraph("Unit Price", level4Bold));
+//            cell3.setBackgroundColor(new BaseColor(193, 211, 197));
+//            cell3.setBorder(0);
+//            cell3.setPaddingBottom(5);
+//            cell3.setPaddingTop(5);
+//            cell3.setHorizontalAlignment(Element.ALIGN_CENTER);
             PdfPCell cell4 = new PdfPCell(new Paragraph("Quantity", level4Bold));
             cell4.setBackgroundColor(new BaseColor(193, 211, 197));
             cell4.setBorder(0);
@@ -341,12 +352,12 @@ public class PDFHandler {
             cell5.setHorizontalAlignment(Element.ALIGN_CENTER);
             cell5.setPaddingBottom(5);
             cell5.setPaddingTop(5);
-            PdfPCell cell6 = new PdfPCell(new Paragraph("Discount", level4Bold));
-            cell6.setBackgroundColor(new BaseColor(193, 211, 197));
-            cell6.setBorder(0);
-            cell6.setHorizontalAlignment(Element.ALIGN_CENTER);
-            cell6.setPaddingBottom(5);
-            cell6.setPaddingTop(5);
+//            PdfPCell cell6 = new PdfPCell(new Paragraph("Discount", level4Bold));
+//            cell6.setBackgroundColor(new BaseColor(193, 211, 197));
+//            cell6.setBorder(0);
+//            cell6.setHorizontalAlignment(Element.ALIGN_CENTER);
+//            cell6.setPaddingBottom(5);
+//            cell6.setPaddingTop(5);
             PdfPCell cell7 = new PdfPCell(new Paragraph("Net Amount", level4Bold));
             cell7.setBackgroundColor(new BaseColor(193, 211, 197));
             cell7.setBorder(0);
@@ -356,10 +367,10 @@ public class PDFHandler {
 
             sectionTable.addCell(cell1);
             sectionTable.addCell(cell2);
-            sectionTable.addCell(cell3);
+//            sectionTable.addCell(cell3);
             sectionTable.addCell(cell4);
             sectionTable.addCell(cell5);
-            sectionTable.addCell(cell6);
+//            sectionTable.addCell(cell6);
             sectionTable.addCell(cell7);
 
             mainTableCell1.addElement(sectionTable);
@@ -367,14 +378,15 @@ public class PDFHandler {
             PdfPCell mainTableCell2 = new PdfPCell();
             mainTableCell2.setBorder(0);
 
-            PdfPTable sectionDynamicValues = new PdfPTable(7);
+            PdfPTable sectionDynamicValues = new PdfPTable(5);
             sectionDynamicValues.setLockedWidth(true);
-            sectionDynamicValues.setTotalWidth(new float[]{35, 170, 70, 65, 60, 65, 85});
+            sectionDynamicValues.setTotalWidth(new float[]{15, 200, 70, 65, 45});
 
             XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
             File file = fontResource.getFile();
             fontProvider.register(file.getAbsolutePath(), "TamilFont");
             Font tamilFont = fontProvider.getFont("TamilFont", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            tamilFont.setSize(8);
 
             for (int i=0; i<response.getOrderItems().size(); i++) {
                 PdfPCell p1 = new PdfPCell(new Paragraph(String.valueOf(i + 1), level4));
@@ -389,11 +401,11 @@ public class PDFHandler {
                 p2.setHorizontalAlignment(Element.ALIGN_CENTER);
                 p2.setPaddingTop(5);
                 p2.setPaddingBottom(5);
-                PdfPCell p3 = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().get(i).getUnitPrice()), level4));
-                p3.setBorder(0);
-                p3.setHorizontalAlignment(Element.ALIGN_CENTER);
-                p3.setPaddingTop(5);
-                p3.setPaddingBottom(5);
+//                PdfPCell p3 = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().get(i).getUnitPrice()), level4));
+//                p3.setBorder(0);
+//                p3.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                p3.setPaddingTop(5);
+//                p3.setPaddingBottom(5);
                 PdfPCell p4 = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().get(i).getQuantity()), level4));
                 p4.setBorder(0);
                 p4.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -404,11 +416,11 @@ public class PDFHandler {
                 p5.setHorizontalAlignment(Element.ALIGN_CENTER);
                 p5.setPaddingTop(5);
                 p5.setPaddingBottom(5);
-                PdfPCell p6 = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().get(i).getDiscount()), level4));
-                p6.setBorder(0);
-                p6.setHorizontalAlignment(Element.ALIGN_CENTER);
-                p6.setPaddingTop(5);
-                p6.setPaddingBottom(5);
+//                PdfPCell p6 = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().get(i).getDiscount()), level4));
+//                p6.setBorder(0);
+//                p6.setHorizontalAlignment(Element.ALIGN_CENTER);
+//                p6.setPaddingTop(5);
+//                p6.setPaddingBottom(5);
                 PdfPCell p7 = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().get(i).getTotalAmount()), level4));
                 p7.setBorder(0);
                 p7.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -418,19 +430,19 @@ public class PDFHandler {
                 if (i % 2 == 1) {
                     p1.setBackgroundColor(new BaseColor(217, 217, 217));
                     p2.setBackgroundColor(new BaseColor(217, 217, 217));
-                    p3.setBackgroundColor(new BaseColor(217, 217, 217));
+//                    p3.setBackgroundColor(new BaseColor(217, 217, 217));
                     p4.setBackgroundColor(new BaseColor(217, 217, 217));
                     p5.setBackgroundColor(new BaseColor(217, 217, 217));
-                    p6.setBackgroundColor(new BaseColor(217, 217, 217));
+//                    p6.setBackgroundColor(new BaseColor(217, 217, 217));
                     p7.setBackgroundColor(new BaseColor(217, 217, 217));
                 }
 
                 sectionDynamicValues.addCell(p1);
                 sectionDynamicValues.addCell(p2);
-                sectionDynamicValues.addCell(p3);
+//                sectionDynamicValues.addCell(p3);
                 sectionDynamicValues.addCell(p4);
                 sectionDynamicValues.addCell(p5);
-                sectionDynamicValues.addCell(p6);
+//                sectionDynamicValues.addCell(p6);
                 sectionDynamicValues.addCell(p7);
             }
 
@@ -454,84 +466,84 @@ public class PDFHandler {
     public void addDiscounts(PdfPTable table, OrderResponse response) {
         PdfPCell pdfPCell = new PdfPCell();
         pdfPCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        pdfPCell.setBorder(Rectangle.BOTTOM);
-        pdfPCell.setPaddingBottom(20);
+        pdfPCell.setBorder(0);
+
 
         PdfPTable discountTableMain = new PdfPTable(1);
         discountTableMain.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        PdfPCell totalItemsCell = new PdfPCell();
-        totalItemsCell.setBorder(0);
-        totalItemsCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        PdfPTable totalItemsTable = new PdfPTable(2);
-        totalItemsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totalItemsTable.setLockedWidth(true);
+//        PdfPCell totalItemsCell = new PdfPCell();
+//        totalItemsCell.setBorder(0);
+//        totalItemsCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//        PdfPTable totalItemsTable = new PdfPTable(2);
+//        totalItemsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//        totalItemsTable.setLockedWidth(true);
         try {
-            totalItemsTable.setTotalWidth(new float[]{100, 80});
+//            totalItemsTable.setTotalWidth(new float[]{100, 80});
 
 
-            PdfPCell staticItem = new PdfPCell(new Paragraph("Total Items", level4));
-            staticItem.setBorder(0);
-            PdfPCell dynamicCell = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().size()), level4Bold));
-            dynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            dynamicCell.setBorder(0);
+//            PdfPCell staticItem = new PdfPCell(new Paragraph("Total Items", level4));
+//            staticItem.setBorder(0);
+//            PdfPCell dynamicCell = new PdfPCell(new Paragraph(String.valueOf(response.getOrderItems().size()), level4Bold));
+//            dynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            dynamicCell.setBorder(0);
 
-            totalItemsTable.addCell(staticItem);
-            totalItemsTable.addCell(dynamicCell);
-            totalItemsCell.addElement(totalItemsTable);
-            discountTableMain.addCell(totalItemsCell);
+//            totalItemsTable.addCell(staticItem);
+//            totalItemsTable.addCell(dynamicCell);
+//            totalItemsCell.addElement(totalItemsTable);
+//            discountTableMain.addCell(totalItemsCell);
 
-            PdfPCell totalAmountCell = new PdfPCell();
-            totalAmountCell.setBorder(0);
-            totalAmountCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            PdfPTable totalAMountTable = new PdfPTable(2);
-            totalAMountTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            totalAMountTable.setLockedWidth(true);
-            totalAMountTable.setTotalWidth(new float[]{100, 80});
-            PdfPCell totalAmountStatic = new PdfPCell(new Paragraph("Amount", level4));
-            PdfPCell totalAmountDynamic = new PdfPCell(new Paragraph(String.valueOf(response.getTotalPrice()), level4Bold));
-            totalAmountDynamic.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            totalAmountStatic.setBorder(0);
-            totalAmountDynamic.setBorder(0);
+//            PdfPCell totalAmountCell = new PdfPCell();
+//            totalAmountCell.setBorder(0);
+//            totalAmountCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            PdfPTable totalAMountTable = new PdfPTable(2);
+//            totalAMountTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            totalAMountTable.setLockedWidth(true);
+//            totalAMountTable.setTotalWidth(new float[]{100, 80});
+//            PdfPCell totalAmountStatic = new PdfPCell(new Paragraph("Amount", level4));
+//            PdfPCell totalAmountDynamic = new PdfPCell(new Paragraph(String.valueOf(response.getTotalPrice()), level4Bold));
+//            totalAmountDynamic.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            totalAmountStatic.setBorder(0);
+//            totalAmountDynamic.setBorder(0);
 
-            totalAMountTable.addCell(totalAmountStatic);
-            totalAMountTable.addCell(totalAmountDynamic);
-            totalAmountCell.addElement(totalAMountTable);
-            discountTableMain.addCell(totalAmountCell);
+//            totalAMountTable.addCell(totalAmountStatic);
+//            totalAMountTable.addCell(totalAmountDynamic);
+//            totalAmountCell.addElement(totalAMountTable);
+//            discountTableMain.addCell(totalAmountCell);
 
-            PdfPCell discountsCell = new PdfPCell();
-            discountsCell.setBorder(0);
-            discountsCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            PdfPTable discountsInnerTable = new PdfPTable(2);
-            discountsInnerTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            discountsInnerTable.setLockedWidth(true);
-            discountsInnerTable.setTotalWidth(new float[]{100, 80});
+//            PdfPCell discountsCell = new PdfPCell();
+//            discountsCell.setBorder(0);
+//            discountsCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            PdfPTable discountsInnerTable = new PdfPTable(2);
+//            discountsInnerTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            discountsInnerTable.setLockedWidth(true);
+//            discountsInnerTable.setTotalWidth(new float[]{100, 80});
 
-            PdfPCell discountsStaticCell = new PdfPCell(new Paragraph("Discounts", level4));
-            discountsStaticCell.setBorder(0);
-            PdfPCell discountsDynamicCell = new PdfPCell(new Paragraph(String.valueOf(response.getTotalDiscount()), level4Bold));
-            discountsDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            discountsDynamicCell.setBorder(0);
-            discountsInnerTable.addCell(discountsStaticCell);
-            discountsInnerTable.addCell(discountsDynamicCell);
-            discountsCell.addElement(discountsInnerTable);
-            discountTableMain.addCell(discountsCell);
+//            PdfPCell discountsStaticCell = new PdfPCell(new Paragraph("Discounts", level4));
+//            discountsStaticCell.setBorder(0);
+//            PdfPCell discountsDynamicCell = new PdfPCell(new Paragraph(String.valueOf(response.getTotalDiscount()), level4Bold));
+//            discountsDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            discountsDynamicCell.setBorder(0);
+//            discountsInnerTable.addCell(discountsStaticCell);
+//            discountsInnerTable.addCell(discountsDynamicCell);
+//            discountsCell.addElement(discountsInnerTable);
+//            discountTableMain.addCell(discountsCell);
 
-            PdfPCell beforeTaxMainCell = new PdfPCell();
-            beforeTaxMainCell.setBorder(0);
-            beforeTaxMainCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            PdfPTable beforeTaxMainTable = new PdfPTable(2);
-            beforeTaxMainTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            beforeTaxMainTable.setLockedWidth(true);
-            beforeTaxMainTable.setTotalWidth(new float[]{100, 80});
-            PdfPCell beforeTaxStaticCell = new PdfPCell(new Paragraph("Before Tax", level4));
-            beforeTaxStaticCell.setBorder(0);
-            PdfPCell beforeTaxDynamicCell = new PdfPCell(new Paragraph(String.valueOf(response.getTotalAmount()), level4Bold));
-            beforeTaxDynamicCell.setBorder(0);
-            beforeTaxDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            beforeTaxMainTable.addCell(beforeTaxStaticCell);
-            beforeTaxMainTable.addCell(beforeTaxDynamicCell);
-            beforeTaxMainCell.addElement(beforeTaxMainTable);
-            discountTableMain.addCell(beforeTaxMainCell);
+//            PdfPCell beforeTaxMainCell = new PdfPCell();
+//            beforeTaxMainCell.setBorder(0);
+//            beforeTaxMainCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            PdfPTable beforeTaxMainTable = new PdfPTable(2);
+//            beforeTaxMainTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            beforeTaxMainTable.setLockedWidth(true);
+//            beforeTaxMainTable.setTotalWidth(new float[]{100, 80});
+//            PdfPCell beforeTaxStaticCell = new PdfPCell(new Paragraph("Before Tax", level4));
+//            beforeTaxStaticCell.setBorder(0);
+//            PdfPCell beforeTaxDynamicCell = new PdfPCell(new Paragraph(String.valueOf(response.getTotalAmount()), level4Bold));
+//            beforeTaxDynamicCell.setBorder(0);
+//            beforeTaxDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            beforeTaxMainTable.addCell(beforeTaxStaticCell);
+//            beforeTaxMainTable.addCell(beforeTaxDynamicCell);
+//            beforeTaxMainCell.addElement(beforeTaxMainTable);
+//            discountTableMain.addCell(beforeTaxMainCell);
 
             double tax = 0;
             double sgst = 0;
@@ -555,39 +567,39 @@ public class PDFHandler {
             discountTableMain.addCell(taxMainCell);
 
 
-            PdfPCell cgstMainCell = new PdfPCell();
-            cgstMainCell.setBorder(0);
-            cgstMainCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            PdfPTable cgstMainTable = new PdfPTable(2);
-            cgstMainTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            cgstMainTable.setLockedWidth(true);
-            cgstMainTable.setTotalWidth(new float[]{100, 80});
-            PdfPCell cgstStaticCell = new PdfPCell(new Paragraph("CGST:", level4));
-            cgstStaticCell.setBorder(0);
-            PdfPCell cgstDynamicCell = new PdfPCell(new Paragraph(String.valueOf(cgst), level4Bold));
-            cgstDynamicCell.setBorder(0);
-            cgstDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            cgstMainTable.addCell(cgstStaticCell);
-            cgstMainTable.addCell(cgstDynamicCell);
-            cgstMainCell.addElement(cgstMainTable);
-            discountTableMain.addCell(cgstMainCell);
+//            PdfPCell cgstMainCell = new PdfPCell();
+//            cgstMainCell.setBorder(0);
+//            cgstMainCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            PdfPTable cgstMainTable = new PdfPTable(2);
+//            cgstMainTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            cgstMainTable.setLockedWidth(true);
+//            cgstMainTable.setTotalWidth(new float[]{100, 80});
+//            PdfPCell cgstStaticCell = new PdfPCell(new Paragraph("CGST:", level4));
+//            cgstStaticCell.setBorder(0);
+//            PdfPCell cgstDynamicCell = new PdfPCell(new Paragraph(String.valueOf(cgst), level4Bold));
+//            cgstDynamicCell.setBorder(0);
+//            cgstDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            cgstMainTable.addCell(cgstStaticCell);
+//            cgstMainTable.addCell(cgstDynamicCell);
+//            cgstMainCell.addElement(cgstMainTable);
+//            discountTableMain.addCell(cgstMainCell);
 
-            PdfPCell sgstMainCell = new PdfPCell();
-            sgstMainCell.setBorder(0);
-            sgstMainCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            PdfPTable sgstMainTable = new PdfPTable(2);
-            sgstMainTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            sgstMainTable.setLockedWidth(true);
-            sgstMainTable.setTotalWidth(new float[]{100, 80});
-            PdfPCell sgstStaticCell = new PdfPCell(new Paragraph("SGST", level4));
-            sgstStaticCell.setBorder(0);
-            PdfPCell sgstDynamicCell = new PdfPCell(new Paragraph(String.valueOf(sgst), level4Bold));
-            sgstDynamicCell.setBorder(0);
-            sgstDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            sgstMainTable.addCell(sgstStaticCell);
-            sgstMainTable.addCell(sgstDynamicCell);
-            sgstMainCell.addElement(sgstMainTable);
-            discountTableMain.addCell(sgstMainCell);
+//            PdfPCell sgstMainCell = new PdfPCell();
+//            sgstMainCell.setBorder(0);
+//            sgstMainCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            PdfPTable sgstMainTable = new PdfPTable(2);
+//            sgstMainTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            sgstMainTable.setLockedWidth(true);
+//            sgstMainTable.setTotalWidth(new float[]{100, 80});
+//            PdfPCell sgstStaticCell = new PdfPCell(new Paragraph("SGST", level4));
+//            sgstStaticCell.setBorder(0);
+//            PdfPCell sgstDynamicCell = new PdfPCell(new Paragraph(String.valueOf(sgst), level4Bold));
+//            sgstDynamicCell.setBorder(0);
+//            sgstDynamicCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+//            sgstMainTable.addCell(sgstStaticCell);
+//            sgstMainTable.addCell(sgstDynamicCell);
+//            sgstMainCell.addElement(sgstMainTable);
+//            discountTableMain.addCell(sgstMainCell);
 
 
             PdfPCell totalAmountMainCell = new PdfPCell();
@@ -680,6 +692,5 @@ public class PDFHandler {
 
         return cell;
     }
-
 
 }
