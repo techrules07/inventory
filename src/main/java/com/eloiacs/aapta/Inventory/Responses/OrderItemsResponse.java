@@ -26,7 +26,7 @@ public class OrderItemsResponse {
 
     private double totalAmount = 0;
 
-    private int discount = 0;
+    private double discount = 0;
 
     private double discountAmount = 0;
 
@@ -37,8 +37,11 @@ public class OrderItemsResponse {
     private String orderItemCreatedAt = null;
 
     private String category = null;
+
     private String subCategory = null;
+
     private String size = null;
+
     private String unit = null;
 
 
@@ -138,11 +141,11 @@ public class OrderItemsResponse {
         this.totalAmount = totalAmount;
     }
 
-    public int getDiscount() {
+    public double getDiscount() {
         return discount;
     }
 
-    public void setDiscount(int discount) {
+    public void setDiscount(double discount) {
         this.discount = discount;
     }
 

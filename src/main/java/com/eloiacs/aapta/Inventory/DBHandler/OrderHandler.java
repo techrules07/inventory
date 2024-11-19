@@ -114,6 +114,15 @@ public class OrderHandler {
             return getOrderByOrderId(orderItemsRequestModel.getOrderId());
         }
 
+        double salesPrice = 0;
+
+        if (orderItemsRequestModel.getUnitPrice() > 0){
+            salesPrice = orderItemsRequestModel.getUnitPrice();
+        }
+        else {
+            salesPrice = response.getWholesalePrice();
+        }
+
         String insertOrderItemQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
         String updateOrderItemQuery = "update orderItems set unitPrice = ?, quantity = ?, totalAmount = ?, discount = ? where orderId = ? and productId = ?";
         String eventInsertQuery = "INSERT INTO event (eventName, taskId, eventType, userId) VALUES (?, ?, ?, ?)";
@@ -133,18 +142,19 @@ public class OrderHandler {
                 quantity = orderItemsRequestModel.getQuantity();
             }
 
-            double totalAmount = Math.round(response.getWholesalePrice() * quantity);
-            int discount = 0;
+            double totalAmount = Math.round(salesPrice * quantity);
+            double discount = 0;
             if (orderItemsRequestModel.getTypeOfDiscount() == 1) {
                 totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
                 discount = orderItemsRequestModel.getDiscount();
             } else if (orderItemsRequestModel.getTypeOfDiscount() == 2) {
                 totalAmount = totalAmount - orderItemsRequestModel.getDiscountAmount();
-                discount = (int) ((orderItemsRequestModel.getDiscountAmount() / (response.getWholesalePrice() * quantity)) * 100);
+                discount = (double) ((orderItemsRequestModel.getDiscountAmount() / (salesPrice * quantity)) * 100);
+                discount = Double.parseDouble(new DecimalFormat("##.##").format(discount));
             }
 
             int updateOrderItem = jdbcTemplate.update(updateOrderItemQuery,
-                    response.getWholesalePrice(),
+                    salesPrice,
                     quantity,
                     totalAmount,
                     discount,
@@ -159,28 +169,30 @@ public class OrderHandler {
             if (orderItemsRequestModel.getQuantity() != 0) {
                 quantity = orderItemsRequestModel.getQuantity();
             }
-            double totalAmount = Math.round(response.getWholesalePrice() * quantity);
-            int discount = 0;
+            double totalAmount = Math.round(salesPrice * quantity);
+            double discount = 0;
             if (orderItemsRequestModel.getTypeOfDiscount() == 1) {
                 totalAmount = totalAmount * (1 - (double) orderItemsRequestModel.getDiscount() / 100);
                 discount = orderItemsRequestModel.getDiscount();
             } else if (orderItemsRequestModel.getTypeOfDiscount() == 2) {
                 totalAmount = totalAmount - orderItemsRequestModel.getDiscountAmount();
-                discount = (int) ((orderItemsRequestModel.getDiscountAmount() / (response.getWholesalePrice() * quantity)) * 100);
+                discount = (double) ((orderItemsRequestModel.getDiscountAmount() / (salesPrice * quantity)) * 100);
+                discount = Double.parseDouble(new DecimalFormat("##.##").format(discount));
             }
 
             final double amount = totalAmount;
             final int finalQuantity = quantity;
-            final int finalDiscount = discount;
+            final double finalDiscount = discount;
+            final double finalSalesPrice = salesPrice;
 
             int insertOrderItem = jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(insertOrderItemQuery, new String[]{"id"});
                 ps.setString(1, orderItemsRequestModel.getOrderId());
                 ps.setInt(2, orderItemsRequestModel.getProductId());
-                ps.setDouble(3, response.getWholesalePrice());
+                ps.setDouble(3, finalSalesPrice);
                 ps.setInt(4, finalQuantity);
                 ps.setDouble(5, amount);
-                ps.setInt(6, finalDiscount);
+                ps.setDouble(6, finalDiscount);
                 ps.setString(7, createdBy);
                 return ps;
             }, keyHolder);
@@ -324,7 +336,6 @@ public class OrderHandler {
 
         getAllOrdersQuery.append("ORDER BY o.orderId DESC");
 
-
         return jdbcTemplate.query(getAllOrdersQuery.toString(), queryParams.toArray(), rs -> {
             Map<String, OrderResponse> orderMap = new LinkedHashMap<>();
 
@@ -368,7 +379,7 @@ public class OrderHandler {
                     orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
                     orderItem.setQuantity(rs.getInt("quantity"));
                     orderItem.setTotalAmount(Math.round(rs.getDouble("totalAmount")));
-                    orderItem.setDiscount(rs.getInt("discount"));
+                    orderItem.setDiscount(rs.getDouble("discount"));
                     orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                     orderItem.setOrderItemCreatedBy(rs.getString("username"));
                     orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
@@ -379,6 +390,7 @@ public class OrderHandler {
 
                     double itemTotalPrice = Math.round(unitPrice * quantity);
                     double itemDiscountAmount = Math.round(itemTotalPrice * (discount / 100));
+                    itemDiscountAmount = Double.parseDouble(new DecimalFormat("##.##").format(itemDiscountAmount));
                     orderItem.setDiscountAmount(itemDiscountAmount);
                     double itemTotalAmountAfterDiscount = Math.round(itemTotalPrice - itemDiscountAmount);
 
@@ -445,7 +457,7 @@ public class OrderHandler {
                         orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
                         orderItem.setQuantity(rs.getInt("quantity"));
                         orderItem.setTotalAmount(rs.getDouble("totalAmount"));
-                        orderItem.setDiscount(rs.getInt("discount"));
+                        orderItem.setDiscount(rs.getDouble("discount"));
                         orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                         orderItem.setOrderItemCreatedBy(rs.getString("username"));
                         orderItem.setOrderItemCreatedAt(Utils.convertUTCDateTimeToISTString(rs.getTimestamp("createdAt")));
@@ -456,6 +468,7 @@ public class OrderHandler {
 
                         double itemTotalPrice = unitPrice * quantity;
                         double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                        itemDiscountAmount = Double.parseDouble(new DecimalFormat("##.##").format(itemDiscountAmount));
                         orderItem.setDiscountAmount(itemDiscountAmount);
                         double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
 
@@ -515,7 +528,7 @@ public class OrderHandler {
                             orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
                             orderItem.setQuantity(rs.getInt("quantity"));
                             orderItem.setTotalAmount(rs.getDouble("totalAmount"));
-                            orderItem.setDiscount(rs.getInt("discount"));
+                            orderItem.setDiscount(rs.getDouble("discount"));
                             orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                             orderItem.setOrderItemCreatedBy(rs.getString("username"));
                             orderItem.setCategory(rs.getString("categoryName"));
@@ -530,6 +543,7 @@ public class OrderHandler {
 
                         double itemTotalPrice = unitPrice * quantity;
                         double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                        itemDiscountAmount = Double.parseDouble(new DecimalFormat("##.##").format(itemDiscountAmount));
                         orderItem.setDiscountAmount(itemDiscountAmount);
                         double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
 
@@ -601,7 +615,7 @@ public class OrderHandler {
                         orderItem.setWholesalePercentage(rs.getInt("wholesalePercentage"));
                         orderItem.setQuantity(rs.getInt("quantity"));
                         orderItem.setTotalAmount(rs.getDouble("totalAmount"));
-                        orderItem.setDiscount(rs.getInt("discount"));
+                        orderItem.setDiscount(rs.getDouble("discount"));
                         orderItem.setOrderItemCreatedById(rs.getInt("createdBy"));
                         orderItem.setOrderItemCreatedBy(rs.getString("username"));
                         orderItem.setCategory(rs.getString("categoryName"));
@@ -616,6 +630,7 @@ public class OrderHandler {
 
                         double itemTotalPrice = unitPrice * quantity;
                         double itemDiscountAmount = itemTotalPrice * (discount / 100);
+                        itemDiscountAmount = Double.parseDouble(new DecimalFormat("##.##").format(itemDiscountAmount));
                         orderItem.setDiscountAmount(itemDiscountAmount);
                         double itemTotalAmountAfterDiscount = itemTotalPrice - itemDiscountAmount;
 
