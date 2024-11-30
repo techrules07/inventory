@@ -779,6 +779,7 @@ public class OrderHandler {
 
                 String getInventoryIdQuery = "select id from inventory where productId = ?";
                 System.out.println("select id from inventory where productId = '" + orderItem.getProductId() + "'");
+
                 int inventoryId = jdbcTemplate.queryForObject(getInventoryIdQuery, new Object[]{orderItem.getProductId()}, Integer.class);
 
                 jdbcTemplate.update(eventInsertQuery, inventoryCountEventName, inventoryId, inventoryCountEventType, createdBy);

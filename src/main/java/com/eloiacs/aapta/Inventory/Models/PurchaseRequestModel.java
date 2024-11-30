@@ -10,11 +10,11 @@ public class PurchaseRequestModel {
 
     private double mrp = 0;
 
-    private int salesPercentage = 0;
+    private double salesPercentage = 0;
 
     private double salesPrice = 0;
 
-    private int wholesalePercentage = 0;
+    private double wholesalePercentage = 0;
 
     private double wholesalePrice = 0;
 
@@ -51,7 +51,7 @@ public class PurchaseRequestModel {
         this.mrp = mrp;
     }
 
-    public int getSalesPercentage() {
+    public double getSalesPercentage() {
         return salesPercentage;
     }
 
@@ -67,7 +67,7 @@ public class PurchaseRequestModel {
         this.salesPrice = salesPrice;
     }
 
-    public int getWholesalePercentage() {
+    public double getWholesalePercentage() {
         return wholesalePercentage;
     }
 
