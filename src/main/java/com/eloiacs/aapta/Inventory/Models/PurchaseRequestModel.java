@@ -51,14 +51,6 @@ public class PurchaseRequestModel {
         this.mrp = mrp;
     }
 
-    public double getSalesPercentage() {
-        return salesPercentage;
-    }
-
-    public void setSalesPercentage(int salesPercentage) {
-        this.salesPercentage = salesPercentage;
-    }
-
     public double getSalesPrice() {
         return salesPrice;
     }
@@ -67,19 +59,27 @@ public class PurchaseRequestModel {
         this.salesPrice = salesPrice;
     }
 
-    public double getWholesalePercentage() {
-        return wholesalePercentage;
-    }
-
-    public void setWholesalePercentage(int wholesalePercentage) {
-        this.wholesalePercentage = wholesalePercentage;
-    }
-
     public double getWholesalePrice() {
         return wholesalePrice;
     }
 
     public void setWholesalePrice(double wholesalePrice) {
         this.wholesalePrice = wholesalePrice;
+    }
+
+    public double getSalesPercentage() {
+        return salesPercentage;
+    }
+
+    public void setSalesPercentage(double salesPercentage) {
+        this.salesPercentage = salesPercentage;
+    }
+
+    public double getWholesalePercentage() {
+        return wholesalePercentage;
+    }
+
+    public void setWholesalePercentage(double wholesalePercentage) {
+        this.wholesalePercentage = wholesalePercentage;
     }
 }
