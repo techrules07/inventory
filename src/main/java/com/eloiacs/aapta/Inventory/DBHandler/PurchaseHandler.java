@@ -133,16 +133,16 @@ public class PurchaseHandler {
                             salesPrice = purchaseItem.getSalesPrice();
                         }
                         else{
-                            salesPrice = Math.round(purchaseItem.getPurchasePrice() + (purchaseItem.getPurchasePrice() * purchaseItem.getSalesPercentage() /100));
-                            salesPrice = Math.min(salesPrice, purchaseItem.getMrp());
+                            salesPrice = purchaseItem.getPurchasePrice() + (purchaseItem.getPurchasePrice() * purchaseItem.getSalesPercentage() /100);
+//                            salesPrice = Math.min(salesPrice, purchaseItem.getMrp());
                         }
 
                         if (purchaseItem.getWholesalePercentage() == 0){
                             wholesalesPrice = purchaseItem.getWholesalePrice();
                         }
                         else{
-                            wholesalesPrice = Math.round(purchaseItem.getPurchasePrice() + (purchaseItem.getPurchasePrice() * purchaseItem.getWholesalePercentage() /100));
-                            wholesalesPrice = Math.min(wholesalesPrice, purchaseItem.getMrp());
+                            wholesalesPrice = purchaseItem.getPurchasePrice() + (purchaseItem.getPurchasePrice() * purchaseItem.getWholesalePercentage() /100);
+//                            wholesalesPrice = Math.min(wholesalesPrice, purchaseItem.getMrp());
                         }
 
                         String checkProductPriceExistQuery = "SELECT COUNT(*) FROM productPrice WHERE productId = ? AND category = ? AND subCategory = ? and size = ?";
