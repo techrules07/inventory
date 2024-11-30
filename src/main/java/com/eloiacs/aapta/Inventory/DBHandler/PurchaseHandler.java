@@ -90,7 +90,7 @@ public class PurchaseHandler {
         LocalDate purchaseDate = LocalDate.parse(purchaseOrderRequestModel.getPurchaseDate().replace("/", "-"), inputFormatter);
         String formattedDate = purchaseDate.format(targetFormatter);
 
-        final double amount = totalAmount;
+        final double amount = Utils.roundToTwoDecimalPlaces(totalAmount);
 
         int rowsAffected = jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(insertPurchaseOrderQuery, new String[]{"id"});
@@ -116,11 +116,16 @@ public class PurchaseHandler {
             if (purchaseItemsList != null){
                 for (PurchaseRequestModel purchaseItem : purchaseItemsList){
 
+                    double purchasePrice = Utils.roundToTwoDecimalPlaces(purchaseItem.getPurchasePrice());
+                    double salesPercentage = Utils.roundToTwoDecimalPlaces(purchaseItem.getSalesPercentage());
+                    double wholesalesPercentage = Utils.roundToTwoDecimalPlaces(purchaseItem.getWholesalePercentage());
+                    double mrp = Utils.roundToTwoDecimalPlaces(purchaseItem.getMrp());
+
                     int insertedPurchaseItem = jdbcTemplate.update(insertPurchaseItemsQuery,
                             purchaseOrderId,
                             purchaseItem.getProductId(),
                             purchaseItem.getQuantity(),
-                            purchaseItem.getPurchasePrice());
+                            purchasePrice);
 
                     if (insertedPurchaseItem > 0){
 
@@ -129,21 +134,24 @@ public class PurchaseHandler {
 
                         ProductResponse productResponse = productHandler.getProductById(purchaseItem.getProductId());
 
-                        if (purchaseItem.getSalesPercentage() == 0){
-                            salesPrice = purchaseItem.getSalesPrice();
+                        if (salesPercentage == 0){
+                            salesPrice = Utils.roundToTwoDecimalPlaces(purchaseItem.getSalesPrice());
                         }
                         else{
-                            salesPrice = purchaseItem.getPurchasePrice() + (purchaseItem.getPurchasePrice() * purchaseItem.getSalesPercentage() /100);
-//                            salesPrice = Math.min(salesPrice, purchaseItem.getMrp());
+                            salesPrice = purchasePrice + (purchasePrice * salesPercentage /100);
+//                            salesPrice = Math.min(salesPrice, mrp);
                         }
 
-                        if (purchaseItem.getWholesalePercentage() == 0){
-                            wholesalesPrice = purchaseItem.getWholesalePrice();
+                        if (wholesalesPercentage == 0){
+                            wholesalesPrice = Utils.roundToTwoDecimalPlaces(purchaseItem.getWholesalePrice());
                         }
                         else{
-                            wholesalesPrice = purchaseItem.getPurchasePrice() + (purchaseItem.getPurchasePrice() * purchaseItem.getWholesalePercentage() /100);
-//                            wholesalesPrice = Math.min(wholesalesPrice, purchaseItem.getMrp());
+                            wholesalesPrice = purchasePrice + (purchasePrice * wholesalesPercentage /100);
+//                            wholesalesPrice = Math.min(wholesalesPrice, mrp);
                         }
+
+                        salesPrice = Utils.roundToTwoDecimalPlaces(salesPrice);
+                        wholesalesPrice = Utils.roundToTwoDecimalPlaces(wholesalesPrice);
 
                         String checkProductPriceExistQuery = "SELECT COUNT(*) FROM productPrice WHERE productId = ? AND category = ? AND subCategory = ? and size = ?";
                         int productPriceExists = jdbcTemplate.queryForObject(checkProductPriceExistQuery, Integer.class, purchaseItem.getProductId(), productResponse.getCategoryId(), productResponse.getSubCategoryId(), productResponse.getSizeId());
@@ -152,11 +160,11 @@ public class PurchaseHandler {
                             String updateProductPriceQuery = "UPDATE productPrice SET mrp = ?, salesPrice = ?, salesPercentage = ?, wholesalePrice = ?, wholesalePercentage = ? WHERE productId = ? AND category = ? AND subCategory = ? and size = ?";
 
                             jdbcTemplate.update(updateProductPriceQuery,
-                                    purchaseItem.getMrp(),
+                                    Utils.roundToTwoDecimalPlaces(purchaseItem.getMrp()),
                                     salesPrice,
-                                    purchaseItem.getSalesPercentage(),
+                                    salesPercentage,
                                     wholesalesPrice,
-                                    purchaseItem.getWholesalePercentage(),
+                                    wholesalesPercentage,
                                     purchaseItem.getProductId(),
                                     productResponse.getCategoryId(),
                                     productResponse.getSubCategoryId(),
@@ -167,11 +175,11 @@ public class PurchaseHandler {
                                     productResponse.getCategoryId(),
                                     productResponse.getSubCategoryId(),
                                     productResponse.getSizeId(),
-                                    purchaseItem.getMrp(),
+                                    mrp,
                                     salesPrice,
-                                    purchaseItem.getSalesPercentage(),
+                                    salesPercentage,
                                     wholesalesPrice,
-                                    purchaseItem.getWholesalePercentage());
+                                    wholesalesPercentage);
 
                             if (insertedProductPrice > 0){
 
