@@ -120,7 +120,7 @@ public class OrderHandler {
             salesPrice = orderItemsRequestModel.getUnitPrice();
         }
         else {
-            if (orderItemsRequestModel.getRetail()){
+            if (orderItemsRequestModel.getSalesType() == 2){
                 salesPrice = response.getRetailPrice();
             }else {
                 salesPrice = response.getWholesalePrice();
