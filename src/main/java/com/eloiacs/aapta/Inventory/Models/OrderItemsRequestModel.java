@@ -14,6 +14,8 @@ public class OrderItemsRequestModel {
 
     private Boolean manuallyEntered = false;
 
+    private Boolean isRetail = false;
+
     private Integer typeOfDiscount = 0;
 
     private Integer discountAmount = 0;
@@ -73,6 +75,14 @@ public class OrderItemsRequestModel {
 
     public void setManuallyEntered(Boolean manuallyEntered) {
         this.manuallyEntered = manuallyEntered;
+    }
+
+    public Boolean getRetail() {
+        return isRetail;
+    }
+
+    public void setRetail(Boolean retail) {
+        isRetail = retail;
     }
 
     public Integer getTypeOfDiscount() {

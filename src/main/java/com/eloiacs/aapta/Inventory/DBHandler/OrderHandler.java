@@ -120,7 +120,11 @@ public class OrderHandler {
             salesPrice = orderItemsRequestModel.getUnitPrice();
         }
         else {
-            salesPrice = response.getWholesalePrice();
+            if (orderItemsRequestModel.getRetail()){
+                salesPrice = response.getRetailPrice();
+            }else {
+                salesPrice = response.getWholesalePrice();
+            }
         }
 
         String insertOrderItemQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
