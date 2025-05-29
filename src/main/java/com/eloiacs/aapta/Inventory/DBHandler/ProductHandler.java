@@ -430,7 +430,6 @@ public class ProductHandler {
 
         getProductsQuery.append("group by pd.id,pp.mrp, pp.salesPrice, pp.salesPercentage, pp.wholesalePrice, pp.wholesalePercentage order by pd.id desc");
 
-
         return jdbcTemplate.query(getProductsQuery.toString(), new PreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps) throws SQLException {

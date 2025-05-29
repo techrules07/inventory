@@ -120,7 +120,11 @@ public class OrderHandler {
             salesPrice = orderItemsRequestModel.getUnitPrice();
         }
         else {
-            salesPrice = response.getWholesalePrice();
+            if (orderItemsRequestModel.getSalesType() == 2){
+                salesPrice = response.getRetailPrice();
+            }else {
+                salesPrice = response.getWholesalePrice();
+            }
         }
 
         String insertOrderItemQuery = "insert into orderItems(orderId,productId,unitPrice,quantity,totalAmount,discount,createdBy,createdAt) values(?,?,?,?,?,?,?,current_timestamp())";
@@ -488,7 +492,7 @@ public class OrderHandler {
 
     public OrderResponse getOrderByOrderId(String orderId) {
 
-        String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice,pp.mrp,pp.salesPrice,pp.salesPercentage,pp.wholesalePrice,pp.wholesalePercentage, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join apptaCustomers ac on ac.customerId = o.customerId  left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join users usr on usr.id = o.createdBy left join productPrice pp on pp.productId=oi.productId  left join users usrs on usrs.id = oi.createdBy where o.orderId = ?";
+        String getOrderByOrderIdQuery = "select o.id as oId, o.orderId as oOrderId, o.customerId, ac.customerName, o.invoiceUrl, o.status, os.statusType, o.createdBy as orderCreatedBy, usr.username as orderUsername, o.createdAt as orderCreatedAt, oi.id, oi.orderId, oi.productId, p.productName, oi.unitPrice,pp.mrp,pp.salesPrice,pp.salesPercentage,pp.wholesalePrice,pp.wholesalePercentage, oi.quantity, oi.totalAmount, oi.discount, oi.createdBy, usrs.username, oi.createdAt, cat.category_name as categoryName, sub.subCategoryName, unit.unitName, ps.size from orders o left join orderItems oi on oi.orderId = o.orderId left join orderStatus os on os.id = o.status left join apptaCustomers ac on ac.customerId = o.customerId  left join products p on p.id = oi.productId left JOIN category cat on cat.id=p.category left OUTER join subcategory sub on sub.id=p.subCategory left outer join unitTable unit on unit.id=p.unit left OUTER JOIN productSize ps on ps.id=p.size left join users usr on usr.id = o.createdBy left join productPrice pp on pp.productId=oi.productId  left join users usrs on usrs.id = oi.createdBy where o.orderId = ? order by oi.id asc";
 
         return jdbcTemplate.query(getOrderByOrderIdQuery, new Object[]{orderId}, new ResultSetExtractor<OrderResponse>() {
             @Override
